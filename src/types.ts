@@ -1,0 +1,116 @@
+export interface HAEntity {
+  entity_id: string;
+  state: string;
+  attributes: Record<string, unknown>;
+  last_changed: string;
+  last_updated: string;
+}
+
+export interface HAEvent {
+  event_type: string;
+  data: {
+    entity_id: string;
+    new_state: HAEntity;
+    old_state: HAEntity;
+  };
+}
+
+export interface Room {
+  id: string;
+  name: string;
+  icon: string;
+  entities: RoomEntity[];
+}
+
+export interface RoomEntity {
+  entity_id: string;
+  name?: string;
+  icon?: string;
+  /** Explicit tile size set in edit mode. When unset, an auto heuristic is used. */
+  size?: TileSize;
+  /** Optional camera entity_id to show as a live thumbnail in the tile's empty space. */
+  camera?: string;
+  /** Related entity_ids shown together in this tile's flyout (detail panel). */
+  links?: string[];
+  /** Custom quick-action buttons shown in this tile's flyout. */
+  actions?: TileAction[];
+  /** Per-tile customization of what appears in the flyout (detail panel). */
+  flyout?: FlyoutConfig;
+  /** Enable horizontal drag across the tile to dim a light (brightness shown as fill). */
+  slideDim?: boolean;
+  /** Reverse the position slider direction (useful for covers, e.g. left = open). */
+  reverseSlider?: boolean;
+  /** Show the now-playing artwork as the tile background (media players). */
+  mediaArtwork?: boolean;
+  /** Companion media_player entity to pull now-playing artwork from (media players). */
+  artworkEntity?: string;
+  type?: 'light' | 'switch' | 'cover' | 'lock' | 'climate' | 'camera' | 'media_player' | 'vacuum' | 'sensor' | 'binary_sensor' | 'scene' | 'script';
+}
+
+/** Controls which sections/attributes are visible in a tile's flyout. */
+export interface FlyoutConfig {
+  hideState?: boolean;
+  hideControls?: boolean;
+  hideHistory?: boolean;
+  hideAttributes?: boolean;
+  /** Specific attribute keys to hide from the attributes card. */
+  hiddenAttributes?: string[];
+}
+
+/** A user-defined quick action button that calls a Home Assistant service. */
+export interface TileAction {
+  label: string;
+  icon?: string;
+  domain: string;
+  service: string;
+  /** Optional JSON service data. */
+  data?: Record<string, unknown>;
+  /** Optional target entity_id(s). */
+  target?: string;
+}
+
+/** Tile footprint in the responsive grid (cols x rows). */
+export type TileSize = '1x1' | '2x1' | '1x2' | '2x2';
+
+export interface SceneConfig {
+  entity_id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export interface PersonConfig {
+  entity_id: string;
+  name: string;
+  avatar?: string;
+}
+
+/** A titled group of entities inside a dashboard view (mirrors HA mushroom-title sections).
+ *  Used both as a legacy top-level section and as a column within a row. */
+export interface DashSection {
+  title?: string;
+  entities: RoomEntity[];
+}
+
+/** A horizontal band that divides into one or more named columns sitting side-by-side. */
+export interface DashRow {
+  title?: string;
+  columns: DashSection[];
+}
+
+/** A dashboard tab mirroring a Home Assistant Lovelace view. */
+export interface DashView {
+  id: string;
+  name: string;
+  icon: string;
+  /** Special render kind for non-tile views. Defaults to a sectioned tile grid. */
+  kind?: 'tiles' | 'cameras' | 'sensors';
+  /** Scene entity_ids (from the scenes catalog) relevant to this view. */
+  scenes?: string[];
+  /** Legacy flat sections; auto-converted to single-column rows when `rows` is absent. */
+  sections: DashSection[];
+  /** Rich row/column layout. When present, takes precedence over `sections`. */
+  rows?: DashRow[];
+}
+
+export type ViewId = string;

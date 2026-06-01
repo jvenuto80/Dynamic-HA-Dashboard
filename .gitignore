@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+*.tsbuildinfo
+
+# Secrets / local config
+.env
+.env.local
+
+# Local layout state (personal dashboard arrangement)
+layouts.json
+
+# Personal Home Assistant config dumps
+scripts/lovelace-dump.json
+scripts/views.json
+
+# Screenshots contain personal data; a curated subset is force-added
+screenshots
