@@ -38,6 +38,32 @@ Decision: leaving as `localStorage` for now since it works on a single device.
   pages in the left navigation panel (add/rename/reorder/remove views), not just
   editing tiles within an existing page.
 
+## Deployment
+
+- [ ] **Ship as a Home Assistant Add-on (Option B)** — run the dashboard as a
+  Supervisor-managed add-on directly on the HA server, surfaced in the sidebar
+  via Ingress (so it inherits HA auth, no extra exposed port).
+  - **Token: user-entered, never baked.** The long-lived token is NOT baked into
+    the build or stored in add-on options. The user adds it via the in-app
+    **Settings** UI (stays in that browser's `localStorage`, never hits disk).
+    This keeps the bundle/token out of the image and out of HA config.
+  - Serving: `vite preview --host 0.0.0.0` already runs the `/layout` API
+    (`vite-layout-plugin.ts` registers `configurePreviewServer`), so the same
+    process serves the static build AND persists layouts — no separate backend.
+    (Optionally graduate to a ~30-line static server later for "production
+    correctness," but not required.)
+  - Persistence: mount `/data` (add-on persistent volume) for `layouts.json` so
+    layouts/glance config survive restarts and updates.
+  - Add-on scaffolding to create: `Dockerfile` (HA base image, e.g.
+    `ghcr.io/hassio-addons/base`), `config.yaml` (add-on manifest with
+    `ingress: true`, ports, `map: [...]`/`/data`), `run.sh` (s6/bashio startup),
+    `repository.yaml`, icon/logo, and add-on docs.
+  - Ingress base-path: set Vite `base` (or runtime base) so assets resolve under
+    `/api/hassio_ingress/<token>/…`; `vite.config.ts` `preview.allowedHosts`
+    likely needs the ingress host allowed.
+  - The dev `server.proxy` (`/api`, `/local`) is dev-only; in the add-on the
+    browser talks to HA directly over websocket, so no proxy needed.
+
 ## High-end polish ideas
 
 > Brainstorm of "premium feel" enhancements. Ordered roughly by wow-per-effort.
