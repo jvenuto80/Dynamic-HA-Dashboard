@@ -9,6 +9,23 @@ ambient effects.
 
 ---
 
+## Screenshots
+
+|  |  |
+|---|---|
+| ![Main dashboard](screenshots/01-main.png) | ![Now-playing flyout](screenshots/20-flyout-media.png) |
+| **Main dashboard** — editable tile/room layout | **Media flyout** — now-playing artwork, scrubber, transport |
+| ![Light flyout](screenshots/21-flyout-light.png) | ![Edit mode](screenshots/30-edit-mode.png) |
+| **Light flyout** — brightness, color, live glow | **Edit mode** — drag-and-drop tile arrangement |
+| ![Settings](screenshots/40-settings.png) | ![Ambient — rain](screenshots/50-ambient-rain.png) |
+| **Settings** — themes, accent color, connection | **Ambient backdrop** — weather-reactive rain |
+| ![Ambient — snow](screenshots/51-ambient-snow.png) | ![Ambient — night](screenshots/52-ambient-night.png) |
+| **Ambient backdrop** — snow particles | **Ambient backdrop** — night time-of-day tint |
+| ![Ambient — dusk](screenshots/53-ambient-dusk.png) | ![Ambient — rain at night](screenshots/54-ambient-rain-night.png) |
+| **Ambient backdrop** — dusk gradient | **Ambient backdrop** — rain + night combined |
+
+---
+
 ## Quick start
 
 ```bash
