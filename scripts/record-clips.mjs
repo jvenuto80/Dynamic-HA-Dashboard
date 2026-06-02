@@ -71,8 +71,20 @@ async function clip(browser, name, fn, { startPath = '/' } = {}) {
     '-movflags', '+faststart',
     mp4,
   ]);
-  // Poster frame (~0.4s in) for the <video> tag.
+  // Poster frame (~0.4s in) for reference.
   await run('ffmpeg', ['-y', '-ss', '0.4', '-i', mp4, '-frames:v', '1', `${OUT}${name}.jpg`]);
+  // GitHub READMEs force-download committed MP4s, so also emit an animated GIF
+  // (palette-optimized) — that renders inline as an image. The GIF is what the
+  // README references; the MP4 is kept as a higher-quality download.
+  const pal = `${OUT}${name}.pal.png`;
+  const vf = 'fps=15,scale=640:-1:flags=lanczos';
+  await run('ffmpeg', ['-y', '-i', mp4, '-vf', `${vf},palettegen=stats_mode=diff`, pal]);
+  await run('ffmpeg', [
+    '-y', '-i', mp4, '-i', pal,
+    '-lavfi', `${vf}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3`,
+    `${OUT}${name}.gif`,
+  ]);
+  await rm(pal, { force: true }).catch(() => {});
   console.log('clip →', name);
 }
 
