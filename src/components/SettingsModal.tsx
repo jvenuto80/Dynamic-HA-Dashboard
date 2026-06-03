@@ -283,6 +283,27 @@ export function SettingsModal({ onClose, onResetLayout, onExportLayout, onImport
               <span className="mdi mdi-restore" /> Reset dashboards to default
             </button>
           </section>
+
+          {/* Support */}
+          <section className="settings-section">
+            <h4 className="settings-section-title">
+              <span className="mdi mdi-heart" /> Support
+            </h4>
+            <small className="settings-hint">
+              Enjoying the dashboard? Buy me a beer to say thanks — it keeps the
+              updates flowing.
+            </small>
+            <a
+              className="bmb-button"
+              href="https://venmo.com/u/jvenuto"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="bmb-emoji">🍺</span>
+              <span className="bmb-label">Buy me a beer</span>
+              <span className="mdi mdi-open-in-new bmb-ext" />
+            </a>
+          </section>
         </div>
 
         <div className="ts-footer">
