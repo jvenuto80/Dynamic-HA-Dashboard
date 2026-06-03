@@ -219,7 +219,9 @@ layouts.json           Persisted custom layout (on the add-on: /data/layouts.jso
   build a per-button exclude list (tablet/kiosk screen lights are filtered by
   default). Config persists on the view (`view.glance`) so it syncs across
   devices. The header **greeting is dynamic** — it names whoever is actually
-  home from the `person.*` states.
+  home from the `person.*` states (e.g. "Good night, Jeff & Carissa!"). When
+  nobody is home it drops the names entirely and shows just the time-of-day
+  greeting ("Good morning").
 - **Haptics + spring press** — `lib/haptics.ts` installs one delegated
   `pointerdown` listener firing `navigator.vibrate(8)` on touch/pen taps over
   interactive surfaces (no-op on desktop/mouse). Tiles/pills snap to `scale(0.95–

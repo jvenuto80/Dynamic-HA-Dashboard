@@ -92,7 +92,7 @@ export function Header({ entities, getForecast }: Props) {
       <div className="greeting">
         <h1>
           {getGreeting()}
-          {greetingName ? `, ${greetingName}!` : '!'}
+          {greetingName ? `, ${greetingName}!` : ''}
         </h1>
         <p className="subtitle">
           {mediaPlaying.length > 0
