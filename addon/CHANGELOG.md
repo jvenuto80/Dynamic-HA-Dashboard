@@ -1,4 +1,13 @@
 # Changelog
+## 0.9.3.4-beta
+
+- **More tiles per screen, less scrolling on tablets.** Light tiles no longer
+  expand to a wide 2x1 when turned on — they stay compact 1x1 (the brightness
+  slider still works across the tile), so toggling a light doesn't reflow the
+  grid. Tile columns are also a bit narrower (min 150px → 128px) to fit more per
+  row. You can still set any tile to a larger size manually in tile settings.
+- **Scene bar wraps instead of overflowing.** With many scenes, the Scenes card
+  now wraps its pills onto multiple rows rather than running off the screen edge.
 ## 0.9.3.3-beta
 
 - **Fix shared connection not carrying over to other devices.** The server now

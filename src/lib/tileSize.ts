@@ -6,7 +6,9 @@ export function autoSize(entity: HassEntity | undefined, entity_id: string): Til
   const domain = entity_id.split('.')[0];
   if (domain === 'vacuum') return '1x2';
   if (domain === 'cover' && entity?.attributes.current_position != null) return '1x2';
-  if (domain === 'light' && entity?.attributes.brightness != null) return '2x1';
+  // Lights stay 1x1 even when on — the brightness slider works across the
+  // compact tile, and keeping a fixed size means toggling a light doesn't
+  // reflow the grid or push other tiles off-screen (less scrolling on tablets).
   return '1x1';
 }
 
