@@ -1,4 +1,10 @@
 # Changelog
+## 0.9.3.5-beta
+
+- **Tiles backfill empty gaps.** Switched the tile grid to `grid-auto-flow: dense`
+  so 1x1 tiles fill the space left next to taller (1x2) tiles — e.g. the empty
+  area beside a vacuum/cover tile no longer stays blank. Manual tile size
+  overrides in **TileSettings** are still respected.
 ## 0.9.3.4-beta
 
 - **More tiles per screen, less scrolling on tablets.** Light tiles no longer

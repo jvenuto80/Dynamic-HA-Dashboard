@@ -1572,6 +1572,9 @@ body::after {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
   grid-auto-rows: 94px;
+  /* Backfill gaps left by tall tiles (covers, vacuums, on-lights expanded
+     manually) with following 1x1 tiles so the layout packs tightly. */
+  grid-auto-flow: row dense;
   gap: 10px;
 }
 
