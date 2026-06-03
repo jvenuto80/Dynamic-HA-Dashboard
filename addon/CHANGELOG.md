@@ -1,4 +1,12 @@
 # Changelog
+## 0.9.3.3-beta
+
+- **Fix shared connection not carrying over to other devices.** The server now
+  only stores a complete connection (non-empty URL **and** token), and a device
+  adopts the shared connection when its own connection is incomplete (e.g. a
+  tablet with a token but no URL, which previously fell back to the unreachable
+  `homeassistant.local` default and showed "Connection failed"). Saving with the
+  toggle on now stores the effective URL instead of an empty field value.
 ## 0.9.3.2-beta
 
 - **No-cache for the HTML entry point.** The preview server now sends

@@ -73,9 +73,10 @@ export function SettingsModal({ onClose, onResetLayout, onExportLayout, onImport
     const url = haUrl.trim();
     const token = haToken.trim();
     saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, rememberOnServer });
-    // Sync the opt-in shared connection on the server.
+    // Sync the opt-in shared connection on the server. Store the *effective* URL
+    // (falls back to the default host) so other devices never adopt an empty URL.
     if (rememberOnServer && token) {
-      void saveServerConnection(url, token);
+      void saveServerConnection(effectiveUrl, token);
     } else if (!rememberOnServer && initial.rememberOnServer) {
       void clearServerConnection();
     }

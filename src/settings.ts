@@ -100,7 +100,15 @@ export async function fetchServerConnection(): Promise<ServerConnection | null> 
     const res = await fetch(CONNECTION_ENDPOINT);
     if (!res.ok || res.status === 204) return null;
     const data = (await res.json()) as Partial<ServerConnection>;
-    if (data && typeof data.haUrl === 'string' && typeof data.haToken === 'string' && data.haToken) {
+    // Require BOTH a URL and a token — an incomplete entry would make a device
+    // adopt a connection it can't use (e.g. empty URL → unreachable default host).
+    if (
+      data &&
+      typeof data.haUrl === 'string' &&
+      data.haUrl &&
+      typeof data.haToken === 'string' &&
+      data.haToken
+    ) {
       return { haUrl: data.haUrl, haToken: data.haToken };
     }
   } catch {
@@ -111,6 +119,8 @@ export async function fetchServerConnection(): Promise<ServerConnection | null> 
 
 /** Store the shared connection on the server (opt-in). */
 export async function saveServerConnection(haUrl: string, haToken: string): Promise<void> {
+  // Never store an incomplete connection — it would poison other devices.
+  if (!haUrl || !haToken) return;
   try {
     await fetch(CONNECTION_ENDPOINT, {
       method: 'POST',
@@ -132,15 +142,18 @@ export async function clearServerConnection(): Promise<void> {
 }
 
 /**
- * On startup, if this browser has no local token but the server has a shared
- * connection stored, adopt it for this session so the device auto-connects.
- * Returns true if a server connection was applied.
+ * On startup, if this browser doesn't already have a complete connection of its
+ * own (URL + token) but the server has a shared one stored, adopt it so the
+ * device auto-connects. Returns true if a server connection was applied.
  */
 export async function hydrateConnectionFromServer(): Promise<boolean> {
-  const local = getSettings();
-  if (local.haToken) return false; // this device already has its own connection
+  // "Complete" means both a URL and a token (from settings or env). A device
+  // missing either (e.g. a tablet with a token but no URL) should adopt the
+  // shared connection rather than fall back to an unreachable default host.
+  if (getHaUrl() && getHaToken()) return false;
   const server = await fetchServerConnection();
   if (!server) return false;
+  const local = getSettings();
   cache = { ...local, haUrl: server.haUrl, haToken: server.haToken, rememberOnServer: true };
   return true;
 }
