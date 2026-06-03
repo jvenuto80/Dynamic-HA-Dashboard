@@ -13,6 +13,10 @@ HA's authentication).
 Then find **Dynamic HA Dashboard** in the store, **Install**, **Start**, and
 **Open Web UI** (or use the sidebar panel).
 
+> **Note:** the button only *adds the repository* (you still click **Add** in
+> the dialog, then install the add-on). On some HA/browser versions it just
+> opens the Add-on Store without the dialog — if so, use the manual steps below.
+
 **Manual** — if the button doesn't work:
 
 1. In Home Assistant go to **Settings → Add-ons → Add-on Store**.

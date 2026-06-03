@@ -102,10 +102,31 @@ Supervisor-managed add-on (served from the sidebar via **Ingress**).
 
 [![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjvenuto80%2FDynamic-HA-Dashboard)
 
-Click the button (or add `https://github.com/jvenuto80/Dynamic-HA-Dashboard` as
-a repository in **Settings → Add-ons → Add-on Store → ⋮ → Repositories**), then
-install **Dynamic HA Dashboard**. See [`addon/README.md`](addon/README.md) for
-first-time token setup and layout import/export.
+Click the button above to open the **Add repository** dialog pre-filled in your
+own Home Assistant, then click **Add**.
+
+> **Heads-up:** the button only *adds the repository* — it does not install the
+> add-on, and on some HA/browser versions it just opens the Add-on Store without
+> popping the dialog. If that happens, use the manual steps below.
+
+**Manual install (always works, HA OS / Supervised):**
+
+1. **Settings → Add-ons → Add-on Store**.
+2. Top-right **⋮** menu → **Repositories**.
+3. Paste this URL and click **Add**, then **Close**:
+   ```
+   https://github.com/jvenuto80/Dynamic-HA-Dashboard
+   ```
+4. Refresh the store (pull-to-refresh / reload). A new **Dynamic HA Dashboard
+   Add-ons** section appears.
+5. Open **Dynamic HA Dashboard** → **Install** → **Start** → **Open Web UI**.
+
+> First install builds from source on your device (clones the repo + `npm run
+> build`), so it can take several minutes and needs internet access. Requires a
+> Supervisor (HA OS or Supervised) — HA Container/Core have no add-on store.
+
+See [`addon/README.md`](addon/README.md) for first-time token setup and layout
+import/export.
 
 ---
 
