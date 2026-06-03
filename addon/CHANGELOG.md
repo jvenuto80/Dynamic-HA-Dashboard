@@ -1,4 +1,14 @@
 # Changelog
+## 0.9.2.1-beta
+
+- Rebrand to **Glance**: add-on store name, sidebar panel, and repo all show
+  the Glance name. The panel title only applies when the add-on (re)starts —
+  restart the add-on after updating if it still shows the old name.
+## 0.9.2.1-beta
+
+- Force the sidebar panel to re-register so it shows **Glance** (the panel
+  title is only applied when the add-on (re)starts). Restart the add-on after
+  updating if it still shows the old name.
 
 ## 0.9.2-beta
 

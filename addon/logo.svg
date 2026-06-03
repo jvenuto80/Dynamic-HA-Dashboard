@@ -45,7 +45,7 @@
 
   <!-- wordmark -->
   <g transform="translate(248,0)">
-    <text x="0" y="128" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="68" font-weight="800" fill="url(#text)" letter-spacing="-1">Dynamic</text>
-    <text x="0" y="200" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="68" font-weight="800" fill="url(#accent)" letter-spacing="-1">HA Dashboard</text>
+    <text x="0" y="120" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="92" font-weight="800" fill="url(#accent)" letter-spacing="-2">Glance</text>
+    <text x="2" y="178" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" fill="url(#text)" letter-spacing="0.5">Dynamic HA Dashboard</text>
   </g>
 </svg>

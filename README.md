@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="addon/logo.png" alt="Dynamic HA Dashboard" width="520" />
+  <img src="addon/logo.png" alt="Glance — Dynamic HA Dashboard" width="520" />
 </p>
 
-# HA Dashboard
+# Glance — HA Dashboard
 
-A custom, high-polish Home Assistant dashboard built with **React 19 + TypeScript +
-Vite**. It talks directly to Home Assistant over its WebSocket API, renders a
-fully editable tile/room layout, and layers on a lot of "premium feel" motion and
-ambient effects.
+**Glance** is a custom, high-polish Home Assistant dashboard built with **React 19 +
+TypeScript + Vite**. It talks directly to Home Assistant over its WebSocket API,
+renders a fully editable tile/room layout, and layers on a lot of "premium feel"
+motion and ambient effects.
 
 > Companion file: [TODO.md](./TODO.md) tracks remaining ideas and decisions.
 

@@ -1,8 +1,8 @@
-# Dynamic HA Dashboard — Home Assistant Add-on
+# Glance — Dynamic HA Dashboard (Home Assistant Add-on)
 
-Run the Dynamic HA Dashboard as a Supervisor-managed add-on, available right
-from the Home Assistant sidebar via **Ingress** (no extra exposed port, inherits
-HA's authentication).
+Run **Glance** (the Dynamic HA Dashboard) as a Supervisor-managed add-on, available
+right from the Home Assistant sidebar via **Ingress** (no extra exposed port,
+inherits HA's authentication).
 
 ## Install
 
