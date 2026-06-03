@@ -1,4 +1,10 @@
 # Changelog
+## 0.9.3.8-beta
+
+- **Resolution-aware tiles.** Tile width, height and gap now scale with the
+  viewport via `clamp()` (min ~104px wide / 78px tall on small tablets like the
+  Fire HD, up to 140x96 on large displays). Smaller screens fit more buttons
+  with less wasted space; larger screens get roomier tiles.
 ## 0.9.3.7-beta
 
 - **Tiles fill the row width.** Switched the tile grid from `auto-fill` to

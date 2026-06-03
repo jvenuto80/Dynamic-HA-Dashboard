@@ -1575,12 +1575,15 @@ body::after {
 /* ── Device Tiles (sleek) ── */
 .tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-  grid-auto-rows: 94px;
+  /* Tile min-width and row height scale with the viewport so the grid adapts
+     to the screen resolution (small tablets like the Fire HD pack more, smaller
+     buttons; large displays get roomier tiles). */
+  grid-template-columns: repeat(auto-fit, minmax(clamp(104px, 13vw, 140px), 1fr));
+  grid-auto-rows: clamp(78px, 9vw, 96px);
   /* Backfill gaps left by tall tiles (covers, vacuums, on-lights expanded
      manually) with following 1x1 tiles so the layout packs tightly. */
   grid-auto-flow: row dense;
-  gap: 10px;
+  gap: clamp(7px, 0.9vw, 10px);
 }
 
 .tile {
@@ -1588,7 +1591,7 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 92px;
+  min-height: 0;
   padding: 13px 15px;
   border-radius: var(--radius-md);
   background:
