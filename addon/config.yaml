@@ -1,5 +1,5 @@
 name: Glance — HA Dashboard
-version: "0.9.2.1-beta"
+version: "0.9.2.2-beta"
 slug: dynamic_ha_dashboard
 description: A premium, fully-configurable Home Assistant dashboard with at-a-glance buttons, live tiles, and ambient effects.
 url: https://github.com/jvenuto80/Dynamic-HA-Dashboard
@@ -15,6 +15,6 @@ panel_title: Glance
 ports:
   3000/tcp: null
 ports_description:
-  3000/tcp: Web UI (optional — leave empty to use Ingress only)
+  3000/tcp: Web UI port — optional. Leave empty to use Ingress only; set a host port (e.g. 3000) for direct/kiosk access (Fully Kiosk Browser, tablets).
 options: {}
 schema: {}

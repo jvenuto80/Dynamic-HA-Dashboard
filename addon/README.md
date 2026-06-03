@@ -58,5 +58,19 @@ If you already built a dashboard on another device:
 - The dashboard talks to Home Assistant directly over WebSocket from the
   browser, so make sure the **Server URL** you enter is reachable from the
   device viewing the dashboard.
-- To also expose a plain port (outside Ingress), set a host port for `3000/tcp`
-  in the add-on **Network** options.
+
+## Port / kiosk access (Fully Kiosk Browser, tablets, wall displays)
+
+By default the dashboard is served through **Ingress** only (no extra exposed
+port — it inherits Home Assistant's authentication). If you want to point a
+**Fully Kiosk Browser**, tablet, or wall display straight at the dashboard, give
+it a direct port:
+
+1. Open the add-on → **Network** tab.
+2. Map host port **`3000`** to the container's **`3000/tcp`** (or pick any free
+   host port you prefer).
+3. **Save** and restart the add-on.
+
+Then browse to **`http://<home-assistant-ip>:3000`** (replace with the host port
+you chose). The dashboard listens on container port **`3000`**.
+

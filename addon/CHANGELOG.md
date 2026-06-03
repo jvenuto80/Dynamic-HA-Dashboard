@@ -1,4 +1,9 @@
 # Changelog
+## 0.9.2.2-beta
+
+- Document the **Web UI port (`3000`)** on the add-on page so kiosk setups
+  (Fully Kiosk Browser, tablets, wall displays) know where to point. Clarified
+  the port description and added a Network/port setup section to the docs.
 ## 0.9.2.1-beta
 
 - Rebrand to **Glance**: add-on store name, sidebar panel, and repo all show
