@@ -30,6 +30,20 @@ const MAX_BYTES = 512 * 1024;
  */
 export function layoutApi(): Plugin {
   const handler = (server: ViteDevServer) => {
+    // Prevent kiosks/browsers from caching the HTML entry point. index.html
+    // references content-hashed assets, so a stale cached index.html keeps the
+    // old bundle alive after an add-on update. The hashed JS/CSS stay cacheable.
+    server.middlewares.use((req, res, next) => {
+      const accept = req.headers.accept || '';
+      const path = (req.url || '').split('?')[0];
+      const isDocument =
+        accept.includes('text/html') || path === '/' || path.endsWith('.html');
+      if (isDocument) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+      next();
+    });
+
     server.middlewares.use(async (req, res, next) => {
       const url = (req.url || '').split('?')[0];
       const file = url === ROUTE ? LAYOUT_FILE : url === CONNECTION_ROUTE ? CONNECTION_FILE : null;

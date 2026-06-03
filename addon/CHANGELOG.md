@@ -1,4 +1,10 @@
 # Changelog
+## 0.9.3.2-beta
+
+- **No-cache for the HTML entry point.** The preview server now sends
+  `Cache-Control: no-cache` for `index.html` so kiosks/tablets always pick up the
+  latest build after an add-on update (content-hashed JS/CSS stay cached). Fixes
+  the dashboard showing stale UI until a manual cache clear.
 ## 0.9.3.1-beta
 
 - **Update now reliably rebuilds from source.** Added a cache-bust step before the
