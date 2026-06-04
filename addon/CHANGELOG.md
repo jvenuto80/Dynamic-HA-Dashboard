@@ -1,4 +1,10 @@
 # Changelog
+## 0.9.9.7-beta
+
+- **Vacuum tile quick buttons no longer float mid-map.** After the tile was resized
+  to a square, the Clean/Dock quick-action buttons (positioned with `margin-top:
+  auto`) ended up parked in the middle of the map. They now anchor to the
+  bottom-right corner, opposite the name/status text.
 ## 0.9.9.6-beta
 
 - **Vacuum tile shows the whole map.** The vacuum tile no longer stretches to fill

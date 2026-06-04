@@ -5237,6 +5237,15 @@ html.vt-active .detail-panel.open > * {
   gap: 8px;
   margin-top: auto;
 }
+/* On the map tile the quick actions anchor to the bottom-right corner (opposite
+   the name/status), instead of floating mid-card. */
+.vacuum-tile.has-map .vacuum-quick {
+  position: absolute;
+  right: clamp(11px, 1.2vw, 15px);
+  bottom: clamp(9px, 1.1vw, 14px);
+  margin-top: 0;
+  z-index: 2;
+}
 .vacuum-quick-btn {
   width: 40px;
   height: 40px;
