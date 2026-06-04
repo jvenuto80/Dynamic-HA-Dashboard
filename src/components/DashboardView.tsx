@@ -25,6 +25,7 @@ import { MusicAssistantSearch, type SearchMusic, type PlayMusic, type GetMaPlaye
 import { effectiveSize, sizeToSpan } from '../lib/tileSize';
 import { viewRows } from '../lib/layout';
 import { isSpecialTile, SPECIAL_TILES } from '../lib/musicAssistant';
+import { groupMediaPlayers, pickRepresentative } from '../lib/mediaDevices';
 import { HA_URL } from '../config';
 import { getSettings } from '../settings';
 import { TileSettings } from './TileSettings';
@@ -71,7 +72,7 @@ export interface LayoutActions {
   removeTile: (viewId: string, rowIdx: number, colIdx: number, entIdx: number) => void;
   addTile: (viewId: string, rowIdx: number, colIdx: number, entity: RoomEntity) => void;
   updateTile: (viewId: string, rowIdx: number, colIdx: number, entIdx: number, patch: Partial<RoomEntity>) => void;
-  toggleMediaExclude: (viewId: string, entityId: string) => void;
+  toggleMediaExclude: (viewId: string, entityId: string | string[], hidden?: boolean) => void;
   toggleMediaSearch: (viewId: string) => void;
 }
 
@@ -261,6 +262,10 @@ function MediaAutoView(props: Props) {
   const { view, entities, editing, layout, searchMusic, playMusic, getMaPlayers } = props;
   const exclude = useMemo(() => new Set(view.mediaExclude ?? []), [view.mediaExclude]);
   const players = useMemo(() => allMediaPlayers(entities), [entities]);
+  // Collapse the many media_player entities a single device exposes (Cast/ADB/
+  // AirPlay/Kodi…) into one device per group. Members travel together so hiding
+  // a device hides all of its entities.
+  const devices = useMemo(() => groupMediaPlayers(players), [players]);
   const showSearch = !view.mediaHideSearch;
   const [filter, setFilter] = useState('');
 
@@ -278,13 +283,31 @@ function MediaAutoView(props: Props) {
 
   if (editing) {
     const q = filter.trim().toLowerCase();
-    const matches = (e: (typeof players)[number]) => {
-      if (!q) return true;
-      const name = String(e.attributes.friendly_name ?? e.entity_id).toLowerCase();
-      return name.includes(q) || e.entity_id.toLowerCase().includes(q);
-    };
-    const shown = players.filter((e) => !exclude.has(e.entity_id) && matches(e));
-    const hidden = players.filter((e) => exclude.has(e.entity_id) && matches(e));
+    const rows = devices.map((members) => {
+      const rep = pickRepresentative(members);
+      const ids = members.map((m) => m.entity_id);
+      const hidden = members.some((m) => exclude.has(m.entity_id));
+      const active = members.find((m) => isMediaActive(m.state));
+      const matches =
+        !q ||
+        members.some(
+          (m) =>
+            String(m.attributes.friendly_name ?? m.entity_id).toLowerCase().includes(q) ||
+            m.entity_id.toLowerCase().includes(q),
+        );
+      return {
+        key: rep.entity_id,
+        name: String(rep.attributes.friendly_name ?? rep.entity_id),
+        state: active ? active.state : 'idle',
+        count: members.length,
+        ids,
+        hidden,
+        matches,
+      };
+    });
+    const shown = rows.filter((r) => !r.hidden && r.matches);
+    const hidden = rows.filter((r) => r.hidden && r.matches);
+
     return (
       <div className="view-rows">
         <div className="media-edit-intro">
@@ -328,21 +351,20 @@ function MediaAutoView(props: Props) {
 
           <h3 className="media-manage-title">Shown ({shown.length})</h3>
           <div className="media-manage-grid">
-            {shown.map((e) => (
-              <div className="media-manage-row" key={e.entity_id}>
+            {shown.map((r) => (
+              <div className="media-manage-row" key={r.key}>
                 <span className="mdi mdi-cast-variant media-manage-icon" />
                 <div className="media-manage-text">
-                  <span className="media-manage-name">
-                    {String(e.attributes.friendly_name ?? e.entity_id)}
-                  </span>
+                  <span className="media-manage-name">{r.name}</span>
                   <span className="media-manage-state">
-                    {isMediaActive(e.state) ? e.state : 'idle'}
+                    {isMediaActive(r.state) ? r.state : 'idle'}
+                    {r.count > 1 && ` · ${r.count} entities`}
                   </span>
                 </div>
                 <button
                   className="edit-icon-btn danger"
                   title="Hide this device from the page"
-                  onClick={() => layout.toggleMediaExclude(view.id, e.entity_id)}
+                  onClick={() => layout.toggleMediaExclude(view.id, r.ids, true)}
                 >
                   <span className="mdi mdi-eye-off" />
                 </button>
@@ -359,18 +381,16 @@ function MediaAutoView(props: Props) {
             <>
               <h3 className="media-manage-title media-manage-title-muted">Hidden ({hidden.length})</h3>
               <div className="media-manage-grid">
-                {hidden.map((e) => (
-                  <div className="media-manage-row is-hidden" key={e.entity_id}>
+                {hidden.map((r) => (
+                  <div className="media-manage-row is-hidden" key={r.key}>
                     <span className="mdi mdi-cast-off media-manage-icon" />
                     <div className="media-manage-text">
-                      <span className="media-manage-name">
-                        {String(e.attributes.friendly_name ?? e.entity_id)}
-                      </span>
+                      <span className="media-manage-name">{r.name}</span>
                     </div>
                     <button
                       className="edit-icon-btn"
                       title="Show this device on the page"
-                      onClick={() => layout.toggleMediaExclude(view.id, e.entity_id)}
+                      onClick={() => layout.toggleMediaExclude(view.id, r.ids, false)}
                     >
                       <span className="mdi mdi-eye" />
                     </button>
@@ -384,7 +404,13 @@ function MediaAutoView(props: Props) {
     );
   }
 
-  const active = players.filter((e) => !exclude.has(e.entity_id) && isMediaActive(e.state));
+  // Read mode: one tile per device that has an active member and isn't hidden.
+  const active = devices
+    .filter((members) => !members.some((m) => exclude.has(m.entity_id)))
+    .map((members) => members.filter((m) => isMediaActive(m.state)))
+    .filter((activeMembers) => activeMembers.length > 0)
+    .map((activeMembers) => pickRepresentative(activeMembers, true));
+
   if (active.length === 0) {
     return (
       <div className="view-rows" key={view.id}>

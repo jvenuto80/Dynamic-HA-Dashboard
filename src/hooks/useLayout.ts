@@ -315,12 +315,19 @@ export function useLayout() {
   );
 
   /** Hide/show a specific media_player on a `kind: 'media'` page. */
+  /** Hide/show media_player(s) on a `kind: 'media'` page. Pass all of a device's
+   *  member entity_ids so the whole device toggles together. With `hidden`
+   *  omitted it toggles based on the first id's current state. */
   const toggleMediaExclude = useCallback(
-    (viewId: string, entityId: string) => {
+    (viewId: string, entityId: string | string[], hidden?: boolean) => {
+      const ids = Array.isArray(entityId) ? entityId : [entityId];
       mutateView(viewId, (v) => {
         const set = new Set(v.mediaExclude ?? []);
-        if (set.has(entityId)) set.delete(entityId);
-        else set.add(entityId);
+        const makeHidden = hidden ?? !set.has(ids[0]);
+        for (const id of ids) {
+          if (makeHidden) set.add(id);
+          else set.delete(id);
+        }
         v.mediaExclude = [...set];
       });
     },

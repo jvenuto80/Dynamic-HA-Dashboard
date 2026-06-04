@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AnimatedNumber } from './AnimatedNumber';
 import { PersonTracker } from './PersonTracker';
 import { persons } from '../config';
+import { dedupeMediaPlayers } from '../lib/mediaDevices';
 
 interface ForecastDay {
   datetime: string;
@@ -104,8 +105,10 @@ export function Header({ entities, getForecast }: Props) {
     };
   }, [getForecast, weather]);
 
-  const mediaPlaying = Object.values(entities).filter(
-    (e) => e.entity_id.startsWith('media_player.') && e.state === 'playing'
+  const mediaPlaying = dedupeMediaPlayers(
+    Object.values(entities).filter(
+      (e) => e.entity_id.startsWith('media_player.') && e.state === 'playing',
+    ),
   );
 
   const homeNames = getHomeNames(entities);

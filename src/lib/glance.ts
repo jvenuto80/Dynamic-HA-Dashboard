@@ -1,6 +1,7 @@
 import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { persons } from '../config';
 import type { GlanceButtonConfig, GlanceMetric } from '../types';
+import { dedupeMediaPlayers } from './mediaDevices';
 
 /** How a flyout list row can be toggled, if at all. */
 export type ToggleKind = 'switch' | 'lock' | 'cover' | null;
@@ -100,56 +101,6 @@ function isScreenLight(e: HassEntity): boolean {
 function brightnessPct(e: HassEntity): string {
   const bri = e.attributes.brightness as number | undefined;
   return typeof bri === 'number' ? `${Math.round((bri / 255) * 100)}%` : 'On';
-}
-
-/**
- * A single physical device (e.g. an Android TV) often exposes several
- * `media_player` entities — an ADB/androidtv one plus a Cast/remote one — that
- * report the same playback. Collapse those so a glance count reflects real
- * devices, not entities.
- *
- * Devices are matched by a normalized friendly name with the transport/
- * integration suffix tokens that distinguish the duplicates (adb, cast, remote,
- * androidtv, fire tv…) stripped off. Within a matched group we keep the richest
- * entity (one that actually carries now-playing metadata), then the shortest
- * (usually the base) name for a cleaner label.
- */
-const MEDIA_SOURCE_TOKENS =
-  /\b(adb|cast|remote|androidtv|android\s*tv|google\s*cast|chromecast|fire\s*tv|firetv)\b/g;
-
-function deviceNameKey(e: HassEntity): string {
-  const full = friendly(e)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-  const stripped = full.replace(MEDIA_SOURCE_TOKENS, ' ').replace(/\s+/g, ' ').trim();
-  // Collapse all whitespace so spacing variants of the same device match
-  // (e.g. "Living Room TV" vs "Livingroom TV"). If stripping removed everything
-  // (e.g. the name *is* "ADB"), fall back to the full name so unrelated devices
-  // aren't merged into one empty-keyed group.
-  const key = (stripped || full).replace(/\s+/g, '');
-  return key || e.entity_id;
-}
-
-/** Reduce playing media players to one entity per physical device. */
-function dedupeMediaPlayers(playing: HassEntity[]): HassEntity[] {
-  const groups = new Map<string, HassEntity[]>();
-  for (const e of playing) {
-    const key = deviceNameKey(e);
-    const g = groups.get(key);
-    if (g) g.push(e);
-    else groups.set(key, [e]);
-  }
-  const hasMeta = (e: HassEntity) => !!(e.attributes.media_title as string | undefined);
-  return [...groups.values()].map((group) =>
-    group.reduce((best, e) => {
-      // Prefer an entity that carries now-playing metadata; then the shorter
-      // (usually base) friendly name for a cleaner label.
-      if (hasMeta(e) && !hasMeta(best)) return e;
-      if (hasMeta(e) === hasMeta(best) && friendly(e).length < friendly(best).length) return e;
-      return best;
-    }),
-  );
 }
 
 /** Compute the count + flyout items for one glance button. */
