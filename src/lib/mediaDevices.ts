@@ -52,19 +52,60 @@ export function pickRepresentative(group: HassEntity[], preferMeta = false): Has
   });
 }
 
-/** Group media players by physical device. Insertion order is preserved. */
-export function groupMediaPlayers(players: HassEntity[]): HassEntity[][] {
-  const groups = new Map<string, HassEntity[]>();
+/** Group media players by physical device. Insertion order is preserved.
+ *  `merges` is a list of manual merge groups (each an array of entity_ids the
+ *  user has tied together); heuristic groups sharing any of those ids are
+ *  unioned, so devices the name heuristic missed can still be combined. */
+export function groupMediaPlayers(players: HassEntity[], merges: string[][] = []): HassEntity[][] {
+  const groups: HassEntity[][] = [];
+  const keyToIdx = new Map<string, number>();
   for (const e of players) {
-    const key = deviceNameKey(e);
-    const g = groups.get(key);
-    if (g) g.push(e);
-    else groups.set(key, [e]);
+    const k = deviceNameKey(e);
+    let idx = keyToIdx.get(k);
+    if (idx === undefined) {
+      idx = groups.length;
+      groups.push([]);
+      keyToIdx.set(k, idx);
+    }
+    groups[idx].push(e);
   }
-  return [...groups.values()];
+  if (!merges.length) return groups;
+
+  // Union-find over heuristic group indices, joined by manual merge groups.
+  const parent = groups.map((_, i) => i);
+  const find = (x: number): number => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  const union = (a: number, b: number) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  };
+  const idToIdx = new Map<string, number>();
+  groups.forEach((g, i) => g.forEach((e) => idToIdx.set(e.entity_id, i)));
+  for (const mg of merges) {
+    const idxs = mg
+      .map((id) => idToIdx.get(id))
+      .filter((x): x is number => x !== undefined);
+    for (let i = 1; i < idxs.length; i++) union(idxs[0], idxs[i]);
+  }
+  // Collect unioned members, preserving first-seen order of the root groups.
+  const out = new Map<number, HassEntity[]>();
+  const order: number[] = [];
+  groups.forEach((g, i) => {
+    const r = find(i);
+    if (!out.has(r)) {
+      out.set(r, []);
+      order.push(r);
+    }
+    out.get(r)!.push(...g);
+  });
+  return order.map((r) => out.get(r)!);
 }
 
 /** Reduce media players to one representative entity per physical device. */
-export function dedupeMediaPlayers(players: HassEntity[], preferMeta = true): HassEntity[] {
-  return groupMediaPlayers(players).map((g) => pickRepresentative(g, preferMeta));
+export function dedupeMediaPlayers(
+  players: HassEntity[],
+  preferMeta = true,
+  merges: string[][] = [],
+): HassEntity[] {
+  return groupMediaPlayers(players, merges).map((g) => pickRepresentative(g, preferMeta));
 }

@@ -5100,3 +5100,98 @@ html.vt-active .detail-panel.open > * {
   color: var(--text-muted);
   text-transform: capitalize;
 }
+
+/* ── Media page: sized tile grid ──
+   Fixed-width columns (not 1fr) and left alignment so a single playing tile
+   stays its natural size instead of stretching across the whole page. */
+.media-grid {
+  grid-template-columns: repeat(auto-fill, var(--media-col, 240px));
+  grid-auto-rows: var(--media-row, 150px);
+  justify-content: start;
+}
+.media-grid-small { --media-col: 168px; --media-row: 112px; }
+.media-grid-medium { --media-col: 240px; --media-row: 150px; }
+.media-grid-large { --media-col: 320px; --media-row: 196px; }
+/* Media tiles span exactly one sized column. */
+.media-grid > .tile { grid-column: auto; }
+
+/* ── Media edit: tile-size selector ── */
+.media-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+}
+.media-size-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.media-size-options {
+  display: flex;
+  gap: 6px;
+}
+.media-size-btn {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-glass);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.media-size-btn.on {
+  color: #fff;
+  border-color: rgba(var(--accent-rgb), 0.6);
+  background: rgba(var(--accent-rgb), 0.18);
+}
+
+/* ── Media edit: merge selection ── */
+.media-select {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 20px;
+  transition: color 0.15s ease;
+}
+.media-select:hover { color: var(--text-secondary); }
+.media-manage-row.is-selected {
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+.media-manage-row.is-selected .media-select { color: var(--accent-orange); }
+.media-merged-badge {
+  display: inline-flex;
+  margin-left: 6px;
+  font-size: 12px;
+  color: rgb(var(--ma-accent));
+}
+.media-merge-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--accent-rgb), 0.12);
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.media-merge-bar > span { display: flex; align-items: center; gap: 7px; }
+.media-merge-actions { display: flex; gap: 8px; }

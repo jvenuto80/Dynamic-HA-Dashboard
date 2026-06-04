@@ -119,6 +119,10 @@ export interface DashView {
   mediaExclude?: string[];
   /** For `kind: 'media'`, hide the Music Assistant search button (shown by default). */
   mediaHideSearch?: boolean;
+  /** For `kind: 'media'`, groups of entity_ids the user manually merged into one device. */
+  mediaMerge?: string[][];
+  /** For `kind: 'media'`, the tile width on the page (defaults to medium). */
+  mediaTileSize?: 'small' | 'medium' | 'large';
 }
 
 /** The metric a glance button summarizes. Drives both its count and its flyout. */

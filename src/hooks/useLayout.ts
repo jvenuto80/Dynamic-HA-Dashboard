@@ -345,6 +345,50 @@ export function useLayout() {
     [mutateView],
   );
 
+  /** Manually merge the given media_player entity_ids into one device, folding in
+   *  any existing merge group that overlaps them. */
+  const mergeMediaDevices = useCallback(
+    (viewId: string, entityIds: string[]) => {
+      mutateView(viewId, (v) => {
+        const existing = v.mediaMerge ?? [];
+        const union = new Set(entityIds);
+        const rest: string[][] = [];
+        for (const g of existing) {
+          if (g.some((id) => union.has(id))) g.forEach((id) => union.add(id));
+          else rest.push(g);
+        }
+        rest.push([...union]);
+        v.mediaMerge = rest;
+      });
+    },
+    [mutateView],
+  );
+
+  /** Split a manually-merged device back apart (remove merge groups overlapping
+   *  any of the given entity_ids). */
+  const unmergeMediaDevices = useCallback(
+    (viewId: string, entityIds: string[]) => {
+      mutateView(viewId, (v) => {
+        if (!v.mediaMerge) return;
+        const ids = new Set(entityIds);
+        v.mediaMerge = v.mediaMerge.filter((g) => !g.some((id) => ids.has(id)));
+        if (!v.mediaMerge.length) delete v.mediaMerge;
+      });
+    },
+    [mutateView],
+  );
+
+  /** Set the media page tile width. */
+  const setMediaTileSize = useCallback(
+    (viewId: string, size: DashView['mediaTileSize']) => {
+      mutateView(viewId, (v) => {
+        if (!size || size === 'medium') delete v.mediaTileSize;
+        else v.mediaTileSize = size;
+      });
+    },
+    [mutateView],
+  );
+
   const resetLayout = useCallback(() => {
     setViews(withRows(clone(defaultViews)));
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -404,6 +448,9 @@ export function useLayout() {
     setViewKind,
     toggleMediaExclude,
     toggleMediaSearch,
+    mergeMediaDevices,
+    unmergeMediaDevices,
+    setMediaTileSize,
     resetLayout,
     exportLayout,
     importLayout,

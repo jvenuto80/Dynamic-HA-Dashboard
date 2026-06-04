@@ -25,7 +25,7 @@ import { MusicAssistantSearch, type SearchMusic, type PlayMusic, type GetMaPlaye
 import { effectiveSize, sizeToSpan } from '../lib/tileSize';
 import { viewRows } from '../lib/layout';
 import { isSpecialTile, SPECIAL_TILES } from '../lib/musicAssistant';
-import { groupMediaPlayers, pickRepresentative } from '../lib/mediaDevices';
+import { groupMediaPlayers, pickRepresentative, deviceNameKey } from '../lib/mediaDevices';
 import { HA_URL } from '../config';
 import { getSettings } from '../settings';
 import { TileSettings } from './TileSettings';
@@ -74,6 +74,9 @@ export interface LayoutActions {
   updateTile: (viewId: string, rowIdx: number, colIdx: number, entIdx: number, patch: Partial<RoomEntity>) => void;
   toggleMediaExclude: (viewId: string, entityId: string | string[], hidden?: boolean) => void;
   toggleMediaSearch: (viewId: string) => void;
+  mergeMediaDevices: (viewId: string, entityIds: string[]) => void;
+  unmergeMediaDevices: (viewId: string, entityIds: string[]) => void;
+  setMediaTileSize: (viewId: string, size: DashView['mediaTileSize']) => void;
 }
 
 interface Props {
@@ -262,12 +265,19 @@ function MediaAutoView(props: Props) {
   const { view, entities, editing, layout, searchMusic, playMusic, getMaPlayers } = props;
   const exclude = useMemo(() => new Set(view.mediaExclude ?? []), [view.mediaExclude]);
   const players = useMemo(() => allMediaPlayers(entities), [entities]);
+  const mergeGroups = view.mediaMerge ?? [];
   // Collapse the many media_player entities a single device exposes (Cast/ADB/
-  // AirPlay/Kodi…) into one device per group. Members travel together so hiding
-  // a device hides all of its entities.
-  const devices = useMemo(() => groupMediaPlayers(players), [players]);
+  // AirPlay/Kodi…) into one device, plus any manual merges. Members travel
+  // together so hiding a device hides all of its entities.
+  const devices = useMemo(
+    () => groupMediaPlayers(players, mergeGroups),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [players, JSON.stringify(mergeGroups)],
+  );
+  const size = view.mediaTileSize ?? 'medium';
   const showSearch = !view.mediaHideSearch;
   const [filter, setFilter] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const maTile =
     showSearch && searchMusic && playMusic ? (
@@ -283,6 +293,11 @@ function MediaAutoView(props: Props) {
 
   if (editing) {
     const q = filter.trim().toLowerCase();
+    const isMerged = (members: typeof players) => {
+      // A device is "manually merged" if its members span >1 heuristic key.
+      const keys = new Set(members.map((m) => deviceNameKey(m)));
+      return keys.size > 1;
+    };
     const rows = devices.map((members) => {
       const rep = pickRepresentative(members);
       const ids = members.map((m) => m.entity_id);
@@ -303,10 +318,26 @@ function MediaAutoView(props: Props) {
         ids,
         hidden,
         matches,
+        merged: isMerged(members),
       };
     });
     const shown = rows.filter((r) => !r.hidden && r.matches);
     const hidden = rows.filter((r) => r.hidden && r.matches);
+
+    const toggleSelect = (key: string) =>
+      setSelected((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      });
+
+    const selectedRows = rows.filter((r) => selected.has(r.key));
+    const doMerge = () => {
+      const ids = selectedRows.flatMap((r) => r.ids);
+      if (ids.length) layout.mergeMediaDevices(view.id, ids);
+      setSelected(new Set());
+    };
 
     return (
       <div className="view-rows">
@@ -333,6 +364,22 @@ function MediaAutoView(props: Props) {
           </button>
         </label>
 
+        <div className="media-size-row">
+          <span className="media-size-label">Tile size</span>
+          <div className="media-size-options">
+            {(['small', 'medium', 'large'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={`media-size-btn ${size === s ? 'on' : ''}`}
+                onClick={() => layout.setMediaTileSize(view.id, s)}
+              >
+                {s[0].toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="media-manage">
           <div className="media-filter">
             <span className="mdi mdi-magnify" />
@@ -349,18 +396,62 @@ function MediaAutoView(props: Props) {
             )}
           </div>
 
+          {selected.size >= 2 && (
+            <div className="media-merge-bar">
+              <span>
+                <span className="mdi mdi-merge" /> {selected.size} devices selected
+              </span>
+              <div className="media-merge-actions">
+                <button className="toolbar-btn" onClick={() => setSelected(new Set())}>
+                  Clear
+                </button>
+                <button className="toolbar-btn primary" onClick={doMerge}>
+                  <span className="mdi mdi-merge" /> Merge into one
+                </button>
+              </div>
+            </div>
+          )}
+
           <h3 className="media-manage-title">Shown ({shown.length})</h3>
           <div className="media-manage-grid">
             {shown.map((r) => (
-              <div className="media-manage-row" key={r.key}>
+              <div
+                className={`media-manage-row ${selected.has(r.key) ? 'is-selected' : ''}`}
+                key={r.key}
+              >
+                <button
+                  className="media-select"
+                  title={selected.has(r.key) ? 'Deselect' : 'Select to merge'}
+                  onClick={() => toggleSelect(r.key)}
+                >
+                  <span
+                    className={`mdi ${selected.has(r.key) ? 'mdi-checkbox-marked-circle' : 'mdi-checkbox-blank-circle-outline'}`}
+                  />
+                </button>
                 <span className="mdi mdi-cast-variant media-manage-icon" />
                 <div className="media-manage-text">
-                  <span className="media-manage-name">{r.name}</span>
+                  <span className="media-manage-name">
+                    {r.name}
+                    {r.merged && (
+                      <span className="media-merged-badge" title="Manually merged">
+                        <span className="mdi mdi-merge" />
+                      </span>
+                    )}
+                  </span>
                   <span className="media-manage-state">
                     {isMediaActive(r.state) ? r.state : 'idle'}
                     {r.count > 1 && ` · ${r.count} entities`}
                   </span>
                 </div>
+                {r.merged && (
+                  <button
+                    className="edit-icon-btn"
+                    title="Split this merged device apart"
+                    onClick={() => layout.unmergeMediaDevices(view.id, r.ids)}
+                  >
+                    <span className="mdi mdi-call-split" />
+                  </button>
+                )}
                 <button
                   className="edit-icon-btn danger"
                   title="Hide this device from the page"
@@ -418,7 +509,7 @@ function MediaAutoView(props: Props) {
           <section className="view-row">
             <div className="row-columns">
               <div className="row-column">
-                <div className="tile-grid">{maTile}</div>
+                <div className={`tile-grid media-grid media-grid-${size}`}>{maTile}</div>
               </div>
             </div>
           </section>
@@ -438,7 +529,7 @@ function MediaAutoView(props: Props) {
       <section className="view-row">
         <div className="row-columns">
           <div className="row-column">
-            <div className="tile-grid">
+            <div className={`tile-grid media-grid media-grid-${size}`}>
               {maTile}
               {active.map((e) => (
                 <DeviceTile
@@ -448,7 +539,6 @@ function MediaAutoView(props: Props) {
                   callHA={props.callHA}
                   onToggle={props.onToggle}
                   onOpenDetail={props.onOpenDetail}
-                  span
                   mediaArtwork
                   entities={entities}
                   enterIndex={tileIndex++}
