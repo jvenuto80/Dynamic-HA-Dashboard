@@ -73,7 +73,15 @@ function vacuumMapUrl(entities: HassEntities | undefined, base: string): string 
   const cam = entities[`camera.${base}_map`];
   if (!cam || cam.state === 'unavailable') return undefined;
   const pic = cam.attributes.entity_picture as string | undefined;
-  if (pic) return pic.startsWith('http') ? pic : `${HA_URL}${pic}`;
+  if (pic) {
+    const url = pic.startsWith('http') ? pic : `${HA_URL}${pic}`;
+    // Strip the volatile `&v=<timestamp>` cache-buster HA appends on every map
+    // frame so the tile background stays stable instead of reloading (and
+    // flashing) every few seconds. The signed `token` is preserved, and the
+    // tile still refreshes when that token rotates. The flyout map keeps the
+    // live, per-frame URL.
+    return url.replace(/[?&]v=\d+/, '');
+  }
   const token = cam.attributes.access_token as string | undefined;
   if (!token) return undefined;
   return `${HA_URL}/api/camera_proxy/camera.${base}_map?token=${token}`;

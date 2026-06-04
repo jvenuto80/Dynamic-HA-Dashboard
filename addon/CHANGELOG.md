@@ -1,4 +1,16 @@
 # Changelog
+## 0.9.9.5-beta
+
+- **Vacuum cleaning-mode selector (Vac & Mop / Vac / Mop).** The vacuum flyout now
+  always shows a **Mode** selector with friendly labels — **Vac & Mop**, **Vac**,
+  **Mop** and **Vac → Mop** (sweep-then-mop). It's driven by the robot's own
+  `cleaning_mode_list` so it stays visible even while docked, instead of relying
+  on the `cleaning_mode` select entity that the integration hides whenever the
+  mop pad isn't mounted.
+- **Calmer vacuum tile map.** The live map used as the vacuum tile background no
+  longer flashes every few seconds. The volatile per-frame cache-buster is
+  stripped from the tile's map URL so the thumbnail stays stable; the flyout map
+  still updates live.
 ## 0.9.9.4-beta
 
 - **App-like vacuum control center.** The vacuum card and flyout were rebuilt to

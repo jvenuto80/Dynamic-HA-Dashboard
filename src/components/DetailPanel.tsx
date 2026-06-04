@@ -693,10 +693,22 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
   const fanList = (a.fan_speed_list as string[]) || [];
   const fan = a.fan_speed as string | undefined;
 
-  const modeSel = entities[`select.${base}_cleaning_mode`];
   const modeList = (a.cleaning_mode_list as string[]) || [];
   const mode = a.cleaning_mode as string | undefined;
-  const modeAvailable = !!modeSel && modeSel.state !== 'unavailable' && modeList.length > 0;
+  // Friendly, app-style labels for the Dreame cleaning modes. We render the
+  // selector from the vacuum's own `cleaning_mode_list` attribute (always
+  // present) rather than the `select.<base>_cleaning_mode` entity, which the
+  // integration reports as `unavailable` whenever the mop pad isn't mounted.
+  const MODE_LABELS: Record<string, string> = {
+    'Sweeping and mopping': 'Vac & Mop',
+    'Sweeping': 'Vac',
+    'Mopping': 'Mop',
+    'Mopping after sweeping': 'Vac → Mop',
+  };
+  const MODE_ORDER = ['Sweeping and mopping', 'Sweeping', 'Mopping', 'Mopping after sweeping'];
+  const modes = [...modeList].sort((x, y) => MODE_ORDER.indexOf(x) - MODE_ORDER.indexOf(y));
+  const setMode = (m: string) =>
+    callHA('select', 'select_option', { option: m.toLowerCase().replace(/ /g, '_') }, { entity_id: `select.${base}_cleaning_mode` });
 
   const mapCam = entities[`camera.${base}_map`];
   const rooms = discoverVacuumRooms(entities, base);
@@ -785,17 +797,17 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
         </div>
       )}
 
-      {modeAvailable && (
+      {modes.length > 0 && (
         <div className="vac-section">
           <div className="vac-section-label">Mode</div>
           <div className="vac-seg">
-            {modeList.map((m) => (
+            {modes.map((m) => (
               <button
                 key={m}
                 className={`vac-seg-btn ${mode === m ? 'is-on' : ''}`}
-                onClick={() => callHA('select', 'select_option', { option: m }, { entity_id: `select.${base}_cleaning_mode` })}
+                onClick={() => setMode(m)}
               >
-                {m}
+                {MODE_LABELS[m] || m}
               </button>
             ))}
           </div>
