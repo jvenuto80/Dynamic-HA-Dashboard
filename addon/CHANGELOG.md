@@ -1,4 +1,10 @@
 # Changelog
+## 0.9.9.6-beta
+
+- **Vacuum tile shows the whole map.** The vacuum tile no longer stretches to fill
+  the row and crop the map. It now matches the map's aspect ratio with a capped
+  width, so the entire floor plan (every room) is visible in a compact,
+  glanceable card instead of a wide, cropped strip.
 ## 0.9.9.5-beta
 
 - **Vacuum cleaning-mode selector (Vac & Mop / Vac / Mop).** The vacuum flyout now

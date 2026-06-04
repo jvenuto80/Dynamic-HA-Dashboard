@@ -5198,6 +5198,19 @@ html.vt-active .detail-panel.open > * {
 
 /* ── Vacuum tile: live map background + quick actions ── */
 .vacuum-tile { position: relative; overflow: hidden; }
+/* When the live map is shown, shape the tile to the map's aspect ratio and cap
+   its width so the *whole* map is visible (no cropping) without the tile
+   ballooning to fill the row. justify/align-self stop the grid from stretching
+   it; the reserved row span keeps neighbours flowing around it. */
+.vacuum-tile.has-map {
+  grid-column: span 2;
+  grid-row: span 4;
+  justify-self: start;
+  align-self: start;
+  width: clamp(260px, 30vw, 360px);
+  aspect-ratio: 1168 / 1028;
+  height: auto;
+}
 .vacuum-tile.has-map .vacuum-map-bg {
   position: absolute;
   inset: 0;
