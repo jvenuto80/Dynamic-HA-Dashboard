@@ -123,9 +123,12 @@ function deviceNameKey(e: HassEntity): string {
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
   const stripped = full.replace(MEDIA_SOURCE_TOKENS, ' ').replace(/\s+/g, ' ').trim();
-  // If stripping removed everything (e.g. the name *is* "ADB"), keep the full
-  // name so unrelated devices aren't all merged into one empty-keyed group.
-  return stripped || full || e.entity_id;
+  // Collapse all whitespace so spacing variants of the same device match
+  // (e.g. "Living Room TV" vs "Livingroom TV"). If stripping removed everything
+  // (e.g. the name *is* "ADB"), fall back to the full name so unrelated devices
+  // aren't merged into one empty-keyed group.
+  const key = (stripped || full).replace(/\s+/g, '');
+  return key || e.entity_id;
 }
 
 /** Reduce playing media players to one entity per physical device. */
