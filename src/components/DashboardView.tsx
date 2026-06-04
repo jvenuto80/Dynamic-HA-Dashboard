@@ -71,6 +71,7 @@ export interface LayoutActions {
   removeTile: (viewId: string, rowIdx: number, colIdx: number, entIdx: number) => void;
   addTile: (viewId: string, rowIdx: number, colIdx: number, entity: RoomEntity) => void;
   updateTile: (viewId: string, rowIdx: number, colIdx: number, entIdx: number, patch: Partial<RoomEntity>) => void;
+  toggleMediaExclude: (viewId: string, entityId: string) => void;
 }
 
 interface Props {
@@ -108,6 +109,10 @@ export function DashboardView(props: Props) {
         </section>
       </div>
     );
+  }
+
+  if (view.kind === 'media') {
+    return <MediaAutoView {...props} />;
   }
 
   if (editing) {
@@ -232,9 +237,138 @@ function Tile({
 }
 
 // ──────────────────────────────────────────────────────────────────────────
+// Auto media view (kind: 'media'): every media_player is available; only the
+// ones currently in use (playing/paused/buffering) are shown, minus the user's
+// hidden list. In edit mode the user picks which devices are available.
+// ──────────────────────────────────────────────────────────────────────────
+
+/** A media player is "in use" when it's doing something other than off/idle. */
+const MEDIA_INACTIVE = new Set(['off', 'idle', 'unavailable', 'standby', 'unknown', '']);
+const isMediaActive = (state: string) => !MEDIA_INACTIVE.has(state);
+
+function allMediaPlayers(entities: HassEntities) {
+  return Object.values(entities)
+    .filter((e) => e.entity_id.startsWith('media_player.'))
+    .sort((a, b) => {
+      const an = String(a.attributes.friendly_name ?? a.entity_id);
+      const bn = String(b.attributes.friendly_name ?? b.entity_id);
+      return an.localeCompare(bn);
+    });
+}
+
+function MediaAutoView(props: Props) {
+  const { view, entities, editing, layout } = props;
+  const exclude = useMemo(() => new Set(view.mediaExclude ?? []), [view.mediaExclude]);
+  const players = useMemo(() => allMediaPlayers(entities), [entities]);
+
+  if (editing) {
+    const shown = players.filter((e) => !exclude.has(e.entity_id));
+    const hidden = players.filter((e) => exclude.has(e.entity_id));
+    return (
+      <div className="view-rows">
+        <div className="media-edit-intro">
+          <span className="mdi mdi-information-outline" /> This page automatically shows media
+          devices while they’re playing. Choose which devices can appear here.
+        </div>
+        <div className="media-manage">
+          <h3 className="media-manage-title">Devices ({shown.length})</h3>
+          <div className="media-manage-grid">
+            {shown.map((e) => (
+              <div className="media-manage-row" key={e.entity_id}>
+                <span className="mdi mdi-cast-variant media-manage-icon" />
+                <div className="media-manage-text">
+                  <span className="media-manage-name">
+                    {String(e.attributes.friendly_name ?? e.entity_id)}
+                  </span>
+                  <span className="media-manage-state">
+                    {isMediaActive(e.state) ? e.state : 'idle'}
+                  </span>
+                </div>
+                <button
+                  className="edit-icon-btn danger"
+                  title="Hide this device from the page"
+                  onClick={() => layout.toggleMediaExclude(view.id, e.entity_id)}
+                >
+                  <span className="mdi mdi-eye-off" />
+                </button>
+              </div>
+            ))}
+            {shown.length === 0 && <div className="edit-empty">No media devices available.</div>}
+          </div>
+
+          {hidden.length > 0 && (
+            <>
+              <h3 className="media-manage-title media-manage-title-muted">Hidden ({hidden.length})</h3>
+              <div className="media-manage-grid">
+                {hidden.map((e) => (
+                  <div className="media-manage-row is-hidden" key={e.entity_id}>
+                    <span className="mdi mdi-cast-off media-manage-icon" />
+                    <div className="media-manage-text">
+                      <span className="media-manage-name">
+                        {String(e.attributes.friendly_name ?? e.entity_id)}
+                      </span>
+                    </div>
+                    <button
+                      className="edit-icon-btn"
+                      title="Show this device on the page"
+                      onClick={() => layout.toggleMediaExclude(view.id, e.entity_id)}
+                    >
+                      <span className="mdi mdi-eye" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const active = players.filter((e) => !exclude.has(e.entity_id) && isMediaActive(e.state));
+  if (active.length === 0) {
+    return (
+      <div className="view-rows">
+        <div className="page-empty">
+          <span className="mdi mdi-music-note-off page-empty-icon" />
+          <h3>Nothing playing</h3>
+          <p>Media devices appear here while they’re playing.</p>
+        </div>
+      </div>
+    );
+  }
+
+  let tileIndex = 0;
+  return (
+    <div className="view-rows" key={view.id}>
+      <section className="view-row">
+        <div className="row-columns">
+          <div className="row-column">
+            <div className="tile-grid">
+              {active.map((e) => (
+                <DeviceTile
+                  key={e.entity_id}
+                  entity={e}
+                  name={String(e.attributes.friendly_name ?? e.entity_id)}
+                  callHA={props.callHA}
+                  onToggle={props.onToggle}
+                  onOpenDetail={props.onOpenDetail}
+                  span
+                  mediaArtwork
+                  entities={entities}
+                  enterIndex={tileIndex++}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 // Editable view: a stack of named rows, each divided into named columns.
-// Drag tiles within/between any column (across rows too); manage rows, columns,
-// and tiles. Local state mirrors the saved layout and commits on drop.
 // ──────────────────────────────────────────────────────────────────────────
 
 interface Item {

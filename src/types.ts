@@ -104,8 +104,9 @@ export interface DashView {
   id: string;
   name: string;
   icon: string;
-  /** Special render kind for non-tile views. Defaults to a sectioned tile grid. */
-  kind?: 'tiles' | 'cameras' | 'sensors';
+  /** Special render kind for non-tile views. Defaults to a sectioned tile grid.
+   *  'media' auto-fills with every media_player, showing only active ones. */
+  kind?: 'tiles' | 'cameras' | 'sensors' | 'media';
   /** Scene entity_ids (from the scenes catalog) relevant to this view. */
   scenes?: string[];
   /** Legacy flat sections; auto-converted to single-column rows when `rows` is absent. */
@@ -114,6 +115,8 @@ export interface DashView {
   rows?: DashRow[];
   /** User-configured "at a glance" summary buttons shown above this view. */
   glance?: GlanceButtonConfig[];
+  /** For `kind: 'media'`, media_player entity_ids the user has hidden. */
+  mediaExclude?: string[];
 }
 
 /** The metric a glance button summarizes. Drives both its count and its flyout. */

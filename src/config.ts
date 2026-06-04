@@ -395,6 +395,7 @@ export const views: DashView[] = [
     id: 'radio',
     name: 'Media',
     icon: 'mdi-radio',
+    kind: 'media',
     scenes: [
       'input_boolean.party',
       'input_boolean.bed_time',

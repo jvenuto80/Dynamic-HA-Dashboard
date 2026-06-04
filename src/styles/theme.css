@@ -4959,3 +4959,77 @@ html.vt-active .detail-panel.open > * {
   padding: 2px 8px;
   border-radius: 999px;
 }
+
+/* ── Auto media view (kind: 'media') edit mode ── */
+.media-edit-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.media-edit-intro .mdi {
+  color: var(--accent-orange);
+  font-size: 18px;
+  margin-top: 1px;
+}
+.media-manage-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+.media-manage-title-muted {
+  margin-top: 22px;
+  color: var(--text-muted);
+}
+.media-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+.media-manage-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+}
+.media-manage-row.is-hidden {
+  opacity: 0.6;
+}
+.media-manage-icon {
+  font-size: 21px;
+  color: var(--text-secondary);
+  flex: none;
+}
+.media-manage-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.media-manage-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.media-manage-state {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}

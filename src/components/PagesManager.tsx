@@ -9,6 +9,7 @@ interface Props {
   onIcon: (id: string, icon: string) => void;
   onMove: (fromIdx: number, toIdx: number) => void;
   onRemove: (id: string) => void;
+  onSetKind: (id: string, kind: DashView['kind']) => void;
   onClose: () => void;
 }
 
@@ -26,6 +27,7 @@ export function PagesManager({
   onIcon,
   onMove,
   onRemove,
+  onSetKind,
   onClose,
 }: Props) {
   return (
@@ -62,6 +64,19 @@ export function PagesManager({
                   />
                 </div>
                 <div className="pm-tools">
+                  {(v.kind === undefined || v.kind === 'tiles' || v.kind === 'media') && (
+                    <button
+                      className={`edit-icon-btn ${v.kind === 'media' ? 'on' : ''}`}
+                      title={
+                        v.kind === 'media'
+                          ? 'Now Playing mode (auto media) — click for normal tiles'
+                          : 'Switch to Now Playing mode (auto media devices)'
+                      }
+                      onClick={() => onSetKind(v.id, v.kind === 'media' ? 'tiles' : 'media')}
+                    >
+                      <span className={`mdi ${v.kind === 'media' ? 'mdi-music-box-multiple' : 'mdi-music-box-multiple-outline'}`} />
+                    </button>
+                  )}
                   <button
                     className="edit-icon-btn"
                     title="Move up"

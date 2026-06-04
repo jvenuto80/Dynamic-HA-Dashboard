@@ -1,7 +1,7 @@
 {
   "name": "ha-dashboard",
   "private": true,
-  "version": "0.9.8.4-beta",
+  "version": "0.9.9.0-beta",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "scripts": {

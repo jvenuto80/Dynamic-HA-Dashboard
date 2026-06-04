@@ -279,6 +279,7 @@ export default function App() {
           onIcon={layout.updateViewIcon}
           onMove={layout.moveView}
           onRemove={handleRemoveView}
+          onSetKind={layout.setViewKind}
           onClose={() => setShowPages(false)}
         />
       )}

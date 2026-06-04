@@ -303,6 +303,30 @@ export function useLayout() {
     [persist],
   );
 
+  /** Switch a page between a normal tile grid and the auto "Now Playing" media view. */
+  const setViewKind = useCallback(
+    (viewId: string, kind: DashView['kind']) => {
+      mutateView(viewId, (v) => {
+        if (kind === 'tiles') delete v.kind;
+        else v.kind = kind;
+      });
+    },
+    [mutateView],
+  );
+
+  /** Hide/show a specific media_player on a `kind: 'media'` page. */
+  const toggleMediaExclude = useCallback(
+    (viewId: string, entityId: string) => {
+      mutateView(viewId, (v) => {
+        const set = new Set(v.mediaExclude ?? []);
+        if (set.has(entityId)) set.delete(entityId);
+        else set.add(entityId);
+        v.mediaExclude = [...set];
+      });
+    },
+    [mutateView],
+  );
+
   const resetLayout = useCallback(() => {
     setViews(withRows(clone(defaultViews)));
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -359,6 +383,8 @@ export function useLayout() {
     renameView,
     updateViewIcon,
     moveView,
+    setViewKind,
+    toggleMediaExclude,
     resetLayout,
     exportLayout,
     importLayout,
