@@ -117,6 +117,8 @@ export interface DashView {
   glance?: GlanceButtonConfig[];
   /** For `kind: 'media'`, media_player entity_ids the user has hidden. */
   mediaExclude?: string[];
+  /** For `kind: 'media'`, hide the Music Assistant search button (shown by default). */
+  mediaHideSearch?: boolean;
 }
 
 /** The metric a glance button summarizes. Drives both its count and its flyout. */

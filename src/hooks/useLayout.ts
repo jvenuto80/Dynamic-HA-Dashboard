@@ -327,6 +327,17 @@ export function useLayout() {
     [mutateView],
   );
 
+  /** Toggle the Music Assistant search button on a `kind: 'media'` page. */
+  const toggleMediaSearch = useCallback(
+    (viewId: string) => {
+      mutateView(viewId, (v) => {
+        if (v.mediaHideSearch) delete v.mediaHideSearch;
+        else v.mediaHideSearch = true;
+      });
+    },
+    [mutateView],
+  );
+
   const resetLayout = useCallback(() => {
     setViews(withRows(clone(defaultViews)));
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -385,6 +396,7 @@ export function useLayout() {
     moveView,
     setViewKind,
     toggleMediaExclude,
+    toggleMediaSearch,
     resetLayout,
     exportLayout,
     importLayout,

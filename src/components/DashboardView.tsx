@@ -72,6 +72,7 @@ export interface LayoutActions {
   addTile: (viewId: string, rowIdx: number, colIdx: number, entity: RoomEntity) => void;
   updateTile: (viewId: string, rowIdx: number, colIdx: number, entIdx: number, patch: Partial<RoomEntity>) => void;
   toggleMediaExclude: (viewId: string, entityId: string) => void;
+  toggleMediaSearch: (viewId: string) => void;
 }
 
 interface Props {
@@ -257,21 +258,75 @@ function allMediaPlayers(entities: HassEntities) {
 }
 
 function MediaAutoView(props: Props) {
-  const { view, entities, editing, layout } = props;
+  const { view, entities, editing, layout, searchMusic, playMusic, getMaPlayers } = props;
   const exclude = useMemo(() => new Set(view.mediaExclude ?? []), [view.mediaExclude]);
   const players = useMemo(() => allMediaPlayers(entities), [entities]);
+  const showSearch = !view.mediaHideSearch;
+  const [filter, setFilter] = useState('');
+
+  const maTile =
+    showSearch && searchMusic && playMusic ? (
+      <MusicAssistantSearch
+        entities={entities}
+        searchMusic={searchMusic}
+        playMusic={playMusic}
+        getMaPlayers={getMaPlayers}
+        name={SPECIAL_TILES['music_assistant.search'].name}
+        icon={SPECIAL_TILES['music_assistant.search'].icon}
+      />
+    ) : null;
 
   if (editing) {
-    const shown = players.filter((e) => !exclude.has(e.entity_id));
-    const hidden = players.filter((e) => exclude.has(e.entity_id));
+    const q = filter.trim().toLowerCase();
+    const matches = (e: (typeof players)[number]) => {
+      if (!q) return true;
+      const name = String(e.attributes.friendly_name ?? e.entity_id).toLowerCase();
+      return name.includes(q) || e.entity_id.toLowerCase().includes(q);
+    };
+    const shown = players.filter((e) => !exclude.has(e.entity_id) && matches(e));
+    const hidden = players.filter((e) => exclude.has(e.entity_id) && matches(e));
     return (
       <div className="view-rows">
         <div className="media-edit-intro">
           <span className="mdi mdi-information-outline" /> This page automatically shows media
           devices while they’re playing. Choose which devices can appear here.
         </div>
+
+        <label className="media-search-toggle">
+          <div className="media-search-toggle-text">
+            <span>
+              <span className="mdi mdi-music-circle" /> Music Assistant search button
+            </span>
+            <small>Show a search-and-play button at the top of this page.</small>
+          </div>
+          <button
+            type="button"
+            className={`ts-switch ${showSearch ? 'on' : ''}`}
+            role="switch"
+            aria-checked={showSearch}
+            onClick={() => layout.toggleMediaSearch(view.id)}
+          >
+            <span className="ts-switch-knob" />
+          </button>
+        </label>
+
         <div className="media-manage">
-          <h3 className="media-manage-title">Devices ({shown.length})</h3>
+          <div className="media-filter">
+            <span className="mdi mdi-magnify" />
+            <input
+              className="media-filter-input"
+              placeholder="Filter devices…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+            {filter && (
+              <button className="media-filter-clear" title="Clear" onClick={() => setFilter('')}>
+                <span className="mdi mdi-close" />
+              </button>
+            )}
+          </div>
+
+          <h3 className="media-manage-title">Shown ({shown.length})</h3>
           <div className="media-manage-grid">
             {shown.map((e) => (
               <div className="media-manage-row" key={e.entity_id}>
@@ -293,7 +348,11 @@ function MediaAutoView(props: Props) {
                 </button>
               </div>
             ))}
-            {shown.length === 0 && <div className="edit-empty">No media devices available.</div>}
+            {shown.length === 0 && (
+              <div className="edit-empty">
+                {q ? 'No shown devices match your filter.' : 'No media devices available.'}
+              </div>
+            )}
           </div>
 
           {hidden.length > 0 && (
@@ -328,7 +387,16 @@ function MediaAutoView(props: Props) {
   const active = players.filter((e) => !exclude.has(e.entity_id) && isMediaActive(e.state));
   if (active.length === 0) {
     return (
-      <div className="view-rows">
+      <div className="view-rows" key={view.id}>
+        {maTile && (
+          <section className="view-row">
+            <div className="row-columns">
+              <div className="row-column">
+                <div className="tile-grid">{maTile}</div>
+              </div>
+            </div>
+          </section>
+        )}
         <div className="page-empty">
           <span className="mdi mdi-music-note-off page-empty-icon" />
           <h3>Nothing playing</h3>
@@ -345,6 +413,7 @@ function MediaAutoView(props: Props) {
         <div className="row-columns">
           <div className="row-column">
             <div className="tile-grid">
+              {maTile}
               {active.map((e) => (
                 <DeviceTile
                   key={e.entity_id}
