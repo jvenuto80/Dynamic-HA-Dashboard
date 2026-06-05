@@ -1,6 +1,14 @@
 # Changelog
-## 0.9.9.10-beta
+## 1.0.0
 
+- **First stable release.** Graduating out of beta.
+- **Fixed Home Assistant update detection.** The previous `0.9.9.x-beta`
+  versioning used a 4-segment number with a `-beta` suffix, which Home
+  Assistant's version engine (AwesomeVersion) classifies as an *unknown*
+  format it can't order — so the Supervisor couldn't reliably tell which
+  build was newer and the update banner misbehaved (appearing to offer "the
+  same version"). Versions now follow standard SemVer (`MAJOR.MINOR.PATCH`),
+  which the Supervisor orders correctly.
 - **Refreshed README screenshots and motion clips.** Regenerated the full
   screenshot set and animation GIFs to reflect the latest UI, and added new
   captures for the **vacuum control center** (live map, room select, suction &
