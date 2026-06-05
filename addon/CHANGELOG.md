@@ -1,4 +1,13 @@
 # Changelog
+## 0.9.9.9-beta
+
+- **Music Assistant dropdown lists only active players.** Players you disable in
+  Music Assistant stay in Home Assistant's entity registry but go `unavailable`,
+  so they were still cluttering the speaker dropdown. The list now filters to
+  players with a live, available state — disabled/offline players drop off, while
+  enabled players (including **sync/speaker groups**) remain. If the
+  previously-selected player is no longer available, the picker auto-selects the
+  first one.
 ## 0.9.9.8-beta
 
 - **No-code setup: people, weather, and a blank slate.** Removed the last pieces of

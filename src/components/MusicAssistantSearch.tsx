@@ -107,7 +107,16 @@ function MusicAssistantPanel({
       if (!resolvedFromMa) {
         ids = Object.keys(entities).filter((k) => k.startsWith('media_player.'));
       }
+      // Show only *active* players. Players disabled in Music Assistant stay in
+      // the entity registry but drop out of the state machine (no entity) or
+      // report `unavailable` and lose their MA attributes — so filter those out
+      // and keep only entities that currently have a live, available state.
+      const isActive = (id: string) => {
+        const e = entities[id];
+        return !!e && e.state !== 'unavailable' && e.state !== 'unknown';
+      };
       const list = ids
+        .filter(isActive)
         .map((id) => ({ id, name: nameOf(id) }))
         .sort((a, b) => a.name.localeCompare(b.name));
       if (!cancelled) setPlayers(list);

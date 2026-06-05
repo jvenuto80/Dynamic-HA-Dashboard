@@ -281,8 +281,10 @@ layouts.json           Persisted custom layout (on the add-on: /data/layouts.jso
 - **Music Assistant search** (`MusicAssistantSearch`) — search the MA library
   (artists, albums, tracks, playlists) from a right-side flyout and tap a result
   to play it on any MA player. Player list is filtered to MA devices via the
-  entity registry; a custom dark-theme dropdown stays readable and open while
-  choosing; artwork shows by default (opt-out per tile).
+  entity registry and narrowed to **only active (available) players** — players
+  disabled in Music Assistant drop off, while sync/speaker groups remain; a
+  custom dark-theme dropdown stays readable and open while choosing; artwork
+  shows by default (opt-out per tile).
 
 ### In-app page management
 - **PagesManager** — create, rename, re-icon, reorder, and delete pages directly
