@@ -76,10 +76,17 @@ If you already built a dashboard on another device:
 
 ## Notes
 
-- The dashboard talks to Home Assistant directly over WebSocket from the
-  browser, so make sure the **Server URL** you enter is reachable from the
-  device viewing the dashboard. On tablets/kiosks use the **IP form**
-  (`http://<HA-IP>:8123`); `homeassistant.local` often won't resolve there.
+- **Remote access just works through Ingress.** When you open Glance from the
+  Home Assistant sidebar, it connects to HA at the *same address you opened it
+  with* — so reaching HA from outside your network (Nabu Casa, a reverse proxy,
+  etc.) works automatically over `https`/`wss`, with no insecure-WebSocket
+  error and without exposing Glance to the internet. The **Server URL** box is
+  hidden in that mode because it isn't needed.
+- The **Server URL** setting only applies when you point a browser at the
+  add-on's **direct port** (kiosk mode, below) or run it standalone. In that
+  case make sure the URL is reachable from the device viewing the dashboard —
+  on tablets/kiosks use the **IP form** (`http://<HA-IP>:8123`);
+  `homeassistant.local` often won't resolve there.
 - **Two ports, don't mix them:** the **Server URL** setting uses HA's API on
   **8123**, while a kiosk browser opens the *dashboard* on the add-on's direct
   port **3000** (see below). There is no port 8124.

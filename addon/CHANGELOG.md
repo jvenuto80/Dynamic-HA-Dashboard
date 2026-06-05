@@ -1,4 +1,18 @@
 # Changelog
+## 1.0.3
+
+- **Remote access now works through Home Assistant (no insecure-WebSocket
+  error).** When Glance is opened from the Home Assistant sidebar (Ingress) it
+  now connects to Home Assistant at the *same address you opened it with*
+  instead of a fixed local URL. Accessing HA remotely over HTTPS (e.g. Nabu
+  Casa or a reverse proxy) previously tried to open an insecure `ws://`
+  connection to the local host, which browsers block as mixed content — now it
+  uses `wss://` over the same proxied origin. This means the dashboard works
+  both at home and away with no extra setup, and Glance never has to be exposed
+  to the internet on its own (Home Assistant proxies everything, including
+  camera/image thumbnails). The "Server URL" box is hidden when running behind
+  Ingress since it isn't needed there.
+
 ## 1.0.2
 
 - **Phone navigation: swipe between pages.** In portrait on a phone the left
