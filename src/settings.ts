@@ -77,8 +77,36 @@ export function saveSettings(patch: Partial<AppSettings>): AppSettings {
   return next;
 }
 
-/** Effective Home Assistant URL: saved setting → env var → default. */
+/**
+ * True when Glance is being served from *inside* Home Assistant — i.e. its
+ * sidebar panel, proxied through Ingress (the path contains
+ * `/api/hassio_ingress/<token>/`). In that case Home Assistant itself is
+ * reachable at the very same origin the page was loaded from.
+ */
+export function isServedByHomeAssistant(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.location.pathname.includes('/api/hassio_ingress/')
+  );
+}
+
+/**
+ * Effective Home Assistant base URL.
+ *
+ * When Glance runs behind Ingress we connect to the page's own origin instead
+ * of any saved/explicit URL. That single rule makes remote access work with no
+ * extra setup:
+ *   • the WebSocket (and the camera/image proxy URLs) inherit the page's
+ *     scheme, so an HTTPS page yields `wss://` — the browser never blocks it as
+ *     insecure mixed content (the cause of the "insecure websocket" error when
+ *     reaching HA through Nabu Casa / a reverse proxy);
+ *   • every request is proxied by Home Assistant itself, so Glance never has to
+ *     be exposed to the internet on its own.
+ * Outside Ingress (a LAN kiosk on the direct port, or local dev) we keep using
+ * the explicitly configured URL → env default.
+ */
 export function getHaUrl(): string {
+  if (isServedByHomeAssistant()) return window.location.origin;
   return getSettings().haUrl || ENV_URL;
 }
 

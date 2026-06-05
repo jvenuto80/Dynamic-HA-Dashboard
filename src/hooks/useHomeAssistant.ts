@@ -25,7 +25,6 @@ export function useHomeAssistant() {
 
     async function connect() {
       try {
-        const wsUrl = HA_URL.replace(/^http/, 'ws') + '/api/websocket';
         const auth = createLongLivedTokenAuth(HA_URL, HA_TOKEN);
         const conn = await createConnection({ auth });
 

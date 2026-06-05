@@ -9,6 +9,7 @@ import {
   applyTheme,
   saveServerConnection,
   clearServerConnection,
+  isServedByHomeAssistant,
   THEMES,
   ACCENT_SWATCHES,
   type ThemeId,
@@ -67,7 +68,12 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
     window.dispatchEvent(new CustomEvent('ha:compact-sections', { detail: next }));
   };
 
-  const effectiveUrl = haUrl.trim() || 'http://homeassistant.local:8123';
+  // Behind Ingress, Home Assistant is the page's own origin — connect there so
+  // the scheme matches (wss:// over HTTPS) and traffic is proxied by HA.
+  const servedByHa = isServedByHomeAssistant();
+  const effectiveUrl = servedByHa
+    ? window.location.origin
+    : haUrl.trim() || 'http://homeassistant.local:8123';
 
   const runTest = async () => {
     setTest('testing');
@@ -160,15 +166,27 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
             <h4 className="settings-section-title">
               <span className="mdi mdi-home-assistant" /> Home Assistant
             </h4>
-            <label className="ts-field">
-              <span>Server URL</span>
-              <input
-                type="url"
-                placeholder="http://homeassistant.local:8123"
-                value={haUrl}
-                onChange={(e) => setHaUrl(e.target.value)}
-              />
-            </label>
+            {servedByHa ? (
+              <div className="ts-field">
+                <span>Server URL</span>
+                <div className="settings-hint" style={{ marginTop: 4 }}>
+                  <span className="mdi mdi-check-circle" style={{ color: 'var(--accent-primary)' }} />{' '}
+                  Connected through Home Assistant — no server URL needed. Glance
+                  uses the same address you opened it with, so it works locally
+                  and remotely without being exposed to the internet.
+                </div>
+              </div>
+            ) : (
+              <label className="ts-field">
+                <span>Server URL</span>
+                <input
+                  type="url"
+                  placeholder="http://homeassistant.local:8123"
+                  value={haUrl}
+                  onChange={(e) => setHaUrl(e.target.value)}
+                />
+              </label>
+            )}
             <label className="ts-field">
               <span>Long-lived access token</span>
               <div className="settings-token-row">

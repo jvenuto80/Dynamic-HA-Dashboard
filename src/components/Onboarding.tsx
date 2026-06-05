@@ -3,7 +3,7 @@ import {
   createConnection,
   createLongLivedTokenAuth,
 } from 'home-assistant-js-websocket';
-import { getSettings, saveSettings, saveServerConnection } from '../settings';
+import { getSettings, saveSettings, saveServerConnection, isServedByHomeAssistant } from '../settings';
 
 type TestState = 'idle' | 'testing' | 'ok' | 'fail';
 
@@ -26,7 +26,12 @@ export function Onboarding({ onDismiss }: Props) {
   const [test, setTest] = useState<TestState>('idle');
   const [msg, setMsg] = useState('');
 
-  const effectiveUrl = haUrl.trim() || 'http://homeassistant.local:8123';
+  // Behind Ingress, Home Assistant is the page's own origin — connect there so
+  // the scheme matches (wss:// over HTTPS) and traffic is proxied by HA.
+  const servedByHa = isServedByHomeAssistant();
+  const effectiveUrl = servedByHa
+    ? window.location.origin
+    : haUrl.trim() || 'http://homeassistant.local:8123';
   const canConnect = haToken.trim().length > 0;
 
   const runTest = async () => {
@@ -84,18 +89,30 @@ export function Onboarding({ onDismiss }: Props) {
           </li>
         </ol>
 
-        <label className="ts-field">
-          <span>Server URL</span>
-          <input
-            type="url"
-            placeholder="http://homeassistant.local:8123"
-            value={haUrl}
-            onChange={(e) => setHaUrl(e.target.value)}
-          />
-          <small className="settings-hint">
-            Use your HA IP (e.g. http://192.168.1.50:8123) if the local name doesn’t resolve.
-          </small>
-        </label>
+        {servedByHa ? (
+          <div className="ts-field">
+            <span>Server URL</span>
+            <div className="settings-hint" style={{ marginTop: 4 }}>
+              <span className="mdi mdi-check-circle" style={{ color: 'var(--accent-primary)' }} />{' '}
+              Connected through Home Assistant — no server URL needed. Glance uses
+              the same address you opened it with, so it works locally and
+              remotely without being exposed to the internet.
+            </div>
+          </div>
+        ) : (
+          <label className="ts-field">
+            <span>Server URL</span>
+            <input
+              type="url"
+              placeholder="http://homeassistant.local:8123"
+              value={haUrl}
+              onChange={(e) => setHaUrl(e.target.value)}
+            />
+            <small className="settings-hint">
+              Use your HA IP (e.g. http://192.168.1.50:8123) if the local name doesn’t resolve.
+            </small>
+          </label>
+        )}
 
         <label className="ts-field">
           <span>Long-lived access token</span>
