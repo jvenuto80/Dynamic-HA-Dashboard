@@ -263,7 +263,9 @@ export default function App() {
       {showSettings && (
         <SettingsModal
           onClose={() => setShowSettings(false)}
+          entities={entities}
           onResetLayout={layout.resetLayout}
+          onStartBlank={layout.startBlank}
           onExportLayout={layout.exportLayout}
           onImportLayout={layout.importLayout}
         />

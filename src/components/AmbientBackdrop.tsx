@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import { getSettings } from '../settings';
+import { resolveWeatherId } from '../lib/weather';
 
 interface Props {
   entities: HassEntities;
@@ -71,9 +72,8 @@ export function AmbientBackdrop({ entities }: Props) {
     return () => window.removeEventListener('ha:ambient-effects', onChange);
   }, []);
 
-  const weather =
-    entities['weather.forecast_home_2'] ||
-    Object.values(entities).find((e) => e.entity_id.startsWith('weather.'));
+  const weatherId = resolveWeatherId(entities);
+  const weather = weatherId ? entities[weatherId] : undefined;
 
   // Dev preview override: ?precip=rain|snow|storm|none forces the precipitation
   // layer regardless of real weather, ?storm=1 forces lightning, and

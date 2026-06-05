@@ -396,6 +396,30 @@ export function useLayout() {
     fetch(ENDPOINT, { method: 'DELETE' }).finally(() => setSaving(false));
   }, []);
 
+  /** Replace the layout with a minimal, generic starter so a new user can build
+   *  from a clean slate with no code: one empty Home page plus a zero-config
+   *  Media page that auto-fills with whatever is playing. */
+  const startBlank = useCallback(() => {
+    const blank: DashView[] = [
+      {
+        id: 'main',
+        name: 'Home',
+        icon: 'mdi-home',
+        sections: [],
+        rows: [{ title: '', columns: [{ title: '', entities: [] }] }],
+      },
+      {
+        id: 'media',
+        name: 'Media',
+        icon: 'mdi-speaker',
+        kind: 'media',
+        sections: [],
+      },
+    ];
+    setViews(withRows(clone(blank)));
+    persist(withRows(clone(blank)));
+  }, [persist]);
+
   /** Serialize the current layout to a pretty JSON string (for export/download). */
   const exportLayout = useCallback(() => {
     // Strip the derived `rows` so the export matches the on-disk schema.
@@ -452,6 +476,7 @@ export function useLayout() {
     unmergeMediaDevices,
     setMediaTileSize,
     resetLayout,
+    startBlank,
     exportLayout,
     importLayout,
   };

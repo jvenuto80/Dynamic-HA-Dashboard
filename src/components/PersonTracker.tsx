@@ -1,4 +1,4 @@
-import { persons } from '../config';
+import { resolvePersons } from '../lib/persons';
 import type { HassEntities } from 'home-assistant-js-websocket';
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
 const colors = ['#3b82f6', '#a855f7', '#10b981', '#f59e0b'];
 
 export function PersonTracker({ entities, variant = 'card' }: Props) {
+  const persons = resolvePersons(entities);
   const list = (
     <div className="person-list">
       {persons.map((person, i) => {

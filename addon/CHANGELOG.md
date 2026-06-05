@@ -1,4 +1,24 @@
 # Changelog
+## 0.9.9.8-beta
+
+- **No-code setup: people, weather, and a blank slate.** Removed the last pieces of
+  hard-coded personal data so anyone can set the dashboard up entirely from the
+  UI:
+  - **People auto-discover.** The header greeting, People tracker and the
+    at-a-glance People button now list every `person.*` entity automatically (a
+    `config.persons` entry still overrides a display name).
+  - **Weather auto-discovers + is selectable.** Fixes the weather widget
+    disappearing when the hard-coded `weather.forecast_home_2` entity didn't
+    exist. The header forecast and ambient backdrop now resolve any `weather.*`
+    entity, and a new **Settings → Appearance → Weather entity** picker lets you
+    choose which one (or leave it on **Auto**).
+  - **Start blank.** A new **Settings → Dashboard data → Start blank** button
+    clears everything to an empty Home page plus an auto-filling Media page, so a
+    new user can build their own dashboard from scratch (the old reset is now
+    **Reset to default**).
+- **Vacuum cards are fully self-service** too — adding any `vacuum.*` entity from
+  the tile picker applies the live-map tile and app-like flyout automatically,
+  documented in the README.
 ## 0.9.9.7-beta
 
 - **Vacuum tile quick buttons no longer float mid-map.** After the tile was resized

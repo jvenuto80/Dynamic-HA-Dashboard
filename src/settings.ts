@@ -11,6 +11,7 @@ export interface AppSettings {
   ambientEffects: boolean; // weather backdrop (rain/snow particles, lightning)
   compactSections: boolean; // flow sections into a masonry so short ones sit side-by-side (less wasted vertical space)
   rememberOnServer: boolean; // opt-in: store connection (URL + token) on the server so new devices auto-connect
+  weatherEntity: string; // header weather entity; '' = auto-discover the first weather.* entity
 }
 
 const STORAGE_KEY = 'ha-dashboard-settings';
@@ -46,6 +47,7 @@ const DEFAULTS: AppSettings = {
   ambientEffects: true,
   compactSections: true,
   rememberOnServer: false,
+  weatherEntity: '',
 };
 
 let cache: AppSettings | null = null;

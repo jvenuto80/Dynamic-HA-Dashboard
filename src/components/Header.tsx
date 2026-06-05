@@ -2,7 +2,8 @@ import type { HassEntities } from 'home-assistant-js-websocket';
 import { useEffect, useState } from 'react';
 import { AnimatedNumber } from './AnimatedNumber';
 import { PersonTracker } from './PersonTracker';
-import { persons } from '../config';
+import { resolvePersons } from '../lib/persons';
+import { resolveWeatherId } from '../lib/weather';
 import { dedupeMediaPlayers } from '../lib/mediaDevices';
 
 interface ForecastDay {
@@ -33,9 +34,9 @@ function joinNames(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`;
 }
 
-/** Names of the configured people currently home, in config order. */
+/** Names of the people currently home, auto-discovered from `person.*`. */
 function getHomeNames(entities: HassEntities): string[] {
-  return persons
+  return resolvePersons(entities)
     .filter((p) => entities[p.entity_id]?.state === 'home')
     .map((p) => p.name);
 }
@@ -81,7 +82,8 @@ function getWeatherColor(state: string): string {
 }
 
 export function Header({ entities, getForecast }: Props) {
-  const weather = entities['weather.forecast_home_2'];
+  const weatherId = resolveWeatherId(entities);
+  const weather = weatherId ? entities[weatherId] : undefined;
   const temp = weather?.attributes?.temperature as number | undefined;
   const state = weather?.state || '';
   const humidity = weather?.attributes?.humidity as number | undefined;
@@ -89,7 +91,7 @@ export function Header({ entities, getForecast }: Props) {
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
 
   useEffect(() => {
-    if (!getForecast || !weather) return;
+    if (!getForecast || !weather || !weatherId) return;
     let active = true;
     // Prefer attribute forecast (older HA), else fetch via service.
     const attrForecast = weather.attributes?.forecast as ForecastDay[] | undefined;
@@ -97,13 +99,13 @@ export function Header({ entities, getForecast }: Props) {
       setForecast(attrForecast.slice(0, 4));
       return;
     }
-    getForecast('weather.forecast_home_2', 'daily').then((data) => {
+    getForecast(weatherId, 'daily').then((data) => {
       if (active) setForecast((data as ForecastDay[]).slice(0, 4));
     });
     return () => {
       active = false;
     };
-  }, [getForecast, weather]);
+  }, [getForecast, weather, weatherId]);
 
   const mediaPlaying = dedupeMediaPlayers(
     Object.values(entities).filter(

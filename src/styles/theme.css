@@ -3469,6 +3469,27 @@ html.vt-active .detail-panel.open > * {
   font-size: 13px;
 }
 
+.settings-weather-field select {
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 13px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+.settings-weather-field select option {
+  background: #1b1d24;
+  color: var(--text-primary);
+}
+
 .ts-icon-row {
   display: flex;
   align-items: center;

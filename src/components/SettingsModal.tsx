@@ -14,17 +14,21 @@ import {
   type ThemeId,
 } from '../settings';
 import type { DashView } from '../types';
+import type { HassEntities } from 'home-assistant-js-websocket';
+import { weatherEntities } from '../lib/weather';
 
 interface Props {
   onClose: () => void;
+  entities: HassEntities;
   onResetLayout: () => void;
+  onStartBlank: () => void;
   onExportLayout: () => string;
   onImportLayout: (data: string | DashView[]) => void;
 }
 
 type TestState = 'idle' | 'testing' | 'ok' | 'fail';
 
-export function SettingsModal({ onClose, onResetLayout, onExportLayout, onImportLayout }: Props) {
+export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, onExportLayout, onImportLayout }: Props) {
   const initial = getSettings();
   const [haUrl, setHaUrl] = useState(initial.haUrl);
   const [haToken, setHaToken] = useState(initial.haToken);
@@ -34,8 +38,11 @@ export function SettingsModal({ onClose, onResetLayout, onExportLayout, onImport
   const [accent, setAccent] = useState(initial.accent);
   const [ambientEffects, setAmbientEffects] = useState(initial.ambientEffects);
   const [compactSections, setCompactSections] = useState(initial.compactSections);
+  const [weatherEntity, setWeatherEntity] = useState(initial.weatherEntity);
   const [test, setTest] = useState<TestState>('idle');
   const [testMsg, setTestMsg] = useState('');
+
+  const weatherOptions = weatherEntities(entities);
 
   // Appearance changes preview instantly.
   const pickTheme = (t: ThemeId) => {
@@ -80,7 +87,7 @@ export function SettingsModal({ onClose, onResetLayout, onExportLayout, onImport
   const save = (reload: boolean) => {
     const url = haUrl.trim();
     const token = haToken.trim();
-    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer });
+    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity });
     // Sync the opt-in shared connection on the server. Store the *effective* URL
     // (falls back to the default host) so other devices never adopt an empty URL.
     if (rememberOnServer && token) {
@@ -297,6 +304,26 @@ export function SettingsModal({ onClose, onResetLayout, onExportLayout, onImport
                 <span className="ts-switch-knob" />
               </button>
             </label>
+            <label className="ts-field settings-weather-field">
+              <span>Weather entity</span>
+              <select
+                value={weatherEntity}
+                onChange={(e) => setWeatherEntity(e.target.value)}
+              >
+                <option value="">
+                  Auto{weatherOptions[0] ? ` (${weatherOptions[0].entity_id})` : ' (none found)'}
+                </option>
+                {weatherOptions.map((w) => (
+                  <option key={w.entity_id} value={w.entity_id}>
+                    {(w.attributes.friendly_name as string) || w.entity_id}
+                  </option>
+                ))}
+              </select>
+              <small className="settings-hint">
+                Which weather entity feeds the header forecast and the ambient
+                backdrop. <strong>Auto</strong> picks the first one found.
+              </small>
+            </label>
           </section>
 
           {/* Data */}
@@ -327,17 +354,38 @@ export function SettingsModal({ onClose, onResetLayout, onExportLayout, onImport
                 />
               </label>
             </div>
-            <button
-              className="toolbar-btn danger"
-              onClick={() => {
-                if (confirm('Reset ALL dashboards to the default layout? This cannot be undone.')) {
-                  onResetLayout();
-                  onClose();
-                }
-              }}
-            >
-              <span className="mdi mdi-restore" /> Reset dashboards to default
-            </button>
+            <div className="settings-data-row">
+              <button
+                className="toolbar-btn"
+                onClick={() => {
+                  if (
+                    confirm(
+                      'Start from a blank slate? This clears all pages and tiles, leaving an empty Home page and an auto-filling Media page to build on. This cannot be undone.',
+                    )
+                  ) {
+                    onStartBlank();
+                    onClose();
+                  }
+                }}
+              >
+                <span className="mdi mdi-broom" /> Start blank
+              </button>
+              <button
+                className="toolbar-btn danger"
+                onClick={() => {
+                  if (confirm('Reset ALL dashboards to the default layout? This cannot be undone.')) {
+                    onResetLayout();
+                    onClose();
+                  }
+                }}
+              >
+                <span className="mdi mdi-restore" /> Reset to default
+              </button>
+            </div>
+            <small className="settings-hint">
+              <strong>Start blank</strong> is the no-code way to begin your own
+              dashboard: connect, then add pages and tiles from the picker.
+            </small>
           </section>
 
           {/* Support */}

@@ -1,5 +1,5 @@
 import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
-import { persons } from '../config';
+import { resolvePersons } from './persons';
 import type { GlanceButtonConfig, GlanceMetric } from '../types';
 import { dedupeMediaPlayers } from './mediaDevices';
 
@@ -286,7 +286,7 @@ export function computeMetric(
     }
 
     case 'people': {
-      const items = persons
+      const items = resolvePersons(entities)
         .map<GlanceItem | null>((p) => {
           const e = entities[p.entity_id];
           if (!e) return null;

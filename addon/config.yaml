@@ -1,5 +1,5 @@
 name: Glance — HA Dashboard
-version: "0.9.9.7-beta"
+version: "0.9.9.8-beta"
 slug: dynamic_ha_dashboard
 description: A premium, fully-configurable Home Assistant dashboard with at-a-glance buttons, live tiles, and ambient effects.
 url: https://github.com/jvenuto80/Dynamic-HA-Dashboard
