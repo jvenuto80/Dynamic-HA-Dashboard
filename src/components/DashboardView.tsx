@@ -18,9 +18,10 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { DashView, DashRow, RoomEntity } from '../types';
+import type { DashView, DashRow, RoomEntity, NocConfig, NocNode, NocMetric } from '../types';
 import { DeviceTile } from './DeviceTile';
 import { CameraGrid } from './CameraGrid';
+import { NocView } from './NocView';
 import { MusicAssistantSearch, type SearchMusic, type PlayMusic, type GetMaPlayers } from './MusicAssistantSearch';
 import { effectiveSize, sizeToSpan } from '../lib/tileSize';
 import { viewRows } from '../lib/layout';
@@ -77,6 +78,19 @@ export interface LayoutActions {
   mergeMediaDevices: (viewId: string, entityIds: string[]) => void;
   unmergeMediaDevices: (viewId: string, entityIds: string[]) => void;
   setMediaTileSize: (viewId: string, size: DashView['mediaTileSize']) => void;
+  setHeaderVisibility: (
+    viewId: string,
+    patch: Partial<Pick<DashView, 'hideGreeting' | 'hideWeather' | 'hidePeople'>>,
+  ) => void;
+  setNoc: (viewId: string, noc: NocConfig | undefined) => void;
+  addNocNode: (viewId: string) => string;
+  removeNocNode: (viewId: string, nodeId: string) => void;
+  moveNocNode: (viewId: string, fromIdx: number, toIdx: number) => void;
+  updateNocNode: (viewId: string, nodeId: string, patch: Partial<NocNode>) => void;
+  addNocMetric: (viewId: string, nodeId: string, entityId: string) => void;
+  updateNocMetric: (viewId: string, nodeId: string, metricId: string, patch: Partial<NocMetric>) => void;
+  removeNocMetric: (viewId: string, nodeId: string, metricId: string) => void;
+  setNocDockerWatch: (viewId: string, nodeId: string, entityIds: string[]) => void;
 }
 
 interface Props {
@@ -118,6 +132,23 @@ export function DashboardView(props: Props) {
 
   if (view.kind === 'media') {
     return <MediaAutoView {...props} />;
+  }
+
+  // A sensors view becomes the enterprise NOC overview once it has a `noc`
+  // config (created via the board-type toggle). Classic sensor grids (no
+  // `noc`) keep their existing graph rendering below.
+  if (view.kind === 'sensors' && view.noc) {
+    return (
+      <NocView
+        view={view}
+        entities={entities}
+        editing={editing}
+        layout={props.layout}
+        getHistory={props.getHistory}
+        onOpenDetail={props.onOpenDetail}
+        callHA={props.callHA}
+      />
+    );
   }
 
   if (editing) {

@@ -9,12 +9,15 @@ export function Sparkline({ data, width = 120, height = 36 }: Props) {
 
   const min = Math.min(...data);
   const max = Math.max(...data);
+  const flat = max - min === 0;
   const range = max - min || 1;
   const stepX = width / (data.length - 1);
 
   const points = data.map((v, i) => {
     const x = i * stepX;
-    const y = height - ((v - min) / range) * (height - 4) - 2;
+    // For a perfectly flat series (e.g. a UPS pinned at 100%), draw the line
+    // through the vertical middle instead of pinned to the bottom edge.
+    const y = flat ? height / 2 : height - ((v - min) / range) * (height - 4) - 2;
     return [x, y] as const;
   });
 

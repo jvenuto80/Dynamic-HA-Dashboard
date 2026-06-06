@@ -63,10 +63,17 @@ disk or baked into the image.
 
 If you already built a dashboard on another device:
 
-1. On the existing dashboard: **Settings → Dashboard data → Export layout**.
+1. On the existing dashboard: **Settings → Dashboard data → Export layout**. The
+   downloaded file is a full backup — every view, tile and at-a-glance button
+   (all NOC nodes, pills, ports — speed, client, PoE/power-cycle bindings, role
+   and node-to-node links — panels and per-board header toggles) plus your
+   appearance preferences (theme, accent, weather source, and date &amp; duration
+   formats). It deliberately leaves out your HA URL and token, so it's safe to
+   share or carry between machines.
 2. On this add-on, **connect first** — **Settings → Home Assistant**, enter your
    URL + **Long-Lived Access Token**, then **Save & reload**.
-3. Then **Settings → Dashboard data → Import layout**, pick the file.
+3. Then **Settings → Dashboard data → Import layout**, pick the file. The board
+   and its look are both restored.
 
 > **Do the token and the import separately, not in one session.** If you enter
 > the token *and* import the backup at the same time, the dashboard can reload

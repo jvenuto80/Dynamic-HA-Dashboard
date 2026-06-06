@@ -17,6 +17,7 @@ import {
 import type { DashView } from '../types';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import { weatherEntities } from '../lib/weather';
+import { DATE_FORMATS, DURATION_STYLES, type DateFormatId, type DurationStyle } from '../lib/format';
 
 interface Props {
   onClose: () => void;
@@ -40,6 +41,8 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
   const [ambientEffects, setAmbientEffects] = useState(initial.ambientEffects);
   const [compactSections, setCompactSections] = useState(initial.compactSections);
   const [weatherEntity, setWeatherEntity] = useState(initial.weatherEntity);
+  const [dateFormat, setDateFormat] = useState<DateFormatId>(initial.dateFormat);
+  const [durationStyle, setDurationStyle] = useState<DurationStyle>(initial.durationStyle);
   const [test, setTest] = useState<TestState>('idle');
   const [testMsg, setTestMsg] = useState('');
 
@@ -93,7 +96,7 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
   const save = (reload: boolean) => {
     const url = haUrl.trim();
     const token = haToken.trim();
-    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity });
+    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle });
     // Sync the opt-in shared connection on the server. Store the *effective* URL
     // (falls back to the default host) so other devices never adopt an empty URL.
     if (rememberOnServer && token) {
@@ -342,6 +345,34 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
                 backdrop. <strong>Auto</strong> picks the first one found.
               </small>
             </label>
+            <label className="ts-field">
+              <span>Date &amp; time format</span>
+              <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value as DateFormatId)}>
+                {DATE_FORMATS.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label} — {f.sample}
+                  </option>
+                ))}
+              </select>
+              <small className="settings-hint">
+                How timestamps (e.g. a NOC node&apos;s “last boot”) display. Always shown
+                in <strong>this device&apos;s timezone</strong>.
+              </small>
+            </label>
+            <label className="ts-field">
+              <span>Duration / uptime style</span>
+              <select value={durationStyle} onChange={(e) => setDurationStyle(e.target.value as DurationStyle)}>
+                {DURATION_STYLES.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label} — {d.sample}
+                  </option>
+                ))}
+              </select>
+              <small className="settings-hint">
+                How durations and uptime counters display. An uptime/boot sensor is
+                shown as elapsed time automatically.
+              </small>
+            </label>
           </section>
 
           {/* Data */}
@@ -350,9 +381,12 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
               <span className="mdi mdi-database" /> Dashboard data
             </h4>
             <small className="settings-hint">
-              Export saves your full layout (views, tiles, and at-a-glance buttons) to a
-              file. Import it after deploying to a new device, Docker container, or add-on
-              so you don't have to rebuild it.
+              Export saves a full backup — every view, tile and at-a-glance button
+              (including all NOC nodes, pills, panels and per-board header toggles)
+              <em>plus</em> your appearance preferences (theme, accent, weather
+              source, and date &amp; duration formats). Import it after deploying to
+              a new device, Docker container, or add-on so you don't have to rebuild
+              anything. Your Home Assistant URL and token are never included.
             </small>
             <div className="settings-data-row">
               <button className="toolbar-btn" onClick={exportLayout}>

@@ -1,4 +1,27 @@
 # Changelog
+## 1.1.0
+
+- **Switch port maps on NOC device nodes.** Switch nodes now show a UniFi-style
+  strip of ports along the bottom of the tile, each cell **color-coded by link
+  speed** (FE / GbE / 2.5G / 5G / 10G / SFP / SFP+, plus *Disconnected* and
+  *Disabled*) with PoE lightning and uplink/aggregate/mirror role glyphs. SFP/SFP+
+  ports are automatically set off from the RJ45 bank by a one-port gap, just like
+  a real faceplate.
+- **One-click port auto-detect.** In the NOC builder, **Auto-detect ports** reads
+  your live UniFi entities and maps the whole switch: it shows **every physical
+  port** (even disconnected ones) up to the switch's port count, names each active
+  port after its **connected client**, sets its **live link speed/color**, and
+  binds the per-port **power-cycle button** + PoE switch automatically.
+- **PoE power-cycle from the flyout.** Tap a port to open its detail card with a
+  **Power-cycle** action (prefers UniFi's dedicated `button.*_power_cycle`, else
+  toggles the PoE switch off → wait → on) and a PoE on/off toggle. The
+  **Open-in-HA** button is now labelled with the actual entity name and opens the
+  most useful entity (live link-speed sensor) for full history.
+- **Node-to-node port links.** Point a port (e.g. an SFP+ uplink) at another NOC
+  node; its flyout gets an **Open &lt;device&gt;** jump, and the target node's
+  flyout automatically shows a jump back — no duplicate config.
+- All port configuration is included in **layout export/import** backups.
+
 ## 1.0.3
 
 - **Remote access now works through Home Assistant (no insecure-WebSocket

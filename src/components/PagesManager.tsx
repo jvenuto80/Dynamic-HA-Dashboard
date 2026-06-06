@@ -1,5 +1,15 @@
 import type { DashView } from '../types';
 
+export type BoardType = 'tiles' | 'sensors' | 'noc' | 'cameras' | 'media';
+
+/** Derive the board-type selector value from a view's kind + noc presence. */
+export function boardTypeOf(v: DashView): BoardType {
+  if (v.kind === 'sensors') return v.noc ? 'noc' : 'sensors';
+  if (v.kind === 'cameras') return 'cameras';
+  if (v.kind === 'media') return 'media';
+  return 'tiles';
+}
+
 interface Props {
   views: DashView[];
   activeView: string;
@@ -9,7 +19,11 @@ interface Props {
   onIcon: (id: string, icon: string) => void;
   onMove: (fromIdx: number, toIdx: number) => void;
   onRemove: (id: string) => void;
-  onSetKind: (id: string, kind: DashView['kind']) => void;
+  onSetBoardType: (id: string, type: BoardType) => void;
+  onSetHeader: (
+    id: string,
+    patch: Partial<Pick<DashView, 'hideGreeting' | 'hideWeather' | 'hidePeople'>>,
+  ) => void;
   onClose: () => void;
 }
 
@@ -27,7 +41,8 @@ export function PagesManager({
   onIcon,
   onMove,
   onRemove,
-  onSetKind,
+  onSetBoardType,
+  onSetHeader,
   onClose,
 }: Props) {
   return (
@@ -62,21 +77,44 @@ export function PagesManager({
                     spellCheck={false}
                     onChange={(e) => onIcon(v.id, e.target.value)}
                   />
+                  <div className="pm-board-row">
+                    <select
+                      className="pm-board-select"
+                      value={boardTypeOf(v)}
+                      onChange={(e) => onSetBoardType(v.id, e.target.value as BoardType)}
+                    >
+                      <option value="tiles">Tiles</option>
+                      <option value="sensors">Sensor graphs</option>
+                      <option value="noc">NOC (servers)</option>
+                      <option value="cameras">Cameras</option>
+                      <option value="media">Now Playing</option>
+                    </select>
+                    <div className="pm-header-toggles" title="Show/hide header widgets on this page">
+                      <button
+                        className={`pm-htoggle ${v.hideGreeting ? '' : 'on'}`}
+                        title="Greeting"
+                        onClick={() => onSetHeader(v.id, { hideGreeting: !v.hideGreeting })}
+                      >
+                        <span className="mdi mdi-hand-wave" />
+                      </button>
+                      <button
+                        className={`pm-htoggle ${v.hideWeather ? '' : 'on'}`}
+                        title="Weather"
+                        onClick={() => onSetHeader(v.id, { hideWeather: !v.hideWeather })}
+                      >
+                        <span className="mdi mdi-weather-partly-cloudy" />
+                      </button>
+                      <button
+                        className={`pm-htoggle ${v.hidePeople ? '' : 'on'}`}
+                        title="People"
+                        onClick={() => onSetHeader(v.id, { hidePeople: !v.hidePeople })}
+                      >
+                        <span className="mdi mdi-account-group" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="pm-tools">
-                  {(v.kind === undefined || v.kind === 'tiles' || v.kind === 'media') && (
-                    <button
-                      className={`edit-icon-btn ${v.kind === 'media' ? 'on' : ''}`}
-                      title={
-                        v.kind === 'media'
-                          ? 'Now Playing mode (auto media) — click for normal tiles'
-                          : 'Switch to Now Playing mode (auto media devices)'
-                      }
-                      onClick={() => onSetKind(v.id, v.kind === 'media' ? 'tiles' : 'media')}
-                    >
-                      <span className={`mdi ${v.kind === 'media' ? 'mdi-music-box-multiple' : 'mdi-music-box-multiple-outline'}`} />
-                    </button>
-                  )}
                   <button
                     className="edit-icon-btn"
                     title="Move up"

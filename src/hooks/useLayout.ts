@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { views as defaultViews } from '../config';
 import { syncSections, withRows } from '../lib/layout';
-import type { DashRow, DashView, GlanceButtonConfig, RoomEntity, TileSize } from '../types';
+import { getExportableSettings, applyImportedSettings } from '../settings';
+import type { DashRow, DashView, GlanceButtonConfig, NocConfig, NocMetric, NocNode, RoomEntity, TileSize } from '../types';
 
 // Resolve the layout API relative to the app's base path so it works behind
 // HA Ingress (served under /api/hassio_ingress/<token>/) as well as at root.
@@ -392,6 +393,124 @@ export function useLayout() {
     [mutateView],
   );
 
+  // ── Per-board header widget visibility ──
+  const setHeaderVisibility = useCallback(
+    (viewId: string, patch: Partial<Pick<DashView, 'hideGreeting' | 'hideWeather' | 'hidePeople'>>) => {
+      mutateView(viewId, (v) => {
+        for (const k of ['hideGreeting', 'hideWeather', 'hidePeople'] as const) {
+          if (k in patch) {
+            if (patch[k]) v[k] = true;
+            else delete v[k];
+          }
+        }
+      });
+    },
+    [mutateView],
+  );
+
+  // ── NOC (enterprise servers overview) ──
+  /** Replace the whole NOC config for a sensors view. */
+  const setNoc = useCallback(
+    (viewId: string, noc: NocConfig | undefined) => {
+      mutateView(viewId, (v) => {
+        if (!noc) delete v.noc;
+        else v.noc = noc;
+      });
+    },
+    [mutateView],
+  );
+
+  /** Append a blank NOC node and return its id. */
+  const addNocNode = useCallback(
+    (viewId: string): string => {
+      const id = `node-${Date.now().toString(36)}`;
+      mutateView(viewId, (v) => {
+        if (!v.noc) v.noc = { nodes: [] };
+        v.noc.nodes.push({ id, name: 'New Device', icon: 'mdi-server', accent: '#3b82f6', metrics: [] });
+      });
+      return id;
+    },
+    [mutateView],
+  );
+
+  const removeNocNode = useCallback(
+    (viewId: string, nodeId: string) => {
+      mutateView(viewId, (v) => {
+        if (v.noc) v.noc.nodes = v.noc.nodes.filter((n) => n.id !== nodeId);
+      });
+    },
+    [mutateView],
+  );
+
+  const moveNocNode = useCallback(
+    (viewId: string, fromIdx: number, toIdx: number) => {
+      mutateView(viewId, (v) => {
+        if (!v.noc) return;
+        if (toIdx < 0 || toIdx >= v.noc.nodes.length) return;
+        const [n] = v.noc.nodes.splice(fromIdx, 1);
+        v.noc.nodes.splice(toIdx, 0, n);
+      });
+    },
+    [mutateView],
+  );
+
+  /** Patch a NOC node's own fields (name, sub, icon, accent, pill/status entities…). */
+  const updateNocNode = useCallback(
+    (viewId: string, nodeId: string, patch: Partial<NocNode>) => {
+      mutateView(viewId, (v) => {
+        const n = v.noc?.nodes.find((x) => x.id === nodeId);
+        if (n) Object.assign(n, patch);
+      });
+    },
+    [mutateView],
+  );
+
+  const addNocMetric = useCallback(
+    (viewId: string, nodeId: string, entityId: string) => {
+      mutateView(viewId, (v) => {
+        const n = v.noc?.nodes.find((x) => x.id === nodeId);
+        if (!n) return;
+        const id = `m-${Date.now().toString(36)}-${n.metrics.length}`;
+        const primaryCount = n.metrics.filter((m) => m.primary).length;
+        n.metrics.push({ id, entity_id: entityId, label: '', primary: primaryCount < 3 });
+      });
+    },
+    [mutateView],
+  );
+
+  const updateNocMetric = useCallback(
+    (viewId: string, nodeId: string, metricId: string, patch: Partial<NocMetric>) => {
+      mutateView(viewId, (v) => {
+        const m = v.noc?.nodes.find((x) => x.id === nodeId)?.metrics.find((y) => y.id === metricId);
+        if (m) Object.assign(m, patch);
+      });
+    },
+    [mutateView],
+  );
+
+  const removeNocMetric = useCallback(
+    (viewId: string, nodeId: string, metricId: string) => {
+      mutateView(viewId, (v) => {
+        const n = v.noc?.nodes.find((x) => x.id === nodeId);
+        if (n) n.metrics = n.metrics.filter((m) => m.id !== metricId);
+      });
+    },
+    [mutateView],
+  );
+
+  /** Set the watched Docker container entity_ids on a NOC (server) node. */
+  const setNocDockerWatch = useCallback(
+    (viewId: string, nodeId: string, entityIds: string[]) => {
+      mutateView(viewId, (v) => {
+        const n = v.noc?.nodes.find((x) => x.id === nodeId);
+        if (!n) return;
+        if (entityIds.length) n.dockerWatch = entityIds;
+        else delete n.dockerWatch;
+      });
+    },
+    [mutateView],
+  );
+
   const resetLayout = useCallback(() => {
     setViews(withRows(clone(defaultViews)));
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -423,26 +542,63 @@ export function useLayout() {
     persist(withRows(clone(blank)));
   }, [persist]);
 
-  /** Serialize the current layout to a pretty JSON string (for export/download).
-   *  Keeps the canonical `rows` (the real, edited tile layout) and rebuilds the
-   *  legacy `sections` from it so the file is internally consistent — earlier
-   *  this stripped `rows` and shipped the stale `sections`, silently dropping
-   *  added tiles, resurrecting removed ones, and exporting in-app pages empty. */
+  /** Serialize the current dashboard to a pretty JSON string for export/download.
+   *
+   *  The file is a self-describing backup bundling BOTH halves of a user's
+   *  configuration so a restore reproduces the dashboard exactly:
+   *    • `views`    — the canonical `rows` (real, edited tile layout, incl. every
+   *                   NOC node/pill/panel and per-board header toggles). Legacy
+   *                   `sections` are rebuilt from `rows` so the file is internally
+   *                   consistent (earlier this stripped `rows` and shipped stale
+   *                   `sections`, silently dropping tiles).
+   *    • `settings` — appearance preferences (theme, accent, weather source,
+   *                   ambient/compact toggles, date & duration formats). The
+   *                   connection (URL/token) is deliberately excluded — secrets
+   *                   never travel in a shareable file.
+   *  Older exports were a bare `views` array; `importLayout` still accepts those. */
   const exportLayout = useCallback(() => {
-    return JSON.stringify(syncSections(views), null, 2);
+    const backup = {
+      _type: 'glance-dashboard-backup',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      settings: getExportableSettings(),
+      views: syncSections(views),
+    };
+    return JSON.stringify(backup, null, 2);
   }, [views]);
 
-  /** Replace the entire layout from imported JSON (string or parsed array). */
+  /** Replace the entire dashboard from imported JSON. Accepts either the modern
+   *  wrapped backup object `{ settings, views }` or a legacy bare `views` array
+   *  (or an already-parsed array). Appearance settings, when present, are applied
+   *  before the layout so the restored board matches the original look. */
   const importLayout = useCallback(
     (data: string | DashView[]) => {
       const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-      if (!Array.isArray(parsed) || parsed.length === 0) {
+
+      let viewsRaw: unknown;
+      let settingsRaw: unknown;
+      if (Array.isArray(parsed)) {
+        viewsRaw = parsed; // legacy bare-array export
+      } else if (
+        parsed &&
+        typeof parsed === 'object' &&
+        Array.isArray((parsed as { views?: unknown }).views)
+      ) {
+        viewsRaw = (parsed as { views: unknown }).views;
+        settingsRaw = (parsed as { settings?: unknown }).settings;
+      } else {
+        throw new Error('Unrecognized file — expected a Glance layout export.');
+      }
+
+      if (!Array.isArray(viewsRaw) || viewsRaw.length === 0) {
         throw new Error('Layout must be a non-empty array of views.');
       }
-      if (!parsed.every((v) => v && typeof v.id === 'string')) {
+      if (!viewsRaw.every((v) => v && typeof (v as DashView).id === 'string')) {
         throw new Error('Each view needs a string "id".');
       }
-      const next = withRows(parsed as DashView[]);
+
+      if (settingsRaw) applyImportedSettings(settingsRaw);
+      const next = withRows(viewsRaw as DashView[]);
       setViews(next);
       persist(next);
     },
@@ -480,6 +636,16 @@ export function useLayout() {
     mergeMediaDevices,
     unmergeMediaDevices,
     setMediaTileSize,
+    setHeaderVisibility,
+    setNoc,
+    addNocNode,
+    removeNocNode,
+    moveNocNode,
+    updateNocNode,
+    addNocMetric,
+    updateNocMetric,
+    removeNocMetric,
+    setNocDockerWatch,
     resetLayout,
     startBlank,
     exportLayout,

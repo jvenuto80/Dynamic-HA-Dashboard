@@ -149,7 +149,13 @@ export default function App() {
       />
 
       <main className="main-content" ref={mainRef}>
-        <Header entities={entities} getForecast={getForecast} />
+        <Header
+          entities={entities}
+          getForecast={getForecast}
+          hideGreeting={view.hideGreeting}
+          hideWeather={view.hideWeather}
+          hidePeople={view.hidePeople}
+        />
 
         {view.kind !== 'cameras' && view.kind !== 'sensors' && (
           <GlanceStrip
@@ -315,7 +321,17 @@ export default function App() {
           onIcon={layout.updateViewIcon}
           onMove={layout.moveView}
           onRemove={handleRemoveView}
-          onSetKind={layout.setViewKind}
+          onSetBoardType={(id, type) => {
+            const v = views.find((x) => x.id === id);
+            if (type === 'noc') {
+              layout.setViewKind(id, 'sensors');
+              if (!v?.noc) layout.setNoc(id, { nodes: [] });
+            } else {
+              if (v?.noc) layout.setNoc(id, undefined);
+              layout.setViewKind(id, type === 'tiles' ? 'tiles' : type);
+            }
+          }}
+          onSetHeader={layout.setHeaderVisibility}
           onClose={() => setShowPages(false)}
         />
       )}

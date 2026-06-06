@@ -12,6 +12,8 @@ export interface AppSettings {
   compactSections: boolean; // flow sections into a masonry so short ones sit side-by-side (less wasted vertical space)
   rememberOnServer: boolean; // opt-in: store connection (URL + token) on the server so new devices auto-connect
   weatherEntity: string; // header weather entity; '' = auto-discover the first weather.* entity
+  dateFormat: import('./lib/format').DateFormatId; // how timestamps render (browser timezone)
+  durationStyle: import('./lib/format').DurationStyle; // how durations/uptime render
 }
 
 const STORAGE_KEY = 'ha-dashboard-settings';
@@ -48,6 +50,8 @@ const DEFAULTS: AppSettings = {
   compactSections: true,
   rememberOnServer: false,
   weatherEntity: '',
+  dateFormat: 'mdy12',
+  durationStyle: 'compact',
 };
 
 let cache: AppSettings | null = null;
@@ -75,6 +79,65 @@ export function saveSettings(patch: Partial<AppSettings>): AppSettings {
   }
   applyTheme(next);
   return next;
+}
+
+/** The display preferences that travel inside an exported layout backup so a
+ *  restore reproduces the *look* of the dashboard (theme, accent, weather
+ *  source, ambient/compact toggles, date & duration formats) — not just the
+ *  tiles. Deliberately EXCLUDES the connection (`haUrl`/`haToken`) and the
+ *  server-share opt-in: those are credentials/device-specific and must never
+ *  be written into a file the user may share or move between machines. */
+export type ExportableSettings = Pick<
+  AppSettings,
+  | 'theme'
+  | 'accent'
+  | 'ambientEffects'
+  | 'compactSections'
+  | 'weatherEntity'
+  | 'dateFormat'
+  | 'durationStyle'
+>;
+
+const EXPORTABLE_KEYS: (keyof ExportableSettings)[] = [
+  'theme',
+  'accent',
+  'ambientEffects',
+  'compactSections',
+  'weatherEntity',
+  'dateFormat',
+  'durationStyle',
+];
+
+/** Snapshot the appearance preferences for inclusion in a backup file. */
+export function getExportableSettings(): ExportableSettings {
+  const s = getSettings();
+  return {
+    theme: s.theme,
+    accent: s.accent,
+    ambientEffects: s.ambientEffects,
+    compactSections: s.compactSections,
+    weatherEntity: s.weatherEntity,
+    dateFormat: s.dateFormat,
+    durationStyle: s.durationStyle,
+  };
+}
+
+/** Apply appearance preferences carried in an imported backup. Only the known,
+ *  non-credential keys are honored; anything else (incl. a stray haUrl/haToken)
+ *  is ignored. Returns the keys that were applied. */
+export function applyImportedSettings(raw: unknown): (keyof ExportableSettings)[] {
+  if (!raw || typeof raw !== 'object') return [];
+  const src = raw as Record<string, unknown>;
+  const patch: Partial<AppSettings> = {};
+  const applied: (keyof ExportableSettings)[] = [];
+  for (const k of EXPORTABLE_KEYS) {
+    if (k in src && src[k] !== undefined) {
+      (patch as Record<string, unknown>)[k] = src[k];
+      applied.push(k);
+    }
+  }
+  if (applied.length) saveSettings(patch);
+  return applied;
 }
 
 /**

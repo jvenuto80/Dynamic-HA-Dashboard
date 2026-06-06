@@ -14,7 +14,9 @@ const CONNECTION_FILE = process.env.CONNECTION_FILE
   : resolve(process.cwd(), 'connection.json');
 const ROUTE = '/layout';
 const CONNECTION_ROUTE = '/connection';
+const PROXY_ROUTE = '/fetch-json';
 const MAX_BYTES = 512 * 1024;
+const PROXY_MAX_BYTES = 256 * 1024;
 
 /**
  * Tiny dev/preview middleware that lets the dashboard read and write its
@@ -42,6 +44,83 @@ export function layoutApi(): Plugin {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       }
       next();
+    });
+
+    // Server-side JSON fetch proxy. Lets the dashboard pull data from a
+    // user-configured HTTP API (e.g. a Speedtest-Tracker container) without
+    // tripping browser CORS. The browser POSTs { url, token? }; the server
+    // fetches it and streams back the JSON. Only http/https, size-capped, with
+    // a short timeout. Intended for the user's own LAN services.
+    server.middlewares.use(async (req, res, next) => {
+      const path = (req.url || '').split('?')[0];
+      if (path !== PROXY_ROUTE) return next();
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.end(JSON.stringify({ error: 'method not allowed' }));
+        return;
+      }
+      let body = '';
+      let tooBig = false;
+      req.on('data', (chunk) => {
+        body += chunk;
+        if (body.length > 8 * 1024) {
+          tooBig = true;
+          req.destroy();
+        }
+      });
+      req.on('end', async () => {
+        if (tooBig) {
+          res.statusCode = 413;
+          res.end(JSON.stringify({ error: 'request too large' }));
+          return;
+        }
+        let target = '';
+        let token = '';
+        try {
+          const parsed = JSON.parse(body || '{}');
+          target = String(parsed.url || '');
+          token = String(parsed.token || '');
+        } catch {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'invalid JSON body' }));
+          return;
+        }
+        let parsedUrl: URL;
+        try {
+          parsedUrl = new URL(target);
+        } catch {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'invalid url' }));
+          return;
+        }
+        if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'only http/https allowed' }));
+          return;
+        }
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        try {
+          const headers: Record<string, string> = { Accept: 'application/json' };
+          if (token) headers.Authorization = `Bearer ${token}`;
+          const upstream = await fetch(target, { headers, signal: controller.signal });
+          const text = await upstream.text();
+          if (text.length > PROXY_MAX_BYTES) {
+            res.statusCode = 502;
+            res.end(JSON.stringify({ error: 'upstream response too large' }));
+            return;
+          }
+          res.statusCode = upstream.ok ? 200 : 502;
+          res.setHeader('Content-Type', 'application/json');
+          // Pass the body through verbatim; the client extracts via JSON path.
+          res.end(upstream.ok ? text : JSON.stringify({ error: `upstream ${upstream.status}`, body: text.slice(0, 500) }));
+        } catch (err) {
+          res.statusCode = 502;
+          res.end(JSON.stringify({ error: 'fetch failed', detail: String(err).slice(0, 200) }));
+        } finally {
+          clearTimeout(timer);
+        }
+      });
     });
 
     server.middlewares.use(async (req, res, next) => {

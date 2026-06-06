@@ -16,6 +16,10 @@ interface ForecastDay {
 interface Props {
   entities: HassEntities;
   getForecast?: (entityId: string, type?: 'daily' | 'hourly') => Promise<unknown[]>;
+  /** Per-board visibility — lets a board strip widgets it doesn't need. */
+  hideGreeting?: boolean;
+  hideWeather?: boolean;
+  hidePeople?: boolean;
 }
 
 function getGreeting(): string {
@@ -81,7 +85,7 @@ function getWeatherColor(state: string): string {
   return map[state] || '#cbd5e1';
 }
 
-export function Header({ entities, getForecast }: Props) {
+export function Header({ entities, getForecast, hideGreeting, hideWeather, hidePeople }: Props) {
   const weatherId = resolveWeatherId(entities);
   const weather = weatherId ? entities[weatherId] : undefined;
   const temp = weather?.attributes?.temperature as number | undefined;
@@ -116,23 +120,29 @@ export function Header({ entities, getForecast }: Props) {
   const homeNames = getHomeNames(entities);
   const greetingName = joinNames(homeNames);
 
+  if (hideGreeting && hideWeather && hidePeople) return null;
+
   return (
     <header className="header">
-      <div className="greeting">
-        <h1>
-          {getGreeting()}
-          {greetingName ? `, ${greetingName}!` : ''}
-        </h1>
-        <p className="subtitle">
-          {mediaPlaying.length > 0
-            ? `${mediaPlaying.length} media playing`
-            : 'Everything quiet'}
-          {' · '}
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-        </p>
-      </div>
+      {!hideGreeting ? (
+        <div className="greeting">
+          <h1>
+            {getGreeting()}
+            {greetingName ? `, ${greetingName}!` : ''}
+          </h1>
+          <p className="subtitle">
+            {mediaPlaying.length > 0
+              ? `${mediaPlaying.length} media playing`
+              : 'Everything quiet'}
+            {' · '}
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          </p>
+        </div>
+      ) : (
+        <div className="greeting" />
+      )}
       <div className="header-right">
-        {weather && (
+        {!hideWeather && weather && (
           <div className="weather-widget">
           <div className="weather-now">
             <span className={`mdi ${getWeatherIcon(state)}`} style={{ fontSize: 36, color: getWeatherColor(state) }} />
@@ -167,7 +177,7 @@ export function Header({ entities, getForecast }: Props) {
           )}
           </div>
         )}
-        <PersonTracker entities={entities} variant="compact" />
+        {!hidePeople && <PersonTracker entities={entities} variant="compact" />}
       </div>
     </header>
   );
