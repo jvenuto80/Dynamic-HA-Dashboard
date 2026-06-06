@@ -739,7 +739,7 @@ function MediaDeviceSettings({
       {pickerOpen && (
         <EntityPicker
           entities={entities}
-          existing={new Set(entityIds)}
+          existing={new Set()}
           domainFilter={['media_player']}
           title="Search media players for artwork…"
           onClose={() => setPickerOpen(false)}
