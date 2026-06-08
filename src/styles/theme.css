@@ -1698,6 +1698,47 @@ body::after {
   overflow: hidden;
 }
 
+/* Layered parallax glass: pointer-tracking 3D tilt (issue #11). The tilt vars
+   are set by the useTilt hook (mouse only); they default to flat so touch and
+   reduced-motion are unaffected. The transform composes a lift (--tilt-ty /
+   --tilt-scale, driven by :hover) with the rotation so hover and tilt coexist. */
+.tile-tilt {
+  transform:
+    perspective(520px)
+    rotateX(var(--tilt-rx, 0deg))
+    rotateY(var(--tilt-ry, 0deg))
+    translateY(var(--tilt-ty, 0px))
+    scale(var(--tilt-scale, 1));
+  transform-style: preserve-3d;
+}
+
+/* Moving specular hotspot that follows the cursor; only visible while tilting. */
+.tile-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: radial-gradient(
+    circle at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02) 30%,
+    transparent 55%
+  );
+  z-index: 1;
+}
+
+.tile-tilt.tilting .tile-glare {
+  opacity: 1;
+}
+
+/* While actively tilting, snap rotation to the pointer (no lag) but keep a quick
+   ease so it still feels smooth; the lift/box-shadow stay on the slower curve. */
+.tile-tilt.tilting {
+  transition: box-shadow 0.28s ease, border-color 0.2s ease;
+}
+
 /* Top edge sheen */
 .tile::before {
   content: '';
@@ -1712,7 +1753,7 @@ body::after {
    view change (keyed by view id), so this only plays on navigation, not on
    every state update. Delay scales with the tile's position index. */
 .tile-enter {
-  animation: tile-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: tile-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(min(var(--enter-i, 0), 16) * 28ms);
 }
 
@@ -1737,7 +1778,7 @@ body::after {
   }
 }
 
-.tile:hover {
+.tile:hover:not(.tile-tilt) {
   border-color: var(--border-glass-light);
   transform: translateY(-3px) scale(1.012);
   box-shadow:
@@ -1745,9 +1786,24 @@ body::after {
     0 16px 38px rgba(0, 0, 0, 0.4);
 }
 
-.tile:active {
+/* Tilt tiles lift via the composed transform's vars so the rotation is kept. */
+.tile-tilt:hover {
+  --tilt-ty: -3px;
+  --tilt-scale: 1.012;
+  border-color: var(--border-glass-light);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 16px 38px rgba(0, 0, 0, 0.4);
+}
+
+.tile:active:not(.tile-tilt) {
   transform: translateY(0) scale(0.97);
   transition: transform 0.08s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.tile-tilt:active {
+  --tilt-ty: 0px;
+  --tilt-scale: 0.97;
 }
 
 @media (prefers-reduced-motion: reduce) {

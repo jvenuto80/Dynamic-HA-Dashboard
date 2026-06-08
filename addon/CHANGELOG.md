@@ -1,4 +1,12 @@
 # Changelog
+## 1.1.5
+
+- **New: layered parallax glass — tiles tilt toward the pointer.** On
+  mouse/trackpad, hovering a tile gives it a subtle pointer-tracking 3D tilt with
+  a soft specular highlight, for a more tactile glass feel. It's mouse-only
+  (disabled on touch so it never interferes with wall-tablet slide gestures) and
+  honors reduced-motion.
+
 ## 1.1.4
 
 - **Fixed: "at a glance" exclusions are now global per button type.** Excluding

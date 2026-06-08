@@ -129,7 +129,7 @@ Decision: leaving as `localStorage` for now since it works on a single device.
 
 ### Depth & materials
 
-- [ ] Layered parallax glass — slight pointer-tracking 3D tilt on tiles. ([#11](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/11))
+- [x] Layered parallax glass — slight pointer-tracking 3D tilt on tiles. ([#11](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/11))
 - [ ] Specular highlight — faint moving sheen across glass cards on hover. ([#12](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/12))
 - [ ] Better elevation — multi-layer shadows + inner highlight stroke. ([#13](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/13))
 

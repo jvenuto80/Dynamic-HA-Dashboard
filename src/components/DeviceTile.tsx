@@ -3,6 +3,7 @@ import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { entityIcon, entitySummary, isActiveState, resolveArtwork } from '../lib/entityInfo';
 import { useArtworkColor } from '../hooks/useArtworkColor';
 import { runViewTransition, viewTransitionsAvailable } from '../lib/viewTransition';
+import { useTilt } from '../hooks/useTilt';
 import { Sparkline } from './Sparkline';
 import { HA_URL } from '../config';
 
@@ -96,6 +97,8 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, span,
   // A custom per-tile icon overrides the domain/state default everywhere the
   // tile draws its glyph.
   const tileIcon = icon || entityIcon(id, entity.state);
+  // Pointer-tracking parallax tilt (mouse only; no-op on touch / reduced-motion).
+  const tiltRef = useTilt();
 
   const brightness = entity.attributes.brightness as number | undefined;
   const dimmable = domain === 'light' && active && brightness != null;
@@ -443,7 +446,8 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, span,
 
   return (
     <div
-      className={`tile tile-enter ${on ? 'on' : ''} ${liveLight ? 'live-light' : ''} ${span ? 'span' : ''} ${tall ? 'tall' : ''} ${cameraUrl ? 'has-cam' : ''} ${artworkUrl ? 'has-artwork' : ''} ${artTint ? 'art-tinted' : ''} ${secClass} ${slideEnabled ? 'slide-dim' : ''}`}
+      ref={tiltRef as React.Ref<HTMLDivElement>}
+      className={`tile tile-enter tile-tilt ${on ? 'on' : ''} ${liveLight ? 'live-light' : ''} ${span ? 'span' : ''} ${tall ? 'tall' : ''} ${cameraUrl ? 'has-cam' : ''} ${artworkUrl ? 'has-artwork' : ''} ${artTint ? 'art-tinted' : ''} ${secClass} ${slideEnabled ? 'slide-dim' : ''}`}
       style={{
         ...(slideEnabled
           ? {
@@ -477,6 +481,7 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, span,
       onPointerCancel={onSlidePointerCancel}
       onPointerLeave={onSlidePointerCancel}
     >
+      <span className="tile-glare" aria-hidden="true" />
       {slideEnabled && <div className="tile-dim-fill" />}
       {artworkUrl && (
         <div ref={artworkRef} key={artworkUrl} className="tile-artwork" style={{ backgroundImage: `url("${artworkUrl}")` }} />
