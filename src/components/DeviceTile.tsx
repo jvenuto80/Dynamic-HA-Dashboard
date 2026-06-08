@@ -18,7 +18,7 @@ interface Props {
   span?: boolean;
   tall?: boolean;
   graph?: boolean;
-  getHistory?: (entityId: string, hours?: number) => Promise<number[]>;
+  getHistory?: (entityId: string, hours?: number, attribute?: string) => Promise<number[]>;
   /** When set, a live camera thumbnail is shown in the tile's empty space. */
   cameraUrl?: string;
   /** Optional custom MDI icon (e.g. "mdi-garage") overriding the domain default. */
@@ -208,6 +208,40 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, span,
       cancelled = true;
     };
   }, [graph, getHistory, id, entity.state]);
+
+  // ── Mini trend sparkline for regular sensor/climate tiles (issue #14) ──
+  // Numeric sensors plot their state; climates plot the `current_temperature`
+  // attribute (their state is the hvac mode, not a number). Rendered as a faint
+  // background behind the tile content. Skipped for the big server-tab graph
+  // tile and when no history fetcher is available. Refreshed on a slow timer
+  // rather than on every state change to keep history calls light.
+  const sparkAttr =
+    domain === 'climate' && typeof entity.attributes.current_temperature === 'number'
+      ? 'current_temperature'
+      : undefined;
+  const sparkEligible =
+    !graph &&
+    !!getHistory &&
+    (sparkAttr != null ||
+      (domain === 'sensor' && Number.isFinite(parseFloat(entity.state))));
+  const [spark, setSpark] = useState<number[]>([]);
+  useEffect(() => {
+    if (!sparkEligible || !getHistory) {
+      setSpark([]);
+      return;
+    }
+    let cancelled = false;
+    const load = () =>
+      getHistory(id, 24, sparkAttr).then((data) => {
+        if (!cancelled) setSpark(data);
+      });
+    load();
+    const t = setInterval(load, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [sparkEligible, getHistory, id, sparkAttr]);
 
   const sliderVal = local ?? (dimmable ? Math.round((brightness! / 255) * 100) : isCover ? position! : 0);
 
@@ -482,6 +516,11 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, span,
       onPointerLeave={onSlidePointerCancel}
     >
       <span className="tile-glare" aria-hidden="true" />
+      {spark.length > 1 && (
+        <div className="tile-spark" aria-hidden="true">
+          <Sparkline data={spark} width={120} height={40} />
+        </div>
+      )}
       {slideEnabled && <div className="tile-dim-fill" />}
       {artworkUrl && (
         <div ref={artworkRef} key={artworkUrl} className="tile-artwork" style={{ backgroundImage: `url("${artworkUrl}")` }} />

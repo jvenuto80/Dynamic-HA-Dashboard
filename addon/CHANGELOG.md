@@ -1,4 +1,11 @@
 # Changelog
+## 1.1.7
+
+- **New: at-a-glance trend sparklines on sensor & climate tiles.** Numeric sensor
+  tiles now show a faint 24-hour trend behind their value; climate tiles plot
+  their `current_temperature` over the same window. The line is subtle and sits
+  behind the icon/name/value, so tiles stay readable and don't change size.
+
 ## 1.1.6
 
 - **Improved: the first-load skeleton now mirrors your actual layout.** While the

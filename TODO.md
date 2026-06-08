@@ -139,7 +139,7 @@ Decision: leaving as `localStorage` for now since it works on a single device.
   sections sit side-by-side and fill the screen width (keeping section headings)
   instead of leaving tall vertical gaps. On by default; toggle in
   Settings → Appearance.~~
-- [ ] Sparklines on more tiles (climate/sensor) using the existing `Sparkline`. ([#14](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/14))
+- [x] Sparklines on more tiles (climate/sensor) using the existing `Sparkline`. ([#14](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/14))
 - [ ] Quiet status dots that pulse only on change. ([#15](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/15))
 - [ ] Smart grouping — collapse an idle room into one tile, expand on tap. ([#16](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/16))
 

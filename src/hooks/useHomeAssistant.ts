@@ -73,22 +73,28 @@ export function useHomeAssistant() {
   );
 
   const getHistory = useCallback(
-    async (entityId: string, hours = 24): Promise<number[]> => {
+    async (entityId: string, hours = 24, attribute?: string): Promise<number[]> => {
       if (!connRef.current) return [];
       try {
         const end = new Date();
         const start = new Date(end.getTime() - hours * 3600 * 1000);
+        // For an attribute series (e.g. a climate's `current_temperature`) we
+        // must keep attributes in the response; the default state-only path stays
+        // lean with minimal_response + no_attributes.
         const res = (await connRef.current.sendMessagePromise({
           type: 'history/history_during_period',
           start_time: start.toISOString(),
           end_time: end.toISOString(),
           entity_ids: [entityId],
-          minimal_response: true,
-          no_attributes: true,
-        })) as Record<string, Array<{ s?: string }>>;
+          minimal_response: !attribute,
+          no_attributes: !attribute,
+        })) as Record<string, Array<{ s?: string; a?: Record<string, unknown> }>>;
         const points = res?.[entityId] ?? [];
         return points
-          .map((p) => parseFloat(p.s ?? ''))
+          .map((p) => {
+            const raw = attribute ? p.a?.[attribute] : p.s;
+            return typeof raw === 'number' ? raw : parseFloat(String(raw ?? ''));
+          })
           .filter((n) => Number.isFinite(n));
       } catch {
         return [];

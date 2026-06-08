@@ -2269,6 +2269,28 @@ body::after {
   z-index: 1;
 }
 
+/* Faint trend sparkline behind sensor/climate tile content (issue #14). Mirrors
+   .graph-area but lives behind a normal tile's icon/name/value (which already
+   sit at z-index 1). Masked at the edges so it fades into the tile. */
+.tile-spark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+  --spark-color: rgba(var(--accent-rgb), 0.85);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+}
+
+.tile-spark .sparkline {
+  width: 100%;
+  height: 100%;
+}
+
 .sparkline {
   display: block;
   width: 100%;
