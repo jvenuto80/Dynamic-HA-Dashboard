@@ -164,8 +164,10 @@ export default function App() {
           <GlanceStrip
             entities={entities}
             glance={view.glance}
+            glanceExcludes={layout.glanceExcludes}
             editing={editing}
             onGlanceChange={(g) => layout.setGlance(view.id, g)}
+            onGlanceExcludeChange={layout.setGlanceExclude}
             onOpenDetail={setDetailEntity}
             callHA={callHA}
           />

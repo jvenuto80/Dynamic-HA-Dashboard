@@ -72,7 +72,7 @@ Decision: leaving as `localStorage` for now since it works on a single device.
   add-on exposes that an HA automation can call on a schedule), so the dashboard
   config is snapshotted automatically without manual Export. Document the
   example automation in the wiki.
-- [ ] **Glance button exclusions should be global per button type, not per page.**
+- [x] **Glance button exclusions should be global per button type, not per page.**
   ([#10](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/10))
   Right now the "at a glance" exclude list (e.g. which `light.*` entities don't
   count toward **lights on**) is stored per view (`view.glance`), so excluding a
@@ -80,7 +80,9 @@ Decision: leaving as `localStorage` for now since it works on a single device.
   button. Make a button's exclusions consistent across every page that uses that
   button type — e.g. store exclusions keyed by button metric/type at the layout
   level and have per-view glance configs reference them, so the count is the same
-  everywhere.
+  everywhere. **Done:** exclusions are now global per metric — `useLayout`
+  derives a union of each button's `exclude` keyed by metric and editing one
+  writes it to every button of that metric on every page.
 
 ## High-end polish ideas
 

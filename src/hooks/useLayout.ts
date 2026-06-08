@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { views as defaultViews } from '../config';
 import { syncSections, withRows } from '../lib/layout';
 import { applyMediaOverride } from '../lib/mediaDevices';
 import { getExportableSettings, applyImportedSettings } from '../settings';
-import type { DashRow, DashView, GlanceButtonConfig, MediaTileConfig, NocConfig, NocMetric, NocNode, RoomEntity, TileSize } from '../types';
+import type { DashRow, DashView, GlanceButtonConfig, GlanceMetric, MediaTileConfig, NocConfig, NocMetric, NocNode, RoomEntity, TileSize } from '../types';
 
 // Resolve the layout API relative to the app's base path so it works behind
 // HA Ingress (served under /api/hassio_ingress/<token>/) as well as at root.
@@ -242,6 +242,44 @@ export function useLayout() {
       });
     },
     [mutateView],
+  );
+
+  // A glance button's exclusions (e.g. tablet "screen" lights omitted from the
+  // "lights on" count) are global per metric: excluding an entity on one page
+  // hides it from every button of that metric on every page, so the number is
+  // consistent everywhere. The shared set is the union of each button's stored
+  // `exclude` (which `setGlanceExclude` keeps in sync across all pages).
+  const glanceExcludes = useMemo<Partial<Record<GlanceMetric, string[]>>>(() => {
+    const map: Partial<Record<GlanceMetric, string[]>> = {};
+    for (const v of views) {
+      for (const b of v.glance ?? []) {
+        if (!b.exclude?.length) continue;
+        const cur = map[b.metric] ?? (map[b.metric] = []);
+        for (const id of b.exclude) if (!cur.includes(id)) cur.push(id);
+      }
+    }
+    return map;
+  }, [views]);
+
+  /** Set a metric's exclusions globally: every glance button of that metric, on
+   *  every page, gets the same exclude list so the count matches everywhere. */
+  const setGlanceExclude = useCallback(
+    (metric: GlanceMetric, exclude: string[]) => {
+      setViews((prev) => {
+        const next = clone(prev);
+        for (const v of next) {
+          if (!v.glance) continue;
+          for (const b of v.glance) {
+            if (b.metric === metric) {
+              b.exclude = exclude.length ? [...exclude] : undefined;
+            }
+          }
+        }
+        persist(next);
+        return next;
+      });
+    },
+    [persist],
   );
 
   // ── Views (pages) ──
@@ -650,6 +688,8 @@ export function useLayout() {
     removeScene,
     moveScene,
     setGlance,
+    glanceExcludes,
+    setGlanceExclude,
     addView,
     removeView,
     renameView,

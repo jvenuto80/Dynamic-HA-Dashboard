@@ -23,10 +23,16 @@ interface Props {
   entities: HassEntities;
   /** Configured buttons for this view (falls back to defaults when unset). */
   glance?: GlanceButtonConfig[];
+  /** Global per-metric exclusions, shared across every page (issue #10). When
+   *  provided, these override each button's own `exclude` so a "lights on"
+   *  count is identical on every view. */
+  glanceExcludes?: Partial<Record<GlanceMetric, string[]>>;
   /** When true, the strip shows add/remove/configure controls. */
   editing?: boolean;
   /** Persist a new button configuration (edit mode). */
   onGlanceChange?: (next: GlanceButtonConfig[]) => void;
+  /** Persist a metric's exclusions globally (applies to every page). */
+  onGlanceExcludeChange?: (metric: GlanceMetric, exclude: string[]) => void;
   /** Open an entity's detail flyout (used by non-toggle list rows). */
   onOpenDetail?: (entityId: string) => void;
   callHA: CallHA;
@@ -57,8 +63,10 @@ const domainForMetric = (m: GlanceMetric): string[] => {
 export function GlanceStrip({
   entities,
   glance,
+  glanceExcludes,
   editing = false,
   onGlanceChange,
+  onGlanceExcludeChange,
   onOpenDetail,
   callHA,
 }: Props) {
@@ -67,13 +75,19 @@ export function GlanceStrip({
 
   const config = glance ?? DEFAULT_GLANCE;
 
+  // Exclusions are global per metric: prefer the shared set, falling back to a
+  // button's own stored excludes when no global map is supplied.
+  const excludesFor = (c: GlanceButtonConfig): string[] =>
+    glanceExcludes?.[c.metric] ?? c.exclude ?? [];
+
   const computed = useMemo(
     () =>
       config.map((c) => ({
         cfg: c,
-        result: computeMetric(c.metric, entities, c.exclude ?? []),
+        result: computeMetric(c.metric, entities, excludesFor(c)),
       })),
-    [config, entities],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config, entities, glanceExcludes],
   );
 
   const toggleItem = (item: GlanceItem) => {
@@ -193,7 +207,9 @@ export function GlanceStrip({
         <GlanceButtonEditor
           cfg={editCfg}
           entities={entities}
+          exclude={glanceExcludes?.[editCfg.metric] ?? editCfg.exclude ?? []}
           onChange={(patch) => updateButton(editCfg.id, patch)}
+          onExcludeChange={(ids) => onGlanceExcludeChange?.(editCfg.metric, ids)}
           onClose={() => setEditKey(null)}
         />
       )}
@@ -278,16 +294,20 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 function GlanceButtonEditor({
   cfg,
   entities,
+  exclude,
   onChange,
+  onExcludeChange,
   onClose,
 }: {
   cfg: GlanceButtonConfig;
   entities: HassEntities;
+  /** Global exclusions for this button's metric (shared across all pages). */
+  exclude: string[];
   onChange: (patch: Partial<GlanceButtonConfig>) => void;
+  onExcludeChange: (ids: string[]) => void;
   onClose: () => void;
 }) {
   const [picking, setPicking] = useState(false);
-  const exclude = cfg.exclude ?? [];
   const nameOf = (id: string) =>
     (entities[id]?.attributes.friendly_name as string) || id;
 
@@ -307,7 +327,7 @@ function GlanceButtonEditor({
             <span>Shows</span>
             <select
               value={cfg.metric}
-              onChange={(e) => onChange({ metric: e.target.value as GlanceMetric, exclude: [] })}
+              onChange={(e) => onChange({ metric: e.target.value as GlanceMetric, exclude: undefined })}
             >
               {METRIC_OPTIONS.map((o) => (
                 <option key={o.metric} value={o.metric}>
@@ -343,8 +363,9 @@ function GlanceButtonEditor({
           <div className="glance-field">
             <span>Exclude entities</span>
             <p className="glance-field-hint">
-              Hide specific entities (e.g. tablet “screen” lights) from this button’s
-              count and flyout.
+              Hide specific entities (e.g. tablet “screen” lights) from this
+              metric’s count and flyout. Exclusions are shared across every page,
+              so the number stays consistent everywhere.
             </p>
             <div className="glance-exclude-list">
               {exclude.length === 0 && <span className="glance-field-hint">None excluded.</span>}
@@ -354,7 +375,7 @@ function GlanceButtonEditor({
                   <button
                     type="button"
                     title="Remove"
-                    onClick={() => onChange({ exclude: exclude.filter((x) => x !== id) })}
+                    onClick={() => onExcludeChange(exclude.filter((x) => x !== id))}
                   >
                     <span className="mdi mdi-close" />
                   </button>
@@ -376,7 +397,7 @@ function GlanceButtonEditor({
           title="Exclude entity…"
           onClose={() => setPicking(false)}
           onPick={(id) => {
-            onChange({ exclude: [...exclude, id] });
+            onExcludeChange([...exclude, id]);
             setPicking(false);
           }}
         />

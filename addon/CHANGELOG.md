@@ -1,6 +1,11 @@
 # Changelog
 ## 1.1.4
 
+- **Fixed: "at a glance" exclusions are now global per button type.** Excluding
+  an entity (e.g. a tablet "screen" light) from a metric like **lights on** now
+  applies to that button on every page, so the count is consistent everywhere —
+  previously the exclude list was stored per page and didn't carry across.
+
 - **Fixed: a custom tile icon now shows on the tile, not just in the editor.**
   Picking an icon in a tile's settings saved correctly, but the rendered tile
   kept showing the domain default because `DeviceTile` ignored the per-tile
