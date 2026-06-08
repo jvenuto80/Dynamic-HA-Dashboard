@@ -430,6 +430,8 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
   const modes = (entity.attributes.hvac_modes as string[]) || [];
   const fanModes = (entity.attributes.fan_modes as string[]) || [];
   const fanMode = entity.attributes.fan_mode as string;
+  const presetModes = (entity.attributes.preset_modes as string[]) || [];
+  const presetMode = entity.attributes.preset_mode as string | undefined;
   const minTemp = (entity.attributes.min_temp as number) || 60;
   const maxTemp = (entity.attributes.max_temp as number) || 90;
   const step = (entity.attributes.target_temp_step as number) || 1;
@@ -547,6 +549,19 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
           ))}
         </div>
       </div>
+      {presetModes.length > 0 && (
+        <div className="glass-card" style={{ marginBottom: fanModes.length > 0 ? 12 : 0 }}>
+          <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>PRESET</h4>
+          <div className="climate-mode-row" style={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+            {presetModes.map((m) => (
+              <button key={m} className={`mode-btn ${presetMode === m ? 'active' : ''}`}
+                onClick={() => callHA('climate', 'set_preset_mode', { preset_mode: m }, { entity_id: entityId })}>
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {fanModes.length > 0 && (
         <div className="glass-card">
           <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>FAN MODE</h4>

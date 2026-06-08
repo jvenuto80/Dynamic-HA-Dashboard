@@ -1,4 +1,11 @@
 # Changelog
+## 1.1.8
+
+- **New: thermostat presets in the climate flyout.** When a thermostat exposes
+  preset modes (e.g. Home / Away / Sleep), the climate detail flyout now shows a
+  **PRESET** section with a button per preset; the active one is highlighted.
+  Thermostats without presets are unaffected.
+
 ## 1.1.7
 
 - **New: at-a-glance trend sparklines on sensor & climate tiles.** Numeric sensor
