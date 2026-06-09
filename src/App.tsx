@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useLayout } from './hooks/useLayout';
 import { useSwipeNav } from './hooks/useSwipeNav';
+import { useIdle } from './hooks/useIdle';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { ScenePills } from './components/ScenePills';
@@ -11,6 +12,8 @@ import { DashboardView } from './components/DashboardView';
 import { DetailPanel } from './components/DetailPanel';
 import { EntityPicker } from './components/DashboardView';
 import { SettingsModal } from './components/SettingsModal';
+import { NowPlayingTakeover } from './components/NowPlayingTakeover';
+import { Screensaver } from './components/Screensaver';
 import { PagesManager } from './components/PagesManager';
 import { PageDots } from './components/PageDots';
 import { Onboarding } from './components/Onboarding';
@@ -27,6 +30,9 @@ export default function App() {
   const { views } = layout;
   const [activeView, setActiveView] = useState<string>('main');
   const [detailEntity, setDetailEntity] = useState<string | null>(null);
+  // Full-bleed now-playing "lock screen" (issue #18), opened by tapping a
+  // playing media tile that carries artwork.
+  const [takeoverEntity, setTakeoverEntity] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPages, setShowPages] = useState(false);
@@ -45,6 +51,19 @@ export default function App() {
   const booting =
     forceSkeleton ||
     (!!HA_TOKEN && !connected && !error && Object.keys(entities).length === 0);
+
+  // ── Idle screensaver (issue #20) ──
+  // After the configured idle minutes (Settings → Appearance; 0 = off) the
+  // dashboard drifts to a clock + ambient art. Any input wakes it. Suppressed
+  // while editing or in a modal where an unexpected takeover would be hostile.
+  const [saverMinutes, setSaverMinutes] = useState(() => getSettings().screensaverMinutes);
+  useEffect(() => {
+    const onChange = (e: Event) => setSaverMinutes((e as CustomEvent<number>).detail);
+    window.addEventListener('ha:screensaver-minutes', onChange);
+    return () => window.removeEventListener('ha:screensaver-minutes', onChange);
+  }, []);
+  const idle = useIdle(saverMinutes > 0 ? saverMinutes * 60_000 : 0);
+  const showScreensaver = idle && !editing && !showSettings && !needsOnboarding && !booting;
 
   /** Add a new page and jump to it so it can be filled in straight away. */
   const handleAddView = useCallback(() => {
@@ -273,6 +292,7 @@ export default function App() {
             entities={entities}
             onToggle={toggleEntity}
             onOpenDetail={setDetailEntity}
+            onOpenTakeover={setTakeoverEntity}
             callHA={callHA}
             getHistory={getHistory}
             editing={editing}
@@ -363,6 +383,19 @@ export default function App() {
           }}
         />
       )}
+
+      {takeoverEntity && (
+        <NowPlayingTakeover
+          entityId={takeoverEntity}
+          entities={entities}
+          callHA={callHA}
+          artworkEntity={configFor[takeoverEntity]?.artworkEntity}
+          onClose={() => setTakeoverEntity(null)}
+          onOpenDetail={setDetailEntity}
+        />
+      )}
+
+      {showScreensaver && <Screensaver entities={entities} />}
 
       {needsOnboarding && <Onboarding onDismiss={() => setOnboardingDismissed(true)} />}
 

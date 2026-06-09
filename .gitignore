@@ -28,3 +28,6 @@ media
 
 # Personal layout backup for redeploying to Docker/add-on
 my-dashboard-layout.backup.json
+
+# Local dev-server launch config for Claude preview
+.claude/

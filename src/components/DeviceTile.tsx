@@ -16,6 +16,10 @@ interface Props {
   callHA: CallHA;
   onToggle: (entityId: string) => void;
   onOpenDetail: (entityId: string) => void;
+  /** Full-bleed now-playing takeover (issue #18). When provided, tapping a
+   *  playing media tile that shows artwork opens it instead of the flyout
+   *  (the ⋯ button still opens the flyout). */
+  onOpenTakeover?: (entityId: string) => void;
   span?: boolean;
   tall?: boolean;
   graph?: boolean;
@@ -91,7 +95,7 @@ function vacuumMapUrl(entities: HassEntities | undefined, base: string): string 
   return `${HA_URL}/api/camera_proxy/camera.${base}_map?token=${token}`;
 }
 
-export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, span, tall, graph, getHistory, cameraUrl, icon, slideDim, reverseSlider, mediaArtwork, artworkEntity, entities, enterIndex }: Props) {
+export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpenTakeover, span, tall, graph, getHistory, cameraUrl, icon, slideDim, reverseSlider, mediaArtwork, artworkEntity, entities, enterIndex }: Props) {
   const id = entity.entity_id;
   const domain = id.split('.')[0];
   const active = isActiveState(entity.state);
@@ -483,6 +487,10 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, span,
           onToggle(id);
         } else if (slideCover) {
           onToggle(id);
+        } else if (onOpenTakeover && domain === 'media_player' && artworkUrl) {
+          // A now-playing tile (artwork showing) taps into the full-bleed
+          // lock-screen takeover; the ⋯ button still opens the flyout.
+          onOpenTakeover(id);
         } else {
           openDetail(id);
         }

@@ -43,6 +43,7 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
   const [weatherEntity, setWeatherEntity] = useState(initial.weatherEntity);
   const [dateFormat, setDateFormat] = useState<DateFormatId>(initial.dateFormat);
   const [durationStyle, setDurationStyle] = useState<DurationStyle>(initial.durationStyle);
+  const [screensaverMinutes, setScreensaverMinutes] = useState(initial.screensaverMinutes);
   const [test, setTest] = useState<TestState>('idle');
   const [testMsg, setTestMsg] = useState('');
 
@@ -71,6 +72,12 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
     window.dispatchEvent(new CustomEvent('ha:compact-sections', { detail: next }));
   };
 
+  const pickScreensaver = (minutes: number) => {
+    setScreensaverMinutes(minutes);
+    // Live-apply the idle timer without persisting yet.
+    window.dispatchEvent(new CustomEvent('ha:screensaver-minutes', { detail: minutes }));
+  };
+
   // Behind Ingress, Home Assistant is the page's own origin — connect there so
   // the scheme matches (wss:// over HTTPS) and traffic is proxied by HA.
   const servedByHa = isServedByHomeAssistant();
@@ -96,7 +103,7 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
   const save = (reload: boolean) => {
     const url = haUrl.trim();
     const token = haToken.trim();
-    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle });
+    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes });
     // Sync the opt-in shared connection on the server. Store the *effective* URL
     // (falls back to the default host) so other devices never adopt an empty URL.
     if (rememberOnServer && token) {
@@ -119,6 +126,9 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
     );
     window.dispatchEvent(
       new CustomEvent('ha:compact-sections', { detail: getSettings().compactSections }),
+    );
+    window.dispatchEvent(
+      new CustomEvent('ha:screensaver-minutes', { detail: getSettings().screensaverMinutes }),
     );
     onClose();
   };
@@ -357,6 +367,25 @@ export function SettingsModal({ onClose, entities, onResetLayout, onStartBlank, 
               <small className="settings-hint">
                 How timestamps (e.g. a NOC node&apos;s “last boot”) display. Always shown
                 in <strong>this device&apos;s timezone</strong>.
+              </small>
+            </label>
+            <label className="ts-field">
+              <span>Idle screensaver</span>
+              <select
+                value={screensaverMinutes}
+                onChange={(e) => pickScreensaver(parseInt(e.target.value))}
+              >
+                <option value={0}>Off</option>
+                {[1, 2, 5, 10, 15, 30].map((m) => (
+                  <option key={m} value={m}>
+                    After {m} minute{m > 1 ? 's' : ''} idle
+                  </option>
+                ))}
+              </select>
+              <small className="settings-hint">
+                For wall tablets: after sitting untouched, the dashboard drifts to a
+                dimmed clock with the date, outside temperature, and ambient album
+                art when music is playing. Tap anywhere to wake it.
               </small>
             </label>
             <label className="ts-field">

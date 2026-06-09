@@ -915,8 +915,9 @@ function MediaDetail({ entity, entityId, callHA, entities, artworkEntity }: Enti
   );
 }
 
-/** Live now-playing progress bar that ticks between HA state updates. */
-function MediaProgress({ entity }: { entity: EntityProps['entity'] }) {
+/** Live now-playing progress bar that ticks between HA state updates.
+ *  Shared with the full-bleed NowPlayingTakeover. */
+export function MediaProgress({ entity }: { entity: EntityProps['entity'] }) {
   const duration = entity.attributes.media_duration as number | undefined;
   const position = entity.attributes.media_position as number | undefined;
   const updatedAt = entity.attributes.media_position_updated_at as string | undefined;

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { AnimatedNumber } from './AnimatedNumber';
 import { PersonTracker } from './PersonTracker';
 import { resolvePersons } from '../lib/persons';
-import { resolveWeatherId } from '../lib/weather';
+import { resolveWeatherId, getWeatherIcon, getWeatherColor } from '../lib/weather';
 import { dedupeMediaPlayers } from '../lib/mediaDevices';
 
 interface ForecastDay {
@@ -43,46 +43,6 @@ function getHomeNames(entities: HassEntities): string[] {
   return resolvePersons(entities)
     .filter((p) => entities[p.entity_id]?.state === 'home')
     .map((p) => p.name);
-}
-
-function getWeatherIcon(state: string): string {
-  const map: Record<string, string> = {
-    sunny: 'mdi-weather-sunny',
-    'clear-night': 'mdi-weather-night',
-    partlycloudy: 'mdi-weather-partly-cloudy',
-    cloudy: 'mdi-weather-cloudy',
-    rainy: 'mdi-weather-rainy',
-    pouring: 'mdi-weather-pouring',
-    snowy: 'mdi-weather-snowy',
-    fog: 'mdi-weather-fog',
-    lightning: 'mdi-weather-lightning',
-    'lightning-rainy': 'mdi-weather-lightning-rainy',
-    windy: 'mdi-weather-windy',
-  };
-  return map[state] || 'mdi-weather-cloudy';
-}
-
-/** Condition-appropriate icon hue so the forecast reads at a glance instead of
- *  a wall of identical amber: sun amber, rain blue, cloud slate, night indigo. */
-function getWeatherColor(state: string): string {
-  const map: Record<string, string> = {
-    sunny: '#fbbf24',
-    'clear-night': '#a5b4fc',
-    partlycloudy: '#cbd5e1',
-    cloudy: '#94a3b8',
-    rainy: '#60a5fa',
-    pouring: '#3b82f6',
-    snowy: '#bae6fd',
-    'snowy-rainy': '#93c5fd',
-    fog: '#cbd5e1',
-    hail: '#bae6fd',
-    lightning: '#c084fc',
-    'lightning-rainy': '#a78bfa',
-    windy: '#94a3b8',
-    'windy-variant': '#94a3b8',
-    exceptional: '#f87171',
-  };
-  return map[state] || '#cbd5e1';
 }
 
 export function Header({ entities, getForecast, hideGreeting, hideWeather, hidePeople }: Props) {

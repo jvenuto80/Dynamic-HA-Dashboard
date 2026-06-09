@@ -93,6 +93,8 @@ interface Props {
   entities: HassEntities;
   onToggle: (entityId: string) => void;
   onOpenDetail: (entityId: string) => void;
+  /** Open the full-bleed now-playing takeover for a playing media tile (issue #18). */
+  onOpenTakeover?: (entityId: string) => void;
   callHA: CallHA;
   getHistory?: (entityId: string, hours?: number) => Promise<number[]>;
   editing: boolean;
@@ -214,6 +216,7 @@ function Tile({
   entities,
   onToggle,
   onOpenDetail,
+  onOpenTakeover,
   callHA,
   getHistory,
   view,
@@ -252,6 +255,7 @@ function Tile({
       callHA={callHA}
       onToggle={onToggle}
       onOpenDetail={onOpenDetail}
+      onOpenTakeover={onOpenTakeover}
       span={span}
       tall={tall}
       graph={view.kind === 'sensors' && domain === 'sensor'}
@@ -626,6 +630,7 @@ function MediaAutoView(props: Props) {
                     callHA={props.callHA}
                     onToggle={props.onToggle}
                     onOpenDetail={props.onOpenDetail}
+                    onOpenTakeover={props.onOpenTakeover}
                     mediaArtwork={config.mediaArtwork}
                     artworkEntity={config.artworkEntity}
                     entities={entities}

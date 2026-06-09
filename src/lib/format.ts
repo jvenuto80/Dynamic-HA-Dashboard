@@ -63,6 +63,24 @@ function timeStr(d: Date, fmt: DateFormatId): string {
   return `${pad(h12)}:${mi}:${se} ${ap}`;
 }
 
+/** A big-clock rendering of a time: hours:minutes plus an optional AM/PM
+ *  suffix, honoring the user's 12/24-hour preference ('auto' asks the locale).
+ *  Used by the screensaver clock and the now-playing takeover. */
+export function clockTime(d: Date = new Date()): { time: string; suffix: string | null } {
+  const fmt = getSettings().dateFormat;
+  const is24 =
+    fmt === 'mdy24' ||
+    fmt === 'dmy24' ||
+    fmt === 'ymd' ||
+    (fmt === 'auto' &&
+      new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hour12 === false);
+  const mi = pad(d.getMinutes());
+  if (is24) return { time: `${pad(d.getHours())}:${mi}`, suffix: null };
+  const h24 = d.getHours();
+  const h12 = ((h24 + 11) % 12) + 1;
+  return { time: `${h12}:${mi}`, suffix: h24 < 12 ? 'AM' : 'PM' };
+}
+
 /** Format an absolute Date in the browser timezone using the chosen pattern. */
 export function formatDateTime(
   d: Date,

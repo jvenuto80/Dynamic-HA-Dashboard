@@ -146,9 +146,9 @@ Decision: leaving as `localStorage` for now since it works on a single device.
 ### Delightful extras
 
 - [ ] Scene transition flash — quick full-screen color wash matching the scene. ([#17](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/17))
-- [ ] Now-playing lock-screen mode — full-bleed album art takeover on tap. ([#18](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/18))
+- [x] ~~Now-playing lock-screen mode — full-bleed album art takeover on tap.~~ ([#18](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/18)) **Done (1.1.10):** tapping a playing media tile (artwork showing) opens a full-bleed lock-screen takeover — blurred album-art backdrop, large art, title/artist, live progress, transport controls and volume; the tile's ⋯ button still opens the regular flyout.
 - [ ] Voice/Assist floating mic button into HA Assist. ([#19](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/19))
-- [ ] Idle "screensaver" — drift to clock + ambient art for wall-tablet use. ([#20](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/20))
+- [x] ~~Idle "screensaver" — drift to clock + ambient art for wall-tablet use.~~ ([#20](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/20)) **Done (1.1.10):** opt-in via Settings → Appearance → Idle screensaver (off by default). After the chosen idle time the dashboard dims to a big drifting clock (OLED-safe), date, outside temp, and an ambient now-playing pill over blurred album art when music plays. Any touch wakes it.
 - [ ] Pull-to-refresh with a custom elastic indicator. ([#21](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/21))
 
 ### Performance polish (makes it *feel* premium)

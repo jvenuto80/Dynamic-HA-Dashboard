@@ -1,4 +1,19 @@
 # Changelog
+## 1.1.10
+
+- **New: now-playing lock screen (#18).** Tap a playing media tile (one showing
+  album art) and the artwork takes over the whole screen, lock-screen style —
+  blurred art wall-to-wall, the cover front and center, title/artist, a live
+  progress bar, play/pause/skip and volume. Tap anywhere (or Escape) to return
+  to the dashboard; the tile's ⋯ button still opens the regular flyout.
+
+- **New: idle screensaver for wall tablets (#20).** Off by default — turn it on
+  in Settings → Appearance → Idle screensaver. After the chosen idle time the
+  dashboard drifts to a dimmed clock with the date and outside temperature; when
+  music is playing it floats a now-playing pill over ambient blurred album art.
+  The clock slowly changes position to protect OLED panels, and any touch wakes
+  the dashboard instantly.
+
 ## 1.1.9
 
 - **Fixed: "Login attempt or request with invalid authentication" spam in the HA

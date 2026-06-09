@@ -14,6 +14,7 @@ export interface AppSettings {
   weatherEntity: string; // header weather entity; '' = auto-discover the first weather.* entity
   dateFormat: import('./lib/format').DateFormatId; // how timestamps render (browser timezone)
   durationStyle: import('./lib/format').DurationStyle; // how durations/uptime render
+  screensaverMinutes: number; // idle minutes before the screensaver shows; 0 = off
 }
 
 const STORAGE_KEY = 'ha-dashboard-settings';
@@ -52,6 +53,7 @@ const DEFAULTS: AppSettings = {
   weatherEntity: '',
   dateFormat: 'mdy12',
   durationStyle: 'compact',
+  screensaverMinutes: 0,
 };
 
 let cache: AppSettings | null = null;
@@ -96,6 +98,7 @@ export type ExportableSettings = Pick<
   | 'weatherEntity'
   | 'dateFormat'
   | 'durationStyle'
+  | 'screensaverMinutes'
 >;
 
 const EXPORTABLE_KEYS: (keyof ExportableSettings)[] = [
@@ -106,6 +109,7 @@ const EXPORTABLE_KEYS: (keyof ExportableSettings)[] = [
   'weatherEntity',
   'dateFormat',
   'durationStyle',
+  'screensaverMinutes',
 ];
 
 /** Snapshot the appearance preferences for inclusion in a backup file. */
@@ -119,6 +123,7 @@ export function getExportableSettings(): ExportableSettings {
     weatherEntity: s.weatherEntity,
     dateFormat: s.dateFormat,
     durationStyle: s.durationStyle,
+    screensaverMinutes: s.screensaverMinutes,
   };
 }
 
