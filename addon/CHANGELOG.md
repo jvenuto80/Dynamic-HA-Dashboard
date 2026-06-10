@@ -1,5 +1,5 @@
 # Changelog
-## Unreleased
+## 1.4.0
 
 - **New: smart grouping (#16).** A dashboard section can now fold into a single
   summary bar when nothing in it is active — its name, a few device icons, and a
