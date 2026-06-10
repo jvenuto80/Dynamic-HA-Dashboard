@@ -1,4 +1,16 @@
 # Changelog
+## Unreleased
+
+- **New: smart grouping (#16).** A dashboard section can now fold into a single
+  summary bar when nothing in it is active — its name, a few device icons, and a
+  "N devices · all quiet" line — reclaiming the space a grid of off tiles used
+  to take. It reopens by itself the instant any device in it becomes active
+  (a light turns on, a door unlocks, motion is detected), or when you tap the
+  bar; a tap holds until the section's activity next changes, then it goes back
+  to deciding on its own. Tap the chevron on a section heading to fold it by
+  hand. Off by default; turn it on in Settings → Appearance → "Smart grouping"
+  (synced across devices).
+
 ## 1.3.0
 
 - **New: quiet status dots (#15).** Each device tile carries a tiny,

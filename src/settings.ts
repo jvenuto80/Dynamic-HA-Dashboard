@@ -21,6 +21,7 @@ export interface AppSettings {
   screensaverShortcut: string; // page (view id) the screensaver's shortcut button opens; '' = no button
   syncSettings: boolean; // sync shared preferences across devices via the add-on server (issue #8)
   statusDots: boolean; // quiet per-tile dots that pulse once when a value changes (issue #15)
+  smartGrouping: boolean; // auto-collapse idle sections into a summary bar, expand on activity/tap (issue #16)
 }
 
 const STORAGE_KEY = 'ha-dashboard-settings';
@@ -66,6 +67,7 @@ const DEFAULTS: AppSettings = {
   screensaverShortcut: '',
   syncSettings: true,
   statusDots: true,
+  smartGrouping: false,
 };
 
 let cache: AppSettings | null = null;
@@ -116,6 +118,7 @@ export type ExportableSettings = Pick<
   | 'calendarEntities'
   | 'screensaverShortcut'
   | 'statusDots'
+  | 'smartGrouping'
 >;
 
 const EXPORTABLE_KEYS: (keyof ExportableSettings)[] = [
@@ -132,6 +135,7 @@ const EXPORTABLE_KEYS: (keyof ExportableSettings)[] = [
   'calendarEntities',
   'screensaverShortcut',
   'statusDots',
+  'smartGrouping',
 ];
 
 /** Snapshot the appearance preferences for inclusion in a backup file. */
@@ -151,6 +155,7 @@ export function getExportableSettings(): ExportableSettings {
     calendarEntities: s.calendarEntities,
     screensaverShortcut: s.screensaverShortcut,
     statusDots: s.statusDots,
+    smartGrouping: s.smartGrouping,
   };
 }
 
@@ -306,7 +311,7 @@ const SYNCED_KEYS: (keyof ExportableSettings)[] = [
 
 const SETTINGS_ENDPOINT = `${import.meta.env.BASE_URL}settings`.replace(/\/\/+/g, '/');
 
-const SYNCED_EXTRA: (keyof AppSettings)[] = ['nowPlayingTakeover', 'calendarChip', 'calendarEntities', 'statusDots'];
+const SYNCED_EXTRA: (keyof AppSettings)[] = ['nowPlayingTakeover', 'calendarChip', 'calendarEntities', 'statusDots', 'smartGrouping'];
 
 function syncedSubset(s: AppSettings): Record<string, unknown> {
   const out: Record<string, unknown> = {};

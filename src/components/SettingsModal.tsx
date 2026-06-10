@@ -54,6 +54,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const [screensaverShortcut, setScreensaverShortcut] = useState(initial.screensaverShortcut);
   const [syncSettings, setSyncSettings] = useState(initial.syncSettings);
   const [statusDots, setStatusDots] = useState(initial.statusDots);
+  const [smartGrouping, setSmartGrouping] = useState(initial.smartGrouping);
   const [test, setTest] = useState<TestState>('idle');
   const [testMsg, setTestMsg] = useState('');
 
@@ -96,6 +97,13 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     window.dispatchEvent(new CustomEvent('ha:status-dots', { detail: next }));
   };
 
+  const toggleSmartGrouping = () => {
+    const next = !smartGrouping;
+    setSmartGrouping(next);
+    // Live-apply the grouping without persisting yet.
+    window.dispatchEvent(new CustomEvent('ha:smart-grouping', { detail: next }));
+  };
+
   const toggleTakeover = () => {
     const next = !nowPlayingTakeover;
     setNowPlayingTakeover(next);
@@ -128,7 +136,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const save = (reload: boolean) => {
     const url = haUrl.trim();
     const token = haToken.trim();
-    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots });
+    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots, smartGrouping });
     // Share the non-credential preferences with other devices (issue #8).
     void pushSettingsToServer();
     // Sync the opt-in shared connection on the server. Store the *effective* URL
@@ -162,6 +170,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     );
     window.dispatchEvent(
       new CustomEvent('ha:status-dots', { detail: getSettings().statusDots }),
+    );
+    window.dispatchEvent(
+      new CustomEvent('ha:smart-grouping', { detail: getSettings().smartGrouping }),
     );
     onClose();
   };
@@ -401,6 +412,26 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 How timestamps (e.g. a NOC node&apos;s “last boot”) display. Always shown
                 in <strong>this device&apos;s timezone</strong>.
               </small>
+            </label>
+            <label className="ts-toggle-field">
+              <div className="ts-toggle-text">
+                <span>Smart grouping</span>
+                <small>
+                  Fold a section into a single summary bar when nothing in it is
+                  on. It reopens by itself the moment a device there becomes
+                  active, or when you tap the bar — so the page stays focused on
+                  what's actually happening. Tap a section heading's chevron to
+                  fold it by hand.
+                </small>
+              </div>
+              <button
+                className={`ts-switch ${smartGrouping ? 'on' : ''}`}
+                role="switch"
+                aria-checked={smartGrouping}
+                onClick={toggleSmartGrouping}
+              >
+                <span className="ts-switch-knob" />
+              </button>
             </label>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">

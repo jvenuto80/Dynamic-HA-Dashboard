@@ -6837,3 +6837,112 @@ button.noc-port:hover { transform: translateY(-1px); }
     animation: none;
   }
 }
+
+/* ───────────────────── Smart grouping (issue #16) ──────────────────────────
+   Idle sections fold into a summary bar; active ones stay expanded. The bar
+   reuses the card elevation tokens so it matches the tiles around it. */
+
+/* Read-mode section heading becomes a flex row so the manual-fold control can
+   sit at its right edge. */
+.column-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-fold {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.row-column:hover .section-fold {
+  opacity: 1;
+}
+
+.section-fold:hover {
+  color: var(--text-secondary);
+  border-color: var(--border-glass-light);
+}
+
+.section-fold .mdi {
+  font-size: 14px;
+}
+
+.section-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 15px;
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.012) 60%),
+    var(--bg-card);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--inner-stroke), var(--elevation-rest);
+  cursor: pointer;
+  text-align: left;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.section-collapsed:hover {
+  border-color: var(--border-glass-light);
+  transform: translateY(-1px);
+  box-shadow: var(--inner-stroke), var(--elevation-raised);
+}
+
+.section-collapsed:active {
+  transform: scale(0.99);
+}
+
+.section-collapsed-lead {
+  font-size: 19px;
+  color: var(--text-secondary);
+  flex: none;
+}
+
+.section-collapsed-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.section-collapsed-mini {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.section-collapsed-mini .mdi {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.section-collapsed-sum {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex: none;
+}
+
+.section-collapsed-chev {
+  font-size: 20px;
+  color: var(--text-muted);
+  flex: none;
+}

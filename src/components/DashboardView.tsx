@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import {
   DndContext,
@@ -26,6 +26,7 @@ import { MusicAssistantSearch, type SearchMusic, type PlayMusic, type GetMaPlaye
 import { effectiveSize, sizeToSpan } from '../lib/tileSize';
 import { viewRows } from '../lib/layout';
 import { isSpecialTile, SPECIAL_TILES } from '../lib/musicAssistant';
+import { isActiveState, entityIcon } from '../lib/entityInfo';
 import { CalendarTile } from './CalendarTile';
 import { groupMediaPlayers, pickRepresentative, deviceNameKey, collapseSpeakerGroups, mediaConfigFor as computeMediaConfig, artworkPickerExclusions } from '../lib/mediaDevices';
 import { cameraProxyUrl } from '../hooks/useCameraFeed';
@@ -44,6 +45,107 @@ function useCompactSections(): boolean {
     return () => window.removeEventListener('ha:compact-sections', onChange);
   }, []);
   return compact;
+}
+
+/** Subscribe to the "smart grouping" preference (issue #16, live-updated from
+ *  Settings). When on, a section with no active device folds into a summary bar
+ *  and reopens when something turns on (or on tap). */
+function useSmartGrouping(): boolean {
+  const [on, setOn] = useState(() => getSettings().smartGrouping);
+  useEffect(() => {
+    const onChange = (e: Event) => setOn((e as CustomEvent<boolean>).detail);
+    window.addEventListener('ha:smart-grouping', onChange);
+    return () => window.removeEventListener('ha:smart-grouping', onChange);
+  }, []);
+  return on;
+}
+
+/** Sections with fewer real entities than this never collapse (no point). */
+const COLLAPSE_MIN_TILES = 2;
+
+/**
+ * A dashboard section (column) that can auto-collapse into a quiet summary bar
+ * when nothing in it is active, and expand when something turns on (issue #16).
+ *
+ * Behavior is "auto + tap override": the effective state follows the section's
+ * activity, but a tap pins it open or folded until the section's active/idle
+ * status next flips, at which point auto resumes. When the feature is off (or
+ * the section is too small) it renders exactly as before.
+ */
+function CollapsibleColumn({
+  title,
+  colEntities,
+  entities,
+  enabled,
+  children,
+}: {
+  title: string;
+  colEntities: RoomEntity[];
+  entities: HassEntities;
+  enabled: boolean;
+  children: React.ReactNode;
+}) {
+  // Only real, present entities count toward activity and the device tally;
+  // special cards (calendar / MA search) have no HA state.
+  const present = colEntities.filter((e) => entities[e.entity_id]);
+  const active = present.some((e) => isActiveState(entities[e.entity_id].state));
+  const collapsible = enabled && !!title && present.length >= COLLAPSE_MIN_TILES;
+
+  // null = follow activity (auto); true/false = a tap override that holds until
+  // the next activity change clears it.
+  const [override, setOverride] = useState<boolean | null>(null);
+  const prevActive = useRef(active);
+  useEffect(() => {
+    if (prevActive.current !== active) {
+      prevActive.current = active;
+      setOverride(null);
+    }
+  }, [active]);
+  // A section that stops being collapsible (feature off, entities removed)
+  // shouldn't carry a stale override.
+  useEffect(() => {
+    if (!collapsible) setOverride(null);
+  }, [collapsible]);
+
+  const expanded = !collapsible || (override ?? active);
+
+  if (expanded) {
+    return (
+      <>
+        {title && (
+          <h3 className="column-title">
+            <span>{title}</span>
+            {collapsible && (
+              <button
+                type="button"
+                className="section-fold"
+                title="Collapse section"
+                onClick={() => setOverride(false)}
+              >
+                <span className="mdi mdi-chevron-up" />
+              </button>
+            )}
+          </h3>
+        )}
+        {children}
+      </>
+    );
+  }
+
+  const icons = present.slice(0, 4).map((e) => entityIcon(e.entity_id, entities[e.entity_id].state));
+  return (
+    <button type="button" className="section-collapsed" onClick={() => setOverride(true)}>
+      <span className={`mdi ${icons[0] ?? 'mdi-dots-grid'} section-collapsed-lead`} />
+      <span className="section-collapsed-name">{title}</span>
+      <span className="section-collapsed-mini" aria-hidden="true">
+        {icons.map((ic, i) => (
+          <span key={i} className={`mdi ${ic}`} />
+        ))}
+      </span>
+      <span className="section-collapsed-sum">{present.length} devices · all quiet</span>
+      <span className="mdi mdi-chevron-right section-collapsed-chev" />
+    </button>
+  );
 }
 
 type CallHA = (domain: string, service: string, data?: Record<string, unknown>, target?: { entity_id: string | string[] }) => Promise<void>;
@@ -117,6 +219,7 @@ interface Props {
 export function DashboardView(props: Props) {
   const { view, entities, editing } = props;
   const compactSections = useCompactSections();
+  const smartGroupingEnabled = useSmartGrouping();
 
   if (view.kind === 'cameras') {
     return (
@@ -189,6 +292,9 @@ export function DashboardView(props: Props) {
   // gaps (less scrolling on tablets). Headings + separation stay intact. Sensor
   // views keep the classic full-width stack (their graphs read better wide).
   const compact = compactSections && view.kind !== 'sensors';
+  // Smart grouping only applies to ordinary tile sections, not media/camera/
+  // sensor boards (those have their own layout).
+  const smartGrouping = smartGroupingEnabled && (view.kind === undefined || view.kind === 'tiles');
 
   return (
     <div className={`view-rows ${compact ? 'compact' : ''}`} key={view.id}>
@@ -198,14 +304,20 @@ export function DashboardView(props: Props) {
           <div className={`row-columns ${row.columns.length > 1 ? 'multi' : ''}`}>
             {row.columns.map((col, ci) => (
               <div className="row-column" key={ci}>
-                {col.title && <h3 className="column-title">{col.title}</h3>}
-                <div className="tile-grid">
-                  {col.entities
-                    .filter((e) => entities[e.entity_id] || isSpecialTile(e.entity_id))
-                    .map((re) => (
-                      <Tile key={re.entity_id} re={re} enterIndex={tileIndex++} {...props} />
-                    ))}
-                </div>
+                <CollapsibleColumn
+                  title={col.title ?? ''}
+                  colEntities={col.entities}
+                  entities={entities}
+                  enabled={smartGrouping}
+                >
+                  <div className="tile-grid">
+                    {col.entities
+                      .filter((e) => entities[e.entity_id] || isSpecialTile(e.entity_id))
+                      .map((re) => (
+                        <Tile key={re.entity_id} re={re} enterIndex={tileIndex++} {...props} />
+                      ))}
+                  </div>
+                </CollapsibleColumn>
               </div>
             ))}
           </div>
