@@ -209,6 +209,10 @@ const ru = {
   dash_add_tile: 'Добавить плитку',
   dash_add_row: 'Добавить ряд',
   dash_row_name: 'Название ряда',
+  dash_deselect: 'Снять выделение',
+  dash_select_merge: 'Выбрать для объединения',
+  dash_remove: 'Удалить',
+  dash_click_to_delete: 'Нажмите ещё раз для удаления плитки',
   dash_move_row_up: 'Ряд вверх',
   dash_move_row_down: 'Ряд вниз',
   dash_add_column: 'Добавить колонку',
@@ -275,6 +279,8 @@ const ru = {
   detail_avg: 'ср',
   detail_max: 'макс',
   detail_device_details: 'Детали',
+  detail_docked: 'Задокировано',
+  detail_in_room: 'В комнате: {{room}}',
 
   // Calendar
   cal_next_7_days: 'Ближайшие 7 дней',
@@ -389,6 +395,10 @@ const ru = {
   tile_size: 'Размер',
   tile_slide_dim: 'Тянуть для диммирования',
   tile_slide_dim_desc: 'Тяните по плитке для установки яркости, когда свет включён.',
+  tile_vacuum_pause: 'Пауза',
+  tile_vacuum_clean: 'Уборка',
+  tile_vacuum_dock: 'Домой',
+  tile_vacuum_batt: 'Акк.',
 };
 
 const en: typeof ru = {
@@ -591,6 +601,10 @@ const en: typeof ru = {
   dash_add_tile: 'Add Tile',
   dash_add_row: 'Add Row',
   dash_row_name: 'Row name',
+  dash_deselect: 'Deselect',
+  dash_select_merge: 'Select to merge',
+  dash_remove: 'Remove',
+  dash_click_to_delete: 'Click again to delete this tile',
   dash_move_row_up: 'Move row up',
   dash_move_row_down: 'Move row down',
   dash_add_column: 'Add column',
@@ -656,6 +670,8 @@ const en: typeof ru = {
   detail_avg: 'avg',
   detail_max: 'max',
   detail_device_details: 'Details',
+  detail_docked: 'Docked',
+  detail_in_room: 'In {{room}}',
 
   cal_next_7_days: 'Next 7 days',
   cal_nothing_scheduled: 'Nothing scheduled this week.',
@@ -756,6 +772,10 @@ const en: typeof ru = {
   tile_size: 'Size',
   tile_slide_dim: 'Slide to dim',
   tile_slide_dim_desc: "Drag across the tile to set brightness when the light is on.",
+  tile_vacuum_pause: 'Pause',
+  tile_vacuum_clean: 'Clean',
+  tile_vacuum_dock: 'Dock',
+  tile_vacuum_batt: 'Batt.',
 };
 
 i18n.use(initReactI18next).init({

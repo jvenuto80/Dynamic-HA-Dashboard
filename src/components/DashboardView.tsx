@@ -615,7 +615,7 @@ function MediaAutoView(props: Props) {
               >
                 <button
                   className="media-select"
-                  title={selected.has(r.key) ? 'Deselect' : 'Select to merge'}
+                  title={selected.has(r.key) ? t('dash_deselect') : t('dash_select_merge')}
                   onClick={() => toggleSelect(r.key)}
                 >
                   <span
@@ -845,7 +845,7 @@ function MediaDeviceSettings({
                 {config.artworkEntity ? (
                   <span className="ts-chip">
                     {nameOf(config.artworkEntity)}
-                    <button onClick={() => onChange({ artworkEntity: undefined })} title="Remove">
+                    <button onClick={() => onChange({ artworkEntity: undefined })} title={t('dash_remove')}>
                       <span className="mdi mdi-close" />
                     </button>
                   </span>
@@ -1319,7 +1319,7 @@ function SortableTile({
         {confirmDel ? (
           <button
             className="edit-icon-btn danger confirm-del"
-            title="Click again to delete this tile"
+            title={t('dash_click_to_delete')}
             onClick={() => layout.removeTile(view.id, rowIdx, colIdx, entIdx)}
           >
             <span className="mdi mdi-check" /> {t('dash_delete_q')}

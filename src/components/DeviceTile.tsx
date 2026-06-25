@@ -455,7 +455,7 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
         {mapUrl && <div className="vacuum-map-bg" />}
         <div className="tile-top">
           <span className="mdi mdi-robot-vacuum tile-icon" />
-          {battery != null && <span className="vacuum-batt">{battery}% Batt.</span>}
+          {battery != null && <span className="vacuum-batt">{battery}% {t('tile_vacuum_batt')}</span>}
         </div>
         {!mapUrl && (
           <div className="vacuum-ring">
@@ -465,12 +465,12 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
         <div className="vacuum-quick">
           <button
             className="vacuum-quick-btn"
-            title={cleaning ? 'Pause' : 'Clean'}
+            title={cleaning ? t('tile_vacuum_pause') : t('tile_vacuum_clean')}
             onClick={(e) => quick(e, cleaning ? 'pause' : 'start')}
           >
             <span className={`mdi ${cleaning ? 'mdi-pause' : 'mdi-play'}`} />
           </button>
-          <button className="vacuum-quick-btn" title="Dock" onClick={(e) => quick(e, 'return_to_base')}>
+          <button className="vacuum-quick-btn" title={t('tile_vacuum_dock')} onClick={(e) => quick(e, 'return_to_base')}>
             <span className="mdi mdi-home-import-outline" />
           </button>
         </div>

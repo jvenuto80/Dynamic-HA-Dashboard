@@ -759,7 +759,7 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
         <div className="vac-summary-text">
           <div className="vac-status">{hasError ? errorRaw : status}</div>
           <div className="vac-substatus">
-            {currentRoom && cleaning ? `In ${currentRoom}` : docked ? 'Docked' : ''}
+            {currentRoom && cleaning ? t('detail_in_room', { room: currentRoom }) : docked ? t('detail_docked') : ''}
             {cleaning && area != null ? `${currentRoom ? ' · ' : ''}${area} m²${time != null ? ` · ${time} min` : ''}` : ''}
           </div>
         </div>
