@@ -7,7 +7,7 @@ FROM node:20-alpine AS build
 
 # Clone + build the dashboard from the public repo so this add-on folder stays
 # self-contained (HA builds add-ons with the add-on folder as the context).
-ARG DASHBOARD_REPO=https://github.com/jvenuto80/Dynamic-HA-Dashboard.git
+ARG DASHBOARD_REPO=https://github.com/efimofline/Dynamic-HA-Dashboard.git
 ARG DASHBOARD_REF=main
 
 RUN apk add --no-cache git
@@ -15,7 +15,7 @@ WORKDIR /build
 # Cache-bust: this file's content changes whenever DASHBOARD_REF moves, so Docker
 # invalidates the clone layer below and Update reliably rebuilds from latest source
 # (without this, the cached `git clone` layer would serve stale code on Update).
-ADD https://api.github.com/repos/jvenuto80/Dynamic-HA-Dashboard/commits/${DASHBOARD_REF} /tmp/dashboard-head.json
+ADD https://api.github.com/repos/efimofline/Dynamic-HA-Dashboard/commits/${DASHBOARD_REF} /tmp/dashboard-head.json
 RUN git clone --depth 1 --branch "${DASHBOARD_REF}" "${DASHBOARD_REPO}" . \
     && npm ci \
     && npm run build

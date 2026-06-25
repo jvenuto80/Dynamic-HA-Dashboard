@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import './i18n';
 import { applyTheme, getSettings, hydrateConnectionFromServer, hydrateSettingsFromServer } from './settings';
 import { refreshConnection } from './config';
 import { installHaptics } from './lib/haptics';

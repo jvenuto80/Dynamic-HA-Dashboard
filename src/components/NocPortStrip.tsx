@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import type { NocPort, NocPortRole } from '../types';
 import { PORT_SPEED_META, isSfpPort, portPoeOn, portSpeedClass } from '../lib/noc';
@@ -69,12 +70,13 @@ export function NocPortStrip({
   activeId?: string | null;
   large?: boolean;
 }) {
+  const { t } = useTranslation();
   if (!ports.length) return null;
   // Insert a one-port-wide gap at the first RJ45 → SFP boundary, like a real
   // switch faceplate. Based on each port's configured type so a disconnected
   // SFP still sits with the SFP cage.
   return (
-    <div className={`noc-ports${large ? ' noc-ports-lg' : ''}`} role="group" aria-label="Switch ports">
+    <div className={`noc-ports${large ? ' noc-ports-lg' : ''}`} role="group" aria-label={t('noc_switch_ports')}>
       {ports.map((p, i) => {
         const gap = isSfpPort(p) && i > 0 && !isSfpPort(ports[i - 1]);
         return (

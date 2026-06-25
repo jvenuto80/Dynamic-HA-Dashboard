@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import { rooms } from '../config';
 import { isActiveState } from '../lib/entityInfo';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function RoomPanel({ roomId, entities, onClose, onToggle, onOpenDetail, callHA }: Props) {
+  const { t } = useTranslation();
   const isOpen = roomId !== null;
   const room = roomId ? rooms.find((r) => r.id === roomId) : null;
   const present = room ? room.entities.filter((e) => entities[e.entity_id]) : [];
@@ -42,11 +44,11 @@ export function RoomPanel({ roomId, entities, onClose, onToggle, onOpenDetail, c
             <div className="room-panel-stat">
               <div>
                 <span className="num">{activeCount}</span>
-                <span className="lbl">active</span>
+                <span className="lbl">{t('room_active')}</span>
               </div>
               <div>
                 <span className="num">{present.length}</span>
-                <span className="lbl">devices</span>
+                <span className="lbl">{t('room_devices')}</span>
               </div>
               {lights.length > 0 && (
                 <button
@@ -57,7 +59,7 @@ export function RoomPanel({ roomId, entities, onClose, onToggle, onOpenDetail, c
                   })}
                 >
                   <span className={`mdi ${allLightsOn ? 'mdi-lightbulb-off' : 'mdi-lightbulb-on'}`} />
-                  {allLightsOn ? 'All lights off' : 'All lights on'}
+                  {allLightsOn ? t('room_all_off') : t('room_all_on')}
                 </button>
               )}
             </div>

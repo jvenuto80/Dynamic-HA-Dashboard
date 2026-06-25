@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { locks } from '../config';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import { useRef, useCallback } from 'react';
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function LockCards({ entities, onToggleLock }: Props) {
+  const { t } = useTranslation();
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handlePointerDown = useCallback((entityId: string, state: string) => {
@@ -42,7 +44,7 @@ export function LockCards({ entities, onToggleLock }: Props) {
               <span className={`mdi ${isLocked ? 'mdi-lock' : 'mdi-lock-open-variant'}`} />
             </div>
             <div className="lock-label">{lock.name}</div>
-            <div className="lock-hint">Hold to {isLocked ? 'unlock' : 'lock'}</div>
+            <div className="lock-hint">{isLocked ? t('lock_hold_unlock') : t('lock_hold_lock')}</div>
           </div>
         );
       })}

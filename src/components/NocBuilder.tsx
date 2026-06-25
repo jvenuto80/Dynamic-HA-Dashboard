@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import type { DashView, NocConfig, NocNode, NocApiStat, NocPanel, NocPanelType, NocPill, NocPort, NocPortPoe, NocPortRole, NocPortSpeed, NocValueFormat } from '../types';
 import { EntityPicker, type LayoutActions } from './DashboardView';
@@ -68,6 +69,7 @@ type PickerTarget =
   | { kind: 'powerField'; panelId: string; unitId: string; field: 'batteryEntity' | 'runtimeEntity' | 'loadEntity' | 'drawEntity' | 'statusEntity' };
 
 export function NocBuilder({ view, entities, layout, getHistory }: Props) {
+  const { t } = useTranslation();
   const noc: NocConfig = view.noc ?? { nodes: [] };
   const [picker, setPicker] = useState<PickerTarget | null>(null);
 
@@ -139,7 +141,7 @@ export function NocBuilder({ view, entities, layout, getHistory }: Props) {
     const found = suggestPorts(entities, nodeSlug(node.name));
     if (!found.length) {
       window.alert(
-        `No port entities found for “${node.name}”.\n\nThis looks for PoE switches and per-port sensors named like “…port 5 PoE”. Add ports manually, or rename the device to match your switch's entities.`,
+        `No port entities found for "${node.name}".\n\nThis looks for PoE switches and per-port sensors named like "…port 5 PoE". Add ports manually, or rename the device to match your switch's entities.`,
       );
       return;
     }
@@ -160,12 +162,12 @@ export function NocBuilder({ view, entities, layout, getHistory }: Props) {
   // edits, so what they see becomes fully editable.
   const panels: NocPanel[] = noc.panels ?? [];
   const setPanels = (next: NocPanel[]) => patchNoc({ panels: next });
-  const ensurePanels = (): NocPanel[] => (noc.panels && noc.panels.length ? noc.panels : effectivePanels(noc));
+  const ensurePanels = (): NocPanel[] => (noc.panels && noc.panels.length ? noc.panels : effectivePanels(noc, t));
   const updatePanel = (panelId: string, patch: Partial<NocPanel>) =>
     setPanels(ensurePanels().map((p) => (p.id === panelId ? { ...p, ...patch } : p)));
   const addPanel = (type: NocPanelType) => {
     const id = `panel-${type}-${Date.now().toString(36)}`;
-    const base: NocPanel = { id, type, title: defaultTitle(type), span: type === 'wan' ? 1.5 : 1 };
+    const base: NocPanel = { id, type, title: defaultTitle(type, t), span: type === 'wan' ? 1.5 : 1 };
     if (type === 'wan') Object.assign(base, { stats: [], series: [] });
     if (type === 'storage') base.donuts = [];
     if (type === 'power') base.units = [];
@@ -179,7 +181,7 @@ export function NocBuilder({ view, entities, layout, getHistory }: Props) {
     arr.splice(to, 0, p);
     setPanels(arr);
   };
-  const autoPopulatePanels = () => setPanels(deriveDefaultPanels(noc));
+  const autoPopulatePanels = () => setPanels(deriveDefaultPanels(noc, t));
   const uid = (p: string) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
 
   // API stats (external HTTP source, e.g. Speedtest-Tracker) on a WAN panel.
@@ -659,8 +661,8 @@ export function NocBuilder({ view, entities, layout, getHistory }: Props) {
                 />
               </div>
               <div className="noc-build-hint" style={{ margin: 0 }}>
-                Matched against “{entityName(entities, node.statusEntity)}” (currently:
-                {' '}{entities[node.statusEntity]?.state ?? '—'}). Great for UPS NUT flags like “Replace Battery”.
+                Matched against "{entityName(entities, node.statusEntity)}" (currently:
+                {' '}{entities[node.statusEntity]?.state ?? '—'}). Great for UPS NUT flags like "Replace Battery".
               </div>
             </div>
           )}
@@ -745,7 +747,7 @@ export function NocBuilder({ view, entities, layout, getHistory }: Props) {
             </button>
             <button
               className="noc-add-mini"
-              title={`Add every running switch/binary_sensor matching “${nodeSlug(node.name)}”`}
+              title={`Add every running switch/binary_sensor matching "${nodeSlug(node.name)}"`}
               onClick={() => {
                 const found = runningContainers(entities, nodeSlug(node.name));
                 const merged = [...new Set([...(node.dockerWatch ?? []), ...found])];
@@ -923,7 +925,7 @@ export function NocBuilder({ view, entities, layout, getHistory }: Props) {
               <input
                 className="noc-build-name"
                 value={panel.title ?? ''}
-                placeholder={defaultTitle(panel.type)}
+                placeholder={defaultTitle(panel.type, t)}
                 onChange={(e) => updatePanel(panel.id, { title: e.target.value })}
               />
               <input

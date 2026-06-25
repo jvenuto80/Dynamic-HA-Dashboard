@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import type { GlanceButtonConfig, GlanceMetric } from '../types';
 import { AnimatedNumber } from './AnimatedNumber';
@@ -83,6 +84,7 @@ export function GlanceStrip({
 }: Props) {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [editKey, setEditKey] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const config = glance ?? DEFAULT_GLANCE;
 
@@ -153,13 +155,13 @@ export function GlanceStrip({
                   type="button"
                   className="glance-stat clickable glance-nav"
                   onClick={!editing && target ? () => onNavigate?.(target.id) : undefined}
-                  title={target ? `Go to ${target.name}` : 'Pick a page in edit mode'}
+                  title={target ? t('glance_go_to', { page: target.name }) : t('glance_pick_page')}
                 >
                   <span className={`mdi ${navIcon} glance-icon`} />
                   <div className="glance-text">
                     <span className="glance-value glance-nav-name">{navLabel}</span>
                     <span className="glance-label">
-                      <span className="mdi mdi-arrow-right-thin" /> open
+                      <span className="mdi mdi-arrow-right-thin" /> {t('glance_open')}
                     </span>
                   </div>
                 </button>
@@ -168,7 +170,7 @@ export function GlanceStrip({
                     <button
                       type="button"
                       className="glance-edit-btn"
-                      title="Configure"
+                      title={t('glance_configure')}
                       onClick={() => setEditKey(cfg.id)}
                     >
                       <span className="mdi mdi-cog" />
@@ -176,7 +178,7 @@ export function GlanceStrip({
                     <button
                       type="button"
                       className="glance-edit-btn danger"
-                      title="Remove"
+                      title={t('glance_remove')}
                       onClick={() => removeButton(cfg.id)}
                     >
                       <span className="mdi mdi-close" />
@@ -216,7 +218,7 @@ export function GlanceStrip({
                   <button
                     type="button"
                     className="glance-edit-btn"
-                    title="Configure"
+                    title={t('glance_configure')}
                     onClick={() => setEditKey(cfg.id)}
                   >
                     <span className="mdi mdi-cog" />
@@ -224,7 +226,7 @@ export function GlanceStrip({
                   <button
                     type="button"
                     className="glance-edit-btn danger"
-                    title="Remove"
+                    title={t('glance_remove')}
                     onClick={() => removeButton(cfg.id)}
                   >
                     <span className="mdi mdi-close" />
@@ -259,7 +261,7 @@ export function GlanceStrip({
         {editing && (
           <button type="button" className="glance-stat glance-add" onClick={addButton}>
             <span className="mdi mdi-plus glance-icon" />
-            <span className="glance-label">Add button</span>
+            <span className="glance-label">{t('glance_add_button')}</span>
           </button>
         )}
       </div>
@@ -316,6 +318,7 @@ function GlanceFlyout({
   onToggle: (item: GlanceItem) => void;
   onOpenDetail: (entityId: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       <div className="detail-header">
@@ -340,7 +343,7 @@ function GlanceFlyout({
               type="button"
               className={`glance-toggle ${item.on ? 'on' : ''}`}
               onClick={() => onToggle(item)}
-              title={`Tap to turn ${item.on ? 'off' : 'on'}`}
+              title={item.on ? t('glance_tap_off') : t('glance_tap_on')}
             >
               <span className={`mdi ${item.icon} glance-toggle-icon`} />
               <span className="glance-toggle-name">{item.name}</span>
@@ -392,6 +395,7 @@ function GlanceButtonEditor({
   onClose: () => void;
 }) {
   const [picking, setPicking] = useState(false);
+  const { t } = useTranslation();
   const nameOf = (id: string) =>
     (entities[id]?.attributes.friendly_name as string) || id;
   const isNav = cfg.kind === 'nav';
@@ -401,15 +405,15 @@ function GlanceButtonEditor({
       <div className="picker-modal glance-editor" onClick={(e) => e.stopPropagation()}>
         <div className="picker-head">
           <span className="mdi mdi-tune-variant" />
-          <span className="glance-editor-title">Glance button</span>
-          <button className="edit-icon-btn" title="Close" onClick={onClose}>
+          <span className="glance-editor-title">{t('glance_button_title')}</span>
+          <button className="edit-icon-btn" title={t('settings_close')} onClick={onClose}>
             <span className="mdi mdi-close" />
           </button>
         </div>
 
         <div className="glance-editor-body">
           <label className="glance-field">
-            <span>Type</span>
+            <span>{t('glance_type')}</span>
             <select
               value={isNav ? 'nav' : 'metric'}
               onChange={(e) =>
@@ -420,16 +424,16 @@ function GlanceButtonEditor({
                 )
               }
             >
-              <option value="metric">Metric count (lights on, who&apos;s home, …)</option>
-              <option value="nav">Page shortcut (jump to a page)</option>
+              <option value="metric">{t('glance_metric_count')}</option>
+              <option value="nav">{t('glance_page_shortcut')}</option>
             </select>
           </label>
 
           {isNav ? (
             <label className="glance-field">
-              <span>Opens page</span>
+              <span>{t('glance_opens_page')}</span>
               <select value={cfg.view ?? ''} onChange={(e) => onChange({ view: e.target.value })}>
-                {!cfg.view && <option value="">Pick a page…</option>}
+                {!cfg.view && <option value="">{t('glance_pick_page_label')}</option>}
                 {views.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name}
@@ -439,7 +443,7 @@ function GlanceButtonEditor({
             </label>
           ) : (
             <label className="glance-field">
-              <span>Shows</span>
+              <span>{t('glance_shows')}</span>
               <select
                 value={cfg.metric}
                 onChange={(e) => onChange({ metric: e.target.value as GlanceMetric, exclude: undefined })}
@@ -454,7 +458,7 @@ function GlanceButtonEditor({
           )}
 
           <label className="glance-field">
-            <span>Label</span>
+            <span>{t('glance_label')}</span>
             <input
               type="text"
               placeholder={
@@ -469,7 +473,7 @@ function GlanceButtonEditor({
 
           {!isNav && (
           <label className="glance-field glance-field-row">
-            <span>Open a flyout when tapped</span>
+            <span>{t('glance_flyout_on_tap')}</span>
             <button
               type="button"
               className={`ts-switch ${cfg.flyout !== false ? 'on' : ''}`}
@@ -484,20 +488,18 @@ function GlanceButtonEditor({
 
           {!isNav && (
           <div className="glance-field">
-            <span>Exclude entities</span>
+            <span>{t('glance_exclude_entities')}</span>
             <p className="glance-field-hint">
-              Hide specific entities (e.g. tablet “screen” lights) from this
-              metric’s count and flyout. Exclusions are shared across every page,
-              so the number stays consistent everywhere.
+              {t('glance_exclude_desc')}
             </p>
             <div className="glance-exclude-list">
-              {exclude.length === 0 && <span className="glance-field-hint">None excluded.</span>}
+              {exclude.length === 0 && <span className="glance-field-hint">{t('glance_none_excluded')}</span>}
               {exclude.map((id) => (
                 <span className="glance-exclude-chip" key={id}>
                   {nameOf(id)}
                   <button
                     type="button"
-                    title="Remove"
+                    title={t('glance_remove')}
                     onClick={() => onExcludeChange(exclude.filter((x) => x !== id))}
                   >
                     <span className="mdi mdi-close" />
@@ -506,7 +508,7 @@ function GlanceButtonEditor({
               ))}
             </div>
             <button type="button" className="glance-add-exclude" onClick={() => setPicking(true)}>
-              <span className="mdi mdi-plus" /> Exclude an entity
+              <span className="mdi mdi-plus" /> {t('glance_exclude_entity')}
             </button>
           </div>
           )}
@@ -518,7 +520,7 @@ function GlanceButtonEditor({
           entities={entities}
           existing={new Set(exclude)}
           domainFilter={domainForMetric(cfg.metric)}
-          title="Exclude entity…"
+          title={t('glance_exclude_entity_picker')}
           onClose={() => setPicking(false)}
           onPick={(id) => {
             onExcludeChange([...exclude, id]);

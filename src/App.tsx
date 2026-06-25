@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useLayout } from './hooks/useLayout';
 import { useSwipeNav } from './hooks/useSwipeNav';
@@ -27,6 +28,7 @@ import { scenes, HA_TOKEN } from './config';
 import type { RoomEntity, DashView } from './types';
 
 export default function App() {
+  const { t } = useTranslation();
   const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers } = useHomeAssistant();
   const layout = useLayout();
   const { views } = layout;
@@ -258,7 +260,7 @@ export default function App() {
 
         {editing && view.kind !== 'cameras' && (
           <div className="glass-card scenes-card scenes-edit-card">
-            <h3 className="block-title">Scenes</h3>
+            <h3 className="block-title">{t('app_scenes')}</h3>
             <div className="scenes-edit-row">
               {viewScenes.map((scene, idx) => (
                 <div key={scene.entity_id} className="scene-edit-pill">
@@ -272,7 +274,7 @@ export default function App() {
                   <div className="scene-edit-tools">
                     <button
                       className="edit-icon-btn"
-                      title="Move left"
+                      title={t('app_move_left')}
                       disabled={idx === 0}
                       onClick={() => layout.moveScene(view.id, idx, idx - 1)}
                     >
@@ -280,7 +282,7 @@ export default function App() {
                     </button>
                     <button
                       className="edit-icon-btn"
-                      title="Move right"
+                      title={t('app_move_right')}
                       disabled={idx === viewScenes.length - 1}
                       onClick={() => layout.moveScene(view.id, idx, idx + 1)}
                     >
@@ -288,7 +290,7 @@ export default function App() {
                     </button>
                     <button
                       className="edit-icon-btn danger"
-                      title="Remove scene"
+                      title={t('app_remove_scene')}
                       onClick={() => layout.removeScene(view.id, scene.entity_id)}
                     >
                       <span className="mdi mdi-close" />
@@ -297,7 +299,7 @@ export default function App() {
                 </div>
               ))}
               <button className="add-tile-btn scene-add-btn" onClick={() => setScenePicker(true)}>
-                <span className="mdi mdi-plus" /> Add Scene
+                <span className="mdi mdi-plus" /> {t('app_add_scene')}
               </button>
             </div>
           </div>
@@ -311,29 +313,29 @@ export default function App() {
                 <span className="edit-status">
                   {layout.saving ? (
                     <>
-                      <span className="mdi mdi-loading mdi-spin" /> Saving…
+                      <span className="mdi mdi-loading mdi-spin" /> {t('app_saving')}
                     </>
                   ) : (
                     <>
-                      <span className="mdi mdi-check-circle-outline" /> Saved
+                      <span className="mdi mdi-check-circle-outline" /> {t('app_saved')}
                     </>
                   )}
                 </span>
                 <button
                   className="toolbar-btn"
                   onClick={() => {
-                    if (confirm('Reset ALL dashboards to the default layout?')) layout.resetLayout();
+                    if (confirm(t('app_reset_confirm'))) layout.resetLayout();
                   }}
                 >
-                  <span className="mdi mdi-restore" /> Reset
+                  <span className="mdi mdi-restore" />{' '}{t('app_reset')}
                 </button>
                 <button className="toolbar-btn primary" onClick={() => setEditing(false)}>
-                  <span className="mdi mdi-check" /> Done
+                  <span className="mdi mdi-check" />{' '}{t('app_done')}
                 </button>
               </>
             ) : (
               <button className="toolbar-btn" onClick={() => setEditing(true)}>
-                <span className="mdi mdi-pencil" /> Edit
+                <span className="mdi mdi-pencil" />{' '}{t('app_edit')}
               </button>
             )}
           </div>
@@ -363,7 +365,7 @@ export default function App() {
 
         {!editing && viewScenes.length > 0 && (
           <div className="glass-card scenes-card scenes-bottom">
-            <h3 className="block-title">Scenes</h3>
+            <h3 className="block-title">{t('app_scenes')}</h3>
             <ScenePills entities={entities} onToggle={toggleEntity} scenes={viewScenes} />
           </div>
         )}
@@ -433,7 +435,7 @@ export default function App() {
           entities={entities}
           existing={new Set(view.scenes ?? [])}
           domainFilter={['scene']}
-          title="Search scenes…"
+          title={t('app_search_scenes')}
           onClose={() => setScenePicker(false)}
           onPick={(entityId) => {
             layout.addScene(view.id, entityId);
@@ -488,7 +490,7 @@ export default function App() {
       )}
       {!connected && !error && !needsOnboarding && (
         <div className="connection-bar connecting">
-          <span className="mdi mdi-loading mdi-spin" /> Connecting to Home Assistant...
+          <span className="mdi mdi-loading mdi-spin" /> {t('connecting')}
         </div>
       )}
     </div>

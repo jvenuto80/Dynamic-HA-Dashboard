@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import type { DashView, NocNode } from '../types';
 import type { LayoutActions } from './DashboardView';
@@ -37,6 +38,7 @@ function deviceUp(node: NocNode, entities: HassEntities): boolean {
 
 
 export function NocView({ view, entities, editing, layout, getHistory, onOpenDetail, callHA }: Props) {
+  const { t } = useTranslation();
   const noc = view.noc;
   const [openNode, setOpenNode] = useState<string | null>(null);
 
@@ -71,8 +73,8 @@ export function NocView({ view, entities, editing, layout, getHistory, onOpenDet
       <div className="view-rows">
         <div className="page-empty">
           <span className="mdi mdi-server-network page-empty-icon" />
-          <h3>Build your NOC</h3>
-          <p>Add devices, assign sensors and pick which containers to watch — all in edit mode.</p>
+          <h3>{t('noc_build')}</h3>
+          <p>{t('noc_build_desc')}</p>
         </div>
       </div>
     );
@@ -86,10 +88,10 @@ export function NocView({ view, entities, editing, layout, getHistory, onOpenDet
       <div className={`noc-banner ${allClear ? 'is-ok' : 'is-alert'}`}>
         <span className="noc-pulse" />
         <div className="noc-banner-text">
-          <h2>{allClear ? 'All Systems Operational' : `${summary.issues} device${summary.issues === 1 ? '' : 's'} need attention`}</h2>
+          <h2>{allClear ? t('noc_operational') : t('noc_need_attention', { count: summary.issues })}</h2>
           <div className="noc-banner-sub">
-            {summary.total} device{summary.total === 1 ? '' : 's'} monitored
-            {summary.containersDown > 0 && ` · ${summary.containersDown} container${summary.containersDown === 1 ? '' : 's'} down`}
+            {t('noc_monitored', { count: summary.total })}
+            {summary.containersDown > 0 && ` · ${t('noc_containers_down', { count: summary.containersDown })}`}
           </div>
         </div>
         <div className="noc-chips">
@@ -97,18 +99,18 @@ export function NocView({ view, entities, editing, layout, getHistory, onOpenDet
             <div className={`noc-chip-v ${summary.up === summary.total ? 'ok' : 'warn'}`}>
               {summary.up}/{summary.total}
             </div>
-            <div className="noc-chip-l">Devices Up</div>
+            <div className="noc-chip-l">{t('noc_devices_up')}</div>
           </div>
           {summary.avgLatency !== undefined && (
             <div className="noc-chip">
               <div className="noc-chip-v info">{summary.avgLatency} ms</div>
-              <div className="noc-chip-l">WAN Latency</div>
+              <div className="noc-chip-l">{t('noc_wan_latency')}</div>
             </div>
           )}
           {summary.clients !== undefined && (
             <div className="noc-chip">
               <div className="noc-chip-v ok">{summary.clients}</div>
-              <div className="noc-chip-l">Clients</div>
+              <div className="noc-chip-l">{t('noc_clients')}</div>
             </div>
           )}
           {summary.watched > 0 && (
@@ -116,13 +118,13 @@ export function NocView({ view, entities, editing, layout, getHistory, onOpenDet
               <div className={`noc-chip-v ${summary.containersDown ? 'crit' : 'ok'}`}>
                 {summary.watched - summary.containersDown}/{summary.watched}
               </div>
-              <div className="noc-chip-l">Containers</div>
+              <div className="noc-chip-l">{t('noc_containers')}</div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="noc-eyebrow">Infrastructure · live</div>
+      <div className="noc-eyebrow">{t('noc_infrastructure')}</div>
       <div className="noc-nodes">
         {nodes.map((n) => (
           <NocNodeTile

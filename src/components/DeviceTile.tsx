@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { entityIcon, entitySummary, isActiveState, resolveArtwork } from '../lib/entityInfo';
 import { useArtworkColor } from '../hooks/useArtworkColor';
@@ -172,6 +173,7 @@ function vacuumMapUrl(entities: HassEntities | undefined, base: string): string 
 }
 
 export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpenTakeover, span, tall, graph, getHistory, cameraUrl, icon, slideDim, reverseSlider, mediaArtwork, artworkEntity, entities, enterIndex }: Props) {
+  const { t } = useTranslation();
   const id = entity.entity_id;
   const domain = id.split('.')[0];
   const active = isActiveState(entity.state);
@@ -499,7 +501,7 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
           <button
             className="tile-more"
             onClick={(e) => { e.stopPropagation(); onOpenDetail(id); }}
-            aria-label="Details"
+            aria-label={t('tile_details')}
           >
             <span className="mdi mdi-dots-horizontal" />
           </button>

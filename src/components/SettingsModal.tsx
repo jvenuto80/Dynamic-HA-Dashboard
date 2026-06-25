@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   createConnection,
   createLongLivedTokenAuth,
@@ -36,6 +37,7 @@ type TestState = 'idle' | 'testing' | 'ok' | 'fail';
 
 export function SettingsModal({ onClose, entities, views, onResetLayout, onStartBlank, onExportLayout, onImportLayout }: Props) {
   const initial = getSettings();
+  const { t } = useTranslation();
   const [haUrl, setHaUrl] = useState(initial.haUrl);
   const [haToken, setHaToken] = useState(initial.haToken);
   const [showToken, setShowToken] = useState(false);
@@ -126,10 +128,10 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
       const conn = await createConnection({ auth });
       conn.close();
       setTest('ok');
-      setTestMsg('Connected successfully.');
+      setTestMsg(t('settings_connected'));
     } catch (err) {
       setTest('fail');
-      setTestMsg(err instanceof Error ? err.message : 'Connection failed.');
+      setTestMsg(err instanceof Error ? err.message : t('settings_failed'));
     }
   };
 
@@ -196,10 +198,10 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     reader.onload = () => {
       try {
         onImportLayout(String(reader.result));
-        alert('Layout imported. Reloading…');
+        alert(t('settings_import_success'));
         window.location.reload();
       } catch (err) {
-        alert(`Import failed: ${err instanceof Error ? err.message : 'invalid file'}`);
+        alert(t('settings_import_fail', { error: err instanceof Error ? err.message : 'invalid file' }));
       }
     };
     reader.readAsText(file);
@@ -210,9 +212,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
       <div className="ts-modal settings-modal" onClick={(e) => e.stopPropagation()}>
         <div className="ts-head">
           <h3>
-            <span className="mdi mdi-cog" /> Settings
+            <span className="mdi mdi-cog" /> {t('settings_title')}
           </h3>
-          <button className="edit-icon-btn" title="Close" onClick={cancel}>
+          <button className="edit-icon-btn" title={t('settings_close')} onClick={cancel}>
             <span className="mdi mdi-close" />
           </button>
         </div>
@@ -221,21 +223,19 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
           {/* Connection */}
           <section className="settings-section">
             <h4 className="settings-section-title">
-              <span className="mdi mdi-home-assistant" /> Home Assistant
+              <span className="mdi mdi-home-assistant" /> {t('settings_ha')}
             </h4>
             {servedByHa ? (
               <div className="ts-field">
-                <span>Server URL</span>
+                <span>{t('settings_server_url')}</span>
                 <div className="settings-hint" style={{ marginTop: 4 }}>
                   <span className="mdi mdi-check-circle" style={{ color: 'var(--accent-primary)' }} />{' '}
-                  Connected through Home Assistant — no server URL needed. Glance
-                  uses the same address you opened it with, so it works locally
-                  and remotely without being exposed to the internet.
+                  {t('settings_served_by_ha')}
                 </div>
               </div>
             ) : (
               <label className="ts-field">
-                <span>Server URL</span>
+                <span>{t('settings_server_url')}</span>
                 <input
                   type="url"
                   placeholder="http://homeassistant.local:8123"
@@ -245,11 +245,11 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               </label>
             )}
             <label className="ts-field">
-              <span>Long-lived access token</span>
+              <span>{t('settings_token')}</span>
               <div className="settings-token-row">
                 <input
                   type={showToken ? 'text' : 'password'}
-                  placeholder="Paste token from your HA profile"
+                  placeholder={t('settings_token_placeholder')}
                   value={haToken}
                   autoComplete="off"
                   spellCheck={false}
@@ -257,25 +257,25 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 />
                 <button
                   className="edit-icon-btn"
-                  title={showToken ? 'Hide' : 'Show'}
+                  title={showToken ? t('settings_hide') : t('settings_show')}
                   onClick={() => setShowToken((s) => !s)}
                 >
                   <span className={`mdi ${showToken ? 'mdi-eye-off' : 'mdi-eye'}`} />
                 </button>
               </div>
               <small className="settings-hint">
-                Create one in Home Assistant → Profile → Long-Lived Access Tokens.
+                {t('settings_create_token')}
               </small>
             </label>
             <div className="settings-test-row">
               <button className="toolbar-btn" onClick={runTest} disabled={test === 'testing'}>
                 {test === 'testing' ? (
                   <>
-                    <span className="mdi mdi-loading mdi-spin" /> Testing…
+                    <span className="mdi mdi-loading mdi-spin" /> {t('settings_testing')}
                   </>
                 ) : (
                   <>
-                    <span className="mdi mdi-lan-connect" /> Test connection
+                    <span className="mdi mdi-lan-connect" /> {t('settings_test_connection')}
                   </>
                 )}
               </button>
@@ -292,12 +292,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
             </div>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Remember connection on this server</span>
+                <span>{t('settings_remember')}</span>
                 <small>
-                  Store the URL &amp; token on the add-on so new devices (tablets, kiosks)
-                  connect automatically — no need to paste the token on each one. Stored in
-                  the add-on's <code>/data</code>; anyone who can open the dashboard can use
-                  it. You can turn this off anytime.
+                  {t('settings_remember_desc')}
                 </small>
               </div>
               <button
@@ -314,10 +311,10 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
           {/* Appearance */}
           <section className="settings-section">
             <h4 className="settings-section-title">
-              <span className="mdi mdi-palette" /> Appearance
+              <span className="mdi mdi-palette" /> {t('settings_appearance')}
             </h4>
             <div className="ts-field">
-              <span>Theme</span>
+              <span>{t('settings_theme')}</span>
               <div className="settings-theme-row">
                 {THEMES.map((t) => (
                   <button
@@ -332,7 +329,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               </div>
             </div>
             <div className="ts-field">
-              <span>Accent color</span>
+              <span>{t('settings_accent')}</span>
               <div className="settings-accent-row">
                 {ACCENT_SWATCHES.map((c) => (
                   <button
@@ -353,8 +350,8 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
             </div>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Ambient effects</span>
-                <small>Weather backdrop — rain &amp; snow particles, plus lightning in thunderstorms.</small>
+                <span>{t('settings_ambient')}</span>
+                <small>{t('settings_ambient_desc')}</small>
               </div>
               <button
                 className={`ts-switch ${ambientEffects ? 'on' : ''}`}
@@ -367,8 +364,8 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
             </label>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Compact sections</span>
-                <small>Let short sections sit side-by-side so they fill the screen width instead of stacking with big vertical gaps — less scrolling on smaller tablets. Section headings stay. Off stacks every section full-width.</small>
+                <span>{t('settings_compact')}</span>
+                <small>{t('settings_compact_desc')}</small>
               </div>
               <button
                 className={`ts-switch ${compactSections ? 'on' : ''}`}
@@ -380,13 +377,13 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               </button>
             </label>
             <label className="ts-field settings-weather-field">
-              <span>Weather entity</span>
+              <span>{t('settings_weather_entity')}</span>
               <select
                 value={weatherEntity}
                 onChange={(e) => setWeatherEntity(e.target.value)}
               >
                 <option value="">
-                  Auto{weatherOptions[0] ? ` (${weatherOptions[0].entity_id})` : ' (none found)'}
+                  {t('settings_weather_auto')}{weatherOptions[0] ? ` (${weatherOptions[0].entity_id})` : ' (none found)'}
                 </option>
                 {weatherOptions.map((w) => (
                   <option key={w.entity_id} value={w.entity_id}>
@@ -395,12 +392,11 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 ))}
               </select>
               <small className="settings-hint">
-                Which weather entity feeds the header forecast and the ambient
-                backdrop. <strong>Auto</strong> picks the first one found.
+                {t('settings_weather_entity_hint')}
               </small>
             </label>
             <label className="ts-field">
-              <span>Date &amp; time format</span>
+              <span>{t('settings_date_format')}</span>
               <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value as DateFormatId)}>
                 {DATE_FORMATS.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -409,19 +405,15 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 ))}
               </select>
               <small className="settings-hint">
-                How timestamps (e.g. a NOC node&apos;s “last boot”) display. Always shown
+                How timestamps (e.g. a NOC node&apos;s "last boot") display. Always shown
                 in <strong>this device&apos;s timezone</strong>.
               </small>
             </label>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Smart grouping</span>
+                <span>{t('settings_smart_grouping')}</span>
                 <small>
-                  Fold a section into a single summary bar when nothing in it is
-                  on. It reopens by itself the moment a device there becomes
-                  active, or when you tap the bar — so the page stays focused on
-                  what's actually happening. Tap a section heading's chevron to
-                  fold it by hand.
+                  {t('settings_smart_grouping_desc')}
                 </small>
               </div>
               <button
@@ -435,12 +427,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
             </label>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Status change dots</span>
+                <span>{t('settings_status_dots')}</span>
                 <small>
-                  A tiny dot on each tile that stays still and pulses once when
-                  that device changes — a door unlocks, a light flips, motion is
-                  detected. Continuous sensors (temperatures, power) never pulse,
-                  so the dashboard stays calm.
+                  {t('settings_status_dots_desc')}
                 </small>
               </div>
               <button
@@ -454,12 +443,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
             </label>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Now-playing lock screen</span>
+                <span>{t('settings_np_takeover')}</span>
                 <small>
-                  Tapping a media tile while it shows album art opens a full-screen
-                  now-playing view with controls. Off returns to the old behavior —
-                  tap opens the detail flyout. The tile&apos;s ⋯ button always opens
-                  the flyout either way.
+                  {t('settings_np_takeover_desc')}
                 </small>
               </div>
               <button
@@ -472,32 +458,30 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               </button>
             </label>
             <label className="ts-field">
-              <span>Idle screensaver</span>
+              <span>{t('settings_screensaver')}</span>
               <select
                 value={screensaverMinutes}
                 onChange={(e) => pickScreensaver(parseInt(e.target.value))}
               >
-                <option value={0}>Off</option>
+                <option value={0}>{t('settings_screensaver_off')}</option>
                 {[1, 2, 5, 10, 15, 30].map((m) => (
                   <option key={m} value={m}>
-                    After {m} minute{m > 1 ? 's' : ''} idle
+                    {t('settings_screensaver_after', { m, s: m > 1 ? 's' : '' })}
                   </option>
                 ))}
               </select>
               <small className="settings-hint">
-                For wall tablets: after sitting untouched, the dashboard drifts to a
-                dimmed clock with the date, outside temperature, and ambient album
-                art when music is playing. Tap anywhere to wake it.
+                {t('settings_screensaver_hint')}
               </small>
             </label>
             {views && views.length > 0 && (
               <label className="ts-field">
-                <span>Screensaver shortcut button</span>
+                <span>{t('settings_screensaver_shortcut')}</span>
                 <select
                   value={screensaverShortcut}
                   onChange={(e) => setScreensaverShortcut(e.target.value)}
                 >
-                  <option value="">None</option>
+                  <option value="">{t('settings_screensaver_none')}</option>
                   {views.map((v) => (
                     <option key={v.id} value={v.id}>
                       {v.name}
@@ -505,19 +489,15 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                   ))}
                 </select>
                 <small className="settings-hint">
-                  Show a button on the screensaver that wakes the dashboard
-                  straight onto this page — e.g. your security cameras.
+                  {t('settings_screensaver_shortcut_hint')}
                 </small>
               </label>
             )}
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Sync preferences across devices</span>
+                <span>{t('settings_sync')}</span>
                 <small>
-                  Store the look-and-feel settings (theme, accent, formats, weather,
-                  calendar choices, …) on the add-on so every device picks them up on
-                  load. The connection token and the idle-screensaver timer stay
-                  per-device and are never synced.
+                  {t('settings_sync_desc')}
                 </small>
               </div>
               <button
@@ -530,7 +510,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               </button>
             </label>
             <label className="ts-field">
-              <span>Duration / uptime style</span>
+              <span>{t('settings_duration')}</span>
               <select value={durationStyle} onChange={(e) => setDurationStyle(e.target.value as DurationStyle)}>
                 {DURATION_STYLES.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -539,8 +519,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 ))}
               </select>
               <small className="settings-hint">
-                How durations and uptime counters display. An uptime/boot sensor is
-                shown as elapsed time automatically.
+                {t('settings_duration_hint')}
               </small>
             </label>
           </section>
@@ -548,16 +527,13 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
           {/* Calendar */}
           <section className="settings-section">
             <h4 className="settings-section-title">
-              <span className="mdi mdi-calendar" /> Calendar
+              <span className="mdi mdi-calendar" /> {t('settings_calendar')}
             </h4>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>At-a-glance calendar button</span>
+                <span>{t('settings_cal_chip')}</span>
                 <small>
-                  Show the next event (and how many more are coming today) in the
-                  at-a-glance strip. Tap it for the 7-day agenda. The agenda also
-                  appears on the idle screensaver, and an &ldquo;Up Next&rdquo;
-                  tile is available in the tile picker.
+                  {t('settings_cal_chip_desc')}
                 </small>
               </div>
               <button
@@ -571,7 +547,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
             </label>
             {calendarOptions.length > 0 ? (
               <div className="ts-field">
-                <span>Calendars</span>
+                <span>{t('settings_calendars')}</span>
                 <div className="settings-cal-list">
                   {calendarOptions.map((c) => {
                     const included =
@@ -601,14 +577,12 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                   })}
                 </div>
                 <small className="settings-hint">
-                  Which calendars feed the agenda. All are included by default.
+                  {t('settings_calendars_hint')}
                 </small>
               </div>
             ) : (
               <small className="settings-hint">
-                No calendar entities found. Add a calendar integration in Home
-                Assistant (Google Calendar, CalDAV, Local Calendar, …) and it will
-                show up here.
+                {t('settings_no_calendars')}
               </small>
             )}
           </section>
@@ -616,22 +590,17 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
           {/* Data */}
           <section className="settings-section">
             <h4 className="settings-section-title">
-              <span className="mdi mdi-database" /> Dashboard data
+              <span className="mdi mdi-database" /> {t('settings_data')}
             </h4>
             <small className="settings-hint">
-              Export saves a full backup — every view, tile and at-a-glance button
-              (including all NOC nodes, pills, panels and per-board header toggles)
-              <em>plus</em> your appearance preferences (theme, accent, weather
-              source, and date &amp; duration formats). Import it after deploying to
-              a new device, Docker container, or add-on so you don't have to rebuild
-              anything. Your Home Assistant URL and token are never included.
+              {t('settings_data_hint')}
             </small>
             <div className="settings-data-row">
               <button className="toolbar-btn" onClick={exportLayout}>
-                <span className="mdi mdi-download" /> Export layout
+                <span className="mdi mdi-download" /> {t('settings_export')}
               </button>
               <label className="toolbar-btn" style={{ cursor: 'pointer' }}>
-                <span className="mdi mdi-upload" /> Import layout
+                <span className="mdi mdi-upload" /> {t('settings_import')}
                 <input
                   type="file"
                   accept="application/json,.json"
@@ -649,43 +618,39 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 className="toolbar-btn"
                 onClick={() => {
                   if (
-                    confirm(
-                      'Start from a blank slate? This clears all pages and tiles, leaving an empty Home page and an auto-filling Media page to build on. This cannot be undone.',
-                    )
+                    confirm(t('settings_start_blank_confirm'))
                   ) {
                     onStartBlank();
                     onClose();
                   }
                 }}
               >
-                <span className="mdi mdi-broom" /> Start blank
+                <span className="mdi mdi-broom" /> {t('settings_start_blank_btn')}
               </button>
               <button
                 className="toolbar-btn danger"
                 onClick={() => {
-                  if (confirm('Reset ALL dashboards to the default layout? This cannot be undone.')) {
+                  if (confirm(t('settings_reset_confirm'))) {
                     onResetLayout();
                     onClose();
                   }
                 }}
               >
-                <span className="mdi mdi-restore" /> Reset to default
+                <span className="mdi mdi-restore" /> {t('settings_reset_btn')}
               </button>
             </div>
             <small className="settings-hint">
-              <strong>Start blank</strong> is the no-code way to begin your own
-              dashboard: connect, then add pages and tiles from the picker.
+              {t('settings_start_blank_hint')}
             </small>
           </section>
 
           {/* Support */}
           <section className="settings-section">
             <h4 className="settings-section-title">
-              <span className="mdi mdi-heart" /> Support
+              <span className="mdi mdi-heart" /> {t('settings_support')}
             </h4>
             <small className="settings-hint">
-              Enjoying the dashboard? Buy me a beer to say thanks — it keeps the
-              updates flowing.
+              {t('settings_support_desc')}
             </small>
             <a
               className="bmb-button"
@@ -694,7 +659,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               rel="noopener noreferrer"
             >
               <span className="bmb-emoji">🍺</span>
-              <span className="bmb-label">Buy me a beer</span>
+              <span className="bmb-label">{t('settings_buy_beer')}</span>
               <span className="mdi mdi-open-in-new bmb-ext" />
             </a>
           </section>
@@ -702,10 +667,10 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
 
         <div className="ts-footer">
           <button className="toolbar-btn" onClick={cancel}>
-            Cancel
+            {t('settings_cancel')}
           </button>
           <button className="toolbar-btn primary" onClick={() => save(true)}>
-            <span className="mdi mdi-content-save" /> Save &amp; reload
+            <span className="mdi mdi-content-save" /> {t('settings_save')}
           </button>
         </div>
       </div>
