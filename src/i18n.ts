@@ -783,7 +783,7 @@ i18n.use(initReactI18next).init({
     ru: { translation: ru },
     en: { translation: en },
   },
-  lng: 'ru',
+  lng: localStorage.getItem('ha-dashboard-lang') ?? 'en',
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
 });
