@@ -50,6 +50,7 @@ export function Header({ entities, getForecast, hideGreeting, hideWeather, hideP
   const weatherId = resolveWeatherId(entities);
   const weather = weatherId ? entities[weatherId] : undefined;
   const temp = weather?.attributes?.temperature as number | undefined;
+  const tempUnit = (weather?.attributes?.temperature_unit as string | undefined) ?? '°C';
   const state = weather?.state || '';
   const humidity = weather?.attributes?.humidity as number | undefined;
 
@@ -109,7 +110,7 @@ export function Header({ entities, getForecast, hideGreeting, hideWeather, hideP
             <span className={`mdi ${getWeatherIcon(state)}`} style={{ fontSize: 36, color: getWeatherColor(state) }} />
             <div>
               <div className="weather-temp">
-                <AnimatedNumber value={Math.round(temp ?? 0)} /><sup>°F</sup>
+                <AnimatedNumber value={Math.round(temp ?? 0)} /><sup>{tempUnit}</sup>
               </div>
               <div className="weather-details">
                 {state.replace(/-/g, ' ')} · {humidity}% {t('weather_humidity')}

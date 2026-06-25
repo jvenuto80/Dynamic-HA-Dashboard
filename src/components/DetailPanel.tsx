@@ -425,14 +425,15 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
   const { t } = useTranslation();
   const currentTemp = entity.attributes.current_temperature as number;
   const targetTemp = entity.attributes.temperature as number;
+  const tempUnit = (entity.attributes.temperature_unit as string | undefined) ?? '°C';
   const mode = entity.state;
   const modes = (entity.attributes.hvac_modes as string[]) || [];
   const fanModes = (entity.attributes.fan_modes as string[]) || [];
   const fanMode = entity.attributes.fan_mode as string;
   const presetModes = (entity.attributes.preset_modes as string[]) || [];
   const presetMode = entity.attributes.preset_mode as string | undefined;
-  const minTemp = (entity.attributes.min_temp as number) || 60;
-  const maxTemp = (entity.attributes.max_temp as number) || 90;
+  const minTemp = (entity.attributes.min_temp as number) || (tempUnit === '°F' ? 60 : 16);
+  const maxTemp = (entity.attributes.max_temp as number) || (tempUnit === '°F' ? 90 : 35);
   const step = (entity.attributes.target_temp_step as number) || 1;
 
   // `pending` holds the temperature the user is dragging toward. While set we show
@@ -521,8 +522,8 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
           </svg>
           <div className="climate-temp-display">
             <span className="value">{(displayTemp ?? currentTemp)?.toFixed(1) || '--'}</span>
-            <span className="unit">°F</span>
-            <span className="label">{t('detail_current')} {currentTemp?.toFixed(1) ?? '--'}°F</span>
+            <span className="unit">{tempUnit}</span>
+            <span className="label">{t('detail_current')} {currentTemp?.toFixed(1) ?? '--'}{tempUnit}</span>
           </div>
         </div>
         <div className="climate-controls">
