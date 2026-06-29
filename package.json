@@ -18,8 +18,10 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "home-assistant-js-websocket": "^9.4.0",
+    "i18next": "^26.3.2",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-i18next": "^17.0.8"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

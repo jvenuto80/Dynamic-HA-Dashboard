@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { entityIcon, entitySummary, isActiveState, resolveArtwork } from '../lib/entityInfo';
 import { useArtworkColor } from '../hooks/useArtworkColor';
@@ -172,6 +173,7 @@ function vacuumMapUrl(entities: HassEntities | undefined, base: string): string 
 }
 
 export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpenTakeover, span, tall, graph, getHistory, cameraUrl, icon, slideDim, reverseSlider, mediaArtwork, artworkEntity, entities, enterIndex }: Props) {
+  const { t } = useTranslation();
   const id = entity.entity_id;
   const domain = id.split('.')[0];
   const active = isActiveState(entity.state);
@@ -453,7 +455,7 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
         {mapUrl && <div className="vacuum-map-bg" />}
         <div className="tile-top">
           <span className="mdi mdi-robot-vacuum tile-icon" />
-          {battery != null && <span className="vacuum-batt">{battery}% Batt.</span>}
+          {battery != null && <span className="vacuum-batt">{battery}% {t('tile_vacuum_batt')}</span>}
         </div>
         {!mapUrl && (
           <div className="vacuum-ring">
@@ -463,12 +465,12 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
         <div className="vacuum-quick">
           <button
             className="vacuum-quick-btn"
-            title={cleaning ? 'Pause' : 'Clean'}
+            title={cleaning ? t('tile_vacuum_pause') : t('tile_vacuum_clean')}
             onClick={(e) => quick(e, cleaning ? 'pause' : 'start')}
           >
             <span className={`mdi ${cleaning ? 'mdi-pause' : 'mdi-play'}`} />
           </button>
-          <button className="vacuum-quick-btn" title="Dock" onClick={(e) => quick(e, 'return_to_base')}>
+          <button className="vacuum-quick-btn" title={t('tile_vacuum_dock')} onClick={(e) => quick(e, 'return_to_base')}>
             <span className="mdi mdi-home-import-outline" />
           </button>
         </div>
@@ -499,7 +501,7 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
           <button
             className="tile-more"
             onClick={(e) => { e.stopPropagation(); onOpenDetail(id); }}
-            aria-label="Details"
+            aria-label={t('tile_details')}
           >
             <span className="mdi mdi-dots-horizontal" />
           </button>

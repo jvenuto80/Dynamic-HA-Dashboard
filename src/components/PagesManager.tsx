@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { DashView } from '../types';
 
 export type BoardType = 'tiles' | 'sensors' | 'noc' | 'cameras' | 'media';
@@ -45,18 +46,19 @@ export function PagesManager({
   onSetHeader,
   onClose,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="ts-overlay" onClick={onClose}>
       <div className="ts-modal pages-manager" onClick={(e) => e.stopPropagation()}>
         <div className="ts-head">
-          <h3>Manage Pages</h3>
-          <button className="edit-icon-btn" title="Close" onClick={onClose}>
+          <h3>{t('pages_manage')}</h3>
+          <button className="edit-icon-btn" title={t('pages_close')} onClick={onClose}>
             <span className="mdi mdi-close" />
           </button>
         </div>
 
         <div className="ts-body">
-          <p className="pm-hint">Rename, re-order and choose an icon for each dashboard page.</p>
+          <p className="pm-hint">{t('pages_hint')}</p>
           <div className="pm-list">
             {views.map((v, idx) => (
               <div className={`pm-row ${v.id === activeView ? 'is-active' : ''}`} key={v.id}>
@@ -67,13 +69,13 @@ export function PagesManager({
                   <input
                     className="pm-name"
                     value={v.name}
-                    placeholder="Page name"
+                    placeholder={t('pages_name_placeholder')}
                     onChange={(e) => onRename(v.id, e.target.value)}
                   />
                   <input
                     className="pm-icon-input"
                     value={v.icon}
-                    placeholder="mdi-home"
+                    placeholder={t('pages_icon_placeholder')}
                     spellCheck={false}
                     onChange={(e) => onIcon(v.id, e.target.value)}
                   />
@@ -83,30 +85,30 @@ export function PagesManager({
                       value={boardTypeOf(v)}
                       onChange={(e) => onSetBoardType(v.id, e.target.value as BoardType)}
                     >
-                      <option value="tiles">Tiles</option>
-                      <option value="sensors">Sensor graphs</option>
-                      <option value="noc">NOC (servers)</option>
-                      <option value="cameras">Cameras</option>
-                      <option value="media">Now Playing</option>
+                      <option value="tiles">{t('pages_tiles')}</option>
+                      <option value="sensors">{t('pages_sensors')}</option>
+                      <option value="noc">{t('pages_noc')}</option>
+                      <option value="cameras">{t('pages_cameras')}</option>
+                      <option value="media">{t('pages_media')}</option>
                     </select>
-                    <div className="pm-header-toggles" title="Show/hide header widgets on this page">
+                    <div className="pm-header-toggles" title={t('pages_header_title')}>
                       <button
                         className={`pm-htoggle ${v.hideGreeting ? '' : 'on'}`}
-                        title="Greeting"
+                        title={t('pages_greeting')}
                         onClick={() => onSetHeader(v.id, { hideGreeting: !v.hideGreeting })}
                       >
                         <span className="mdi mdi-hand-wave" />
                       </button>
                       <button
                         className={`pm-htoggle ${v.hideWeather ? '' : 'on'}`}
-                        title="Weather"
+                        title={t('pages_weather')}
                         onClick={() => onSetHeader(v.id, { hideWeather: !v.hideWeather })}
                       >
                         <span className="mdi mdi-weather-partly-cloudy" />
                       </button>
                       <button
                         className={`pm-htoggle ${v.hidePeople ? '' : 'on'}`}
-                        title="People"
+                        title={t('pages_people')}
                         onClick={() => onSetHeader(v.id, { hidePeople: !v.hidePeople })}
                       >
                         <span className="mdi mdi-account-group" />
@@ -117,7 +119,7 @@ export function PagesManager({
                 <div className="pm-tools">
                   <button
                     className="edit-icon-btn"
-                    title="Move up"
+                    title={t('pages_move_up')}
                     disabled={idx === 0}
                     onClick={() => onMove(idx, idx - 1)}
                   >
@@ -125,7 +127,7 @@ export function PagesManager({
                   </button>
                   <button
                     className="edit-icon-btn"
-                    title="Move down"
+                    title={t('pages_move_down')}
                     disabled={idx === views.length - 1}
                     onClick={() => onMove(idx, idx + 1)}
                   >
@@ -133,17 +135,17 @@ export function PagesManager({
                   </button>
                   <button
                     className="edit-icon-btn"
-                    title="Go to page"
+                    title={t('pages_go_to')}
                     onClick={() => onNavigate(v.id)}
                   >
                     <span className="mdi mdi-open-in-new" />
                   </button>
                   <button
                     className="edit-icon-btn danger"
-                    title="Delete page"
+                    title={t('pages_delete')}
                     disabled={views.length <= 1}
                     onClick={() => {
-                      if (confirm(`Delete page “${v.name || 'Untitled'}”?`)) onRemove(v.id);
+                      if (confirm(t('pages_delete_confirm', { name: v.name || 'Untitled' }))) onRemove(v.id);
                     }}
                   >
                     <span className="mdi mdi-trash-can-outline" />
@@ -153,7 +155,7 @@ export function PagesManager({
             ))}
           </div>
           <button className="add-tile-btn pm-add" onClick={onAdd}>
-            <span className="mdi mdi-plus" /> Add Page
+            <span className="mdi mdi-plus" /> {t('pages_add')}
           </button>
         </div>
       </div>

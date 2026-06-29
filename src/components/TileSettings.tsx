@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import type { RoomEntity, TileAction, TileSize, FlyoutConfig } from '../types';
 import { EntityPicker } from './DashboardView';
@@ -58,6 +59,7 @@ interface Props {
 
 /** Per-tile settings popover: name, icon, size, camera, linked entities, quick actions. */
 export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA, getHistory }: Props) {
+  const { t } = useTranslation();
   const [sub, setSub] = useState<'camera' | 'link' | 'artwork' | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   // Local mirror for free-text fields so the caret doesn't jump to the end while
@@ -129,8 +131,8 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
     <div className="ts-overlay" onClick={onClose}>
       <div className="ts-modal" onClick={(e) => e.stopPropagation()}>
         <div className="ts-head">
-          <h3>Edit Tile</h3>
-          <button className="edit-icon-btn" title="Close" onClick={onClose}>
+          <h3>{t('tile_edit')}</h3>
+          <button className="edit-icon-btn" title={t('tile_close')} onClick={onClose}>
             <span className="mdi mdi-close" />
           </button>
         </div>
@@ -140,7 +142,7 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
 
           {/* Name */}
           <label className="ts-field">
-            <span>Name</span>
+            <span>{t('tile_name')}</span>
             <input
               value={nameDraft}
               placeholder={fallbackName}
@@ -153,7 +155,7 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
 
           {/* Icon */}
           <label className="ts-field">
-            <span>Icon (mdi)</span>
+            <span>{t('tile_icon')}</span>
             <div className="ts-icon-row">
               {iconDraft && <span className={`mdi ${iconDraft}`} />}
               <input
@@ -169,7 +171,7 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
 
           {/* Size */}
           <div className="ts-field">
-            <span>Size</span>
+            <span>{t('tile_size')}</span>
             <div className="ts-size-row">
               {SIZES.map((s) => (
                 <button
@@ -187,8 +189,8 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
           {re.entity_id.split('.')[0] === 'light' && (
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
-                <span>Slide to dim</span>
-                <small>Drag across the tile to set brightness when the light is on.</small>
+                <span>{t('tile_slide_dim')}</span>
+                <small>{t('tile_slide_dim_desc')}</small>
               </div>
               <button
                 className={`ts-switch ${re.slideDim !== false ? 'on' : ''}`}

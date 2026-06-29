@@ -4,6 +4,7 @@ import {
   createLongLivedTokenAuth,
 } from 'home-assistant-js-websocket';
 import { getSettings, saveSettings, saveServerConnection, isServedByHomeAssistant } from '../settings';
+import { useTranslation } from 'react-i18next';
 
 type TestState = 'idle' | 'testing' | 'ok' | 'fail';
 
@@ -18,6 +19,7 @@ interface Props {
  * them test the connection, and connects (persists + reloads) in one step.
  */
 export function Onboarding({ onDismiss }: Props) {
+  const { t } = useTranslation();
   const initial = getSettings();
   const [haUrl, setHaUrl] = useState(initial.haUrl);
   const [haToken, setHaToken] = useState(initial.haToken);
@@ -42,10 +44,10 @@ export function Onboarding({ onDismiss }: Props) {
       const conn = await createConnection({ auth });
       conn.close();
       setTest('ok');
-      setMsg('Connected successfully.');
+      setMsg(t('onboarding_connected'));
     } catch (err) {
       setTest('fail');
-      setMsg(err instanceof Error ? err.message : 'Connection failed.');
+      setMsg(err instanceof Error ? err.message : t('onboarding_failed'));
     }
   };
 
@@ -66,9 +68,9 @@ export function Onboarding({ onDismiss }: Props) {
         <div className="onboarding-brand">
           <span className="onboarding-logo mdi mdi-home-automation" />
           <div>
-            <h1 className="onboarding-title">Welcome to Glance</h1>
+            <h1 className="onboarding-title">{t('onboarding_welcome')}</h1>
             <p className="onboarding-sub">
-              Let’s connect to your Home Assistant to bring your home to life.
+              {t('onboarding_subtitle')}
             </p>
           </div>
         </div>
@@ -77,31 +79,28 @@ export function Onboarding({ onDismiss }: Props) {
           <li>
             <span className="mdi mdi-numeric-1-circle onboarding-step-icon" />
             <span className="onboarding-step-text">
-              In Home Assistant, open your <strong>Profile → Security</strong> and create a{' '}
-              <strong>Long-Lived Access Token</strong>.
+              {t('onboarding_step1')}
             </span>
           </li>
           <li>
             <span className="mdi mdi-numeric-2-circle onboarding-step-icon" />
             <span className="onboarding-step-text">
-              Paste your server address and the token below, then connect.
+              {t('onboarding_step2')}
             </span>
           </li>
         </ol>
 
         {servedByHa ? (
           <div className="ts-field">
-            <span>Server URL</span>
+            <span>{t('onboarding_server_url')}</span>
             <div className="settings-hint" style={{ marginTop: 4 }}>
               <span className="mdi mdi-check-circle" style={{ color: 'var(--accent-primary)' }} />{' '}
-              Connected through Home Assistant — no server URL needed. Glance uses
-              the same address you opened it with, so it works locally and
-              remotely without being exposed to the internet.
+              {t('onboarding_served_by_ha')}
             </div>
           </div>
         ) : (
           <label className="ts-field">
-            <span>Server URL</span>
+            <span>{t('onboarding_server_url')}</span>
             <input
               type="url"
               placeholder="http://homeassistant.local:8123"
@@ -109,17 +108,17 @@ export function Onboarding({ onDismiss }: Props) {
               onChange={(e) => setHaUrl(e.target.value)}
             />
             <small className="settings-hint">
-              Use your HA IP (e.g. http://192.168.1.50:8123) if the local name doesn’t resolve.
+              {t('onboarding_url_hint')}
             </small>
           </label>
         )}
 
         <label className="ts-field">
-          <span>Long-lived access token</span>
+          <span>{t('onboarding_token')}</span>
           <div className="settings-token-row">
             <input
               type={showToken ? 'text' : 'password'}
-              placeholder="Paste token from your HA profile"
+              placeholder={t('onboarding_token_placeholder')}
               value={haToken}
               autoComplete="off"
               spellCheck={false}
@@ -128,7 +127,7 @@ export function Onboarding({ onDismiss }: Props) {
             <button
               type="button"
               className="edit-icon-btn"
-              title={showToken ? 'Hide' : 'Show'}
+              title={showToken ? t('onboarding_hide') : t('onboarding_show')}
               onClick={() => setShowToken((s) => !s)}
             >
               <span className={`mdi ${showToken ? 'mdi-eye-off' : 'mdi-eye'}`} />
@@ -147,7 +146,7 @@ export function Onboarding({ onDismiss }: Props) {
             <span className="ts-switch-knob" />
           </button>
           <span>
-            Remember on this server so other devices connect automatically
+            {t('onboarding_remember')}
           </span>
         </label>
 
@@ -156,21 +155,21 @@ export function Onboarding({ onDismiss }: Props) {
             {test === 'testing' && <span className="mdi mdi-loading mdi-spin" />}
             {test === 'ok' && <span className="mdi mdi-check-circle" />}
             {test === 'fail' && <span className="mdi mdi-alert-circle" />}
-            <span>{test === 'testing' ? 'Testing…' : msg}</span>
+            <span>{test === 'testing' ? t('onboarding_testing') : msg}</span>
           </div>
         )}
 
         <div className="onboarding-actions">
           <button className="toolbar-btn" onClick={runTest} disabled={!canConnect || test === 'testing'}>
-            <span className="mdi mdi-lan-connect" /> Test
+            <span className="mdi mdi-lan-connect" /> {t('onboarding_test')}
           </button>
           <button className="toolbar-btn primary onboarding-connect" onClick={connect} disabled={!canConnect}>
-            <span className="mdi mdi-arrow-right-circle" /> Connect
+            <span className="mdi mdi-arrow-right-circle" /> {t('onboarding_connect')}
           </button>
         </div>
 
         <button className="onboarding-skip" onClick={onDismiss}>
-          I’ll set this up later
+          {t('onboarding_skip')}
         </button>
       </div>
     </div>

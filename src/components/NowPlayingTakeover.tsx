@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import { resolveArtwork } from '../lib/entityInfo';
 import { useArtworkColor } from '../hooks/useArtworkColor';
@@ -33,6 +34,7 @@ const GONE_STATES = ['off', 'unavailable', 'standby', 'unknown'];
  * Tapping the backdrop (or Escape) returns to the dashboard.
  */
 export function NowPlayingTakeover({ entityId, entities, callHA, artworkEntity, onClose, onOpenDetail }: Props) {
+  const { t } = useTranslation();
   const entity = entities[entityId];
   const gone = !entity || GONE_STATES.includes(entity.state);
 
@@ -92,7 +94,7 @@ export function NowPlayingTakeover({ entityId, entities, callHA, artworkEntity, 
         <div className="np-head-actions">
           <button
             className="np-icon-btn"
-            title="Device details"
+            title={t('np_device_details')}
             onClick={() => {
               onClose();
               onOpenDetail(entityId);
@@ -100,7 +102,7 @@ export function NowPlayingTakeover({ entityId, entities, callHA, artworkEntity, 
           >
             <span className="mdi mdi-tune-variant" />
           </button>
-          <button className="np-icon-btn" title="Close" onClick={onClose}>
+          <button className="np-icon-btn" title={t('np_close')} onClick={onClose}>
             <span className="mdi mdi-chevron-down" />
           </button>
         </div>

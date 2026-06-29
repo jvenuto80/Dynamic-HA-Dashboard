@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { eventTimeLabel, nextEventSummary, type CalendarEvent } from '../lib/calendar';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
  * tapping opens the 7-day agenda flyout.
  */
 export function CalendarTile({ events, name, icon, onOpen }: Props) {
+  const { t } = useTranslation();
   const headline = nextEventSummary(events);
   const next = headline?.next;
   // The event after the headline one, for the "then …" line.
@@ -27,7 +29,7 @@ export function CalendarTile({ events, name, icon, onOpen }: Props) {
         <span className={`mdi ${icon} tile-icon cal-tile-icon`} />
         {headline && headline.moreToday > 0 && (
           <span className="cal-tile-more">
-            {headline.moreToday} more today
+            {headline.moreToday} {t('cal_more_today')}
           </span>
         )}
       </div>
@@ -47,7 +49,7 @@ export function CalendarTile({ events, name, icon, onOpen }: Props) {
         ) : (
           <>
             <div className="tile-name">{name}</div>
-            <div className="tile-sub">Nothing scheduled</div>
+            <div className="tile-sub">{t('cal_nothing_short')}</div>
           </>
         )}
       </div>

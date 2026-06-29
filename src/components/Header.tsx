@@ -5,6 +5,7 @@ import { PersonTracker } from './PersonTracker';
 import { resolvePersons } from '../lib/persons';
 import { resolveWeatherId, getWeatherIcon, getWeatherColor } from '../lib/weather';
 import { dedupeMediaPlayers } from '../lib/mediaDevices';
+import { useTranslation } from 'react-i18next';
 
 interface ForecastDay {
   datetime: string;
@@ -22,15 +23,6 @@ interface Props {
   hidePeople?: boolean;
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 5) return 'Good night';
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  if (hour < 21) return 'Good evening';
-  return 'Good night';
-}
-
 /** Join names naturally: "Jeff", "Jeff & Carissa", "Jeff, Carissa & Sam". */
 function joinNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? '';
@@ -46,9 +38,19 @@ function getHomeNames(entities: HassEntities): string[] {
 }
 
 export function Header({ entities, getForecast, hideGreeting, hideWeather, hidePeople }: Props) {
+  const { t, i18n } = useTranslation();
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 5) return t('greeting_night');
+    if (h < 12) return t('greeting_morning');
+    if (h < 17) return t('greeting_afternoon');
+    if (h < 21) return t('greeting_evening');
+    return t('greeting_night');
+  })();
   const weatherId = resolveWeatherId(entities);
   const weather = weatherId ? entities[weatherId] : undefined;
   const temp = weather?.attributes?.temperature as number | undefined;
+  const tempUnit = (weather?.attributes?.temperature_unit as string | undefined) ?? '°C';
   const state = weather?.state || '';
   const humidity = weather?.attributes?.humidity as number | undefined;
 
@@ -87,15 +89,15 @@ export function Header({ entities, getForecast, hideGreeting, hideWeather, hideP
       {!hideGreeting ? (
         <div className="greeting">
           <h1>
-            {getGreeting()}
+            {greeting}
             {greetingName ? `, ${greetingName}!` : ''}
           </h1>
           <p className="subtitle">
             {mediaPlaying.length > 0
-              ? `${mediaPlaying.length} media playing`
-              : 'Everything quiet'}
+              ? t('greeting_media_playing', { count: mediaPlaying.length })
+              : t('greeting_everything_quiet')}
             {' · '}
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            {new Date().toLocaleDateString(i18n.language, { weekday: 'long', month: 'short', day: 'numeric' })}
           </p>
         </div>
       ) : (
@@ -108,10 +110,10 @@ export function Header({ entities, getForecast, hideGreeting, hideWeather, hideP
             <span className={`mdi ${getWeatherIcon(state)}`} style={{ fontSize: 36, color: getWeatherColor(state) }} />
             <div>
               <div className="weather-temp">
-                <AnimatedNumber value={Math.round(temp ?? 0)} /><sup>°F</sup>
+                <AnimatedNumber value={Math.round(temp ?? 0)} /><sup>{tempUnit}</sup>
               </div>
               <div className="weather-details">
-                {state.replace(/-/g, ' ')} · {humidity}% humidity
+                {state.replace(/-/g, ' ')} · {humidity}% {t('weather_humidity')}
               </div>
             </div>
           </div>
@@ -121,8 +123,8 @@ export function Header({ entities, getForecast, hideGreeting, hideWeather, hideP
                 <div className="forecast-day" key={d.datetime ?? i}>
                   <div className="dow">
                     {i === 0
-                      ? 'TODAY'
-                      : new Date(d.datetime).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}
+                      ? t('greeting_today')
+                      : new Date(d.datetime).toLocaleDateString(i18n.language, { weekday: 'short' }).toUpperCase()}
                   </div>
                   <span className={`mdi ${getWeatherIcon(d.condition)}`} style={{ fontSize: 20, color: getWeatherColor(d.condition) }} />
                   <div className="temp">

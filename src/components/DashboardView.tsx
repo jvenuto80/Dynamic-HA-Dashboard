@@ -32,6 +32,7 @@ import { groupMediaPlayers, pickRepresentative, deviceNameKey, collapseSpeakerGr
 import { cameraProxyUrl } from '../hooks/useCameraFeed';
 import { getSettings } from '../settings';
 import { TileSettings } from './TileSettings';
+import { useTranslation } from 'react-i18next';
 
 /** Subscribe to the "compact sections" preference (live-updated from Settings).
  *  When on, sections flow into a responsive masonry so short sections sit
@@ -87,6 +88,7 @@ function CollapsibleColumn({
   noCollapse?: boolean;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   // Only real, present entities count toward activity and the device tally;
   // special cards (calendar / MA search) have no HA state.
   const present = colEntities.filter((e) => entities[e.entity_id]);
@@ -121,7 +123,7 @@ function CollapsibleColumn({
               <button
                 type="button"
                 className="section-fold"
-                title="Collapse section"
+                title={t('dash_collapse')}
                 onClick={() => setOverride(false)}
               >
                 <span className="mdi mdi-chevron-up" />
@@ -144,7 +146,7 @@ function CollapsibleColumn({
           <span key={i} className={`mdi ${ic}`} />
         ))}
       </span>
-      <span className="section-collapsed-sum">{present.length} devices · all quiet</span>
+      <span className="section-collapsed-sum">{present.length} {t('dash_devices_quiet')}</span>
       <span className="mdi mdi-chevron-right section-collapsed-chev" />
     </button>
   );
@@ -220,6 +222,7 @@ interface Props {
 }
 
 export function DashboardView(props: Props) {
+  const { t } = useTranslation();
   const { view, entities, editing } = props;
   const compactSections = useCompactSections();
   const smartGroupingEnabled = useSmartGrouping();
@@ -229,7 +232,7 @@ export function DashboardView(props: Props) {
       <div className="view-rows">
         <section className="view-row">
           {editing ? (
-            <div className="edit-empty">Camera view layout isn’t editable.</div>
+            <div className="edit-empty">{t('dash_camera_not_editable')}</div>
           ) : (
             <CameraGrid entities={entities} />
           )}
@@ -278,11 +281,11 @@ export function DashboardView(props: Props) {
       <div className="view-rows">
         <div className="page-empty">
           <span className="mdi mdi-view-grid-plus page-empty-icon" />
-          <h3>This page is empty</h3>
-          <p>Add some tiles to bring it to life.</p>
+          <h3>{t('dash_page_empty')}</h3>
+          <p>{t('dash_add_tiles')}</p>
           {props.onRequestEdit && (
             <button className="toolbar-btn primary" onClick={props.onRequestEdit}>
-              <span className="mdi mdi-pencil" /> Edit this page
+              <span className="mdi mdi-pencil" /> {t('dash_edit_page')}
             </button>
           )}
         </div>
@@ -426,6 +429,7 @@ function allMediaPlayers(entities: HassEntities) {
 }
 
 function MediaAutoView(props: Props) {
+  const { t } = useTranslation();
   const { view, entities, editing, layout, searchMusic, playMusic, getMaPlayers } = props;
   const exclude = useMemo(() => new Set(view.mediaExclude ?? []), [view.mediaExclude]);
   const mediaOverrides = view.mediaOverrides ?? {};
@@ -513,16 +517,15 @@ function MediaAutoView(props: Props) {
     return (
       <div className="view-rows">
         <div className="media-edit-intro">
-          <span className="mdi mdi-information-outline" /> This page automatically shows media
-          devices while they’re playing. Choose which devices can appear here.
+          <span className="mdi mdi-information-outline" /> {t('dash_media_desc')}
         </div>
 
         <label className="media-search-toggle">
           <div className="media-search-toggle-text">
             <span>
-              <span className="mdi mdi-music-circle" /> Music Assistant search button
+              <span className="mdi mdi-music-circle" /> {t('dash_music_search_btn')}
             </span>
-            <small>Show a search-and-play button at the top of this page.</small>
+            <small>{t('dash_show_search_btn')}</small>
           </div>
           <button
             type="button"
@@ -538,11 +541,10 @@ function MediaAutoView(props: Props) {
         <label className="media-search-toggle">
           <div className="media-search-toggle-text">
             <span>
-              <span className="mdi mdi-speaker-multiple" /> Combine grouped speakers
+              <span className="mdi mdi-speaker-multiple" /> {t('dash_combine_speakers')}
             </span>
             <small>
-              When speakers are grouped, show only the group card instead of the group plus
-              each member.
+              {t('dash_combine_speakers_desc')}
             </small>
           </div>
           <button
@@ -557,7 +559,7 @@ function MediaAutoView(props: Props) {
         </label>
 
         <div className="media-size-row">
-          <span className="media-size-label">Tile size</span>
+          <span className="media-size-label">{t('dash_tile_size')}</span>
           <div className="media-size-options">
             {(['small', 'medium', 'large'] as const).map((s) => (
               <button
@@ -566,7 +568,7 @@ function MediaAutoView(props: Props) {
                 className={`media-size-btn ${size === s ? 'on' : ''}`}
                 onClick={() => layout.setMediaTileSize(view.id, s)}
               >
-                {s[0].toUpperCase() + s.slice(1)}
+                {s === 'small' ? t('dash_small') : s === 'medium' ? t('dash_medium') : t('dash_large')}
               </button>
             ))}
           </div>
@@ -577,12 +579,12 @@ function MediaAutoView(props: Props) {
             <span className="mdi mdi-magnify" />
             <input
               className="media-filter-input"
-              placeholder="Filter devices…"
+              placeholder={t('dash_filter_devices')}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
             {filter && (
-              <button className="media-filter-clear" title="Clear" onClick={() => setFilter('')}>
+              <button className="media-filter-clear" title={t('dash_clear')} onClick={() => setFilter('')}>
                 <span className="mdi mdi-close" />
               </button>
             )}
@@ -591,20 +593,20 @@ function MediaAutoView(props: Props) {
           {selected.size >= 2 && (
             <div className="media-merge-bar">
               <span>
-                <span className="mdi mdi-merge" /> {selected.size} devices selected
+                <span className="mdi mdi-merge" /> {selected.size} {t('dash_devices_selected')}
               </span>
               <div className="media-merge-actions">
                 <button className="toolbar-btn" onClick={() => setSelected(new Set())}>
-                  Clear
+                  {t('dash_clear')}
                 </button>
                 <button className="toolbar-btn primary" onClick={doMerge}>
-                  <span className="mdi mdi-merge" /> Merge into one
+                  <span className="mdi mdi-merge" /> {t('dash_merge')}
                 </button>
               </div>
             </div>
           )}
 
-          <h3 className="media-manage-title">Shown ({shown.length})</h3>
+          <h3 className="media-manage-title">{t('dash_shown')} ({shown.length})</h3>
           <div className="media-manage-grid">
             {shown.map((r) => (
               <div
@@ -613,7 +615,7 @@ function MediaAutoView(props: Props) {
               >
                 <button
                   className="media-select"
-                  title={selected.has(r.key) ? 'Deselect' : 'Select to merge'}
+                  title={selected.has(r.key) ? t('dash_deselect') : t('dash_select_merge')}
                   onClick={() => toggleSelect(r.key)}
                 >
                   <span
@@ -637,7 +639,7 @@ function MediaAutoView(props: Props) {
                 </div>
                 <button
                   className="edit-icon-btn"
-                  title="Artwork and media settings"
+                  title={t('dash_artwork_settings')}
                   onClick={() => setSettingsIds(r.ids)}
                 >
                   <span className="mdi mdi-image-edit-outline" />
@@ -645,7 +647,7 @@ function MediaAutoView(props: Props) {
                 {r.merged && (
                   <button
                     className="edit-icon-btn"
-                    title="Split this merged device apart"
+                    title={t('dash_split_device')}
                     onClick={() => layout.unmergeMediaDevices(view.id, r.ids)}
                   >
                     <span className="mdi mdi-call-split" />
@@ -653,7 +655,7 @@ function MediaAutoView(props: Props) {
                 )}
                 <button
                   className="edit-icon-btn danger"
-                  title="Hide this device from the page"
+                  title={t('dash_hide_device')}
                   onClick={() => layout.toggleMediaExclude(view.id, r.ids, true)}
                 >
                   <span className="mdi mdi-eye-off" />
@@ -662,14 +664,14 @@ function MediaAutoView(props: Props) {
             ))}
             {shown.length === 0 && (
               <div className="edit-empty">
-                {q ? 'No shown devices match your filter.' : 'No media devices available.'}
+                {q ? t('dash_no_match') : t('dash_no_media')}
               </div>
             )}
           </div>
 
           {hidden.length > 0 && (
             <>
-              <h3 className="media-manage-title media-manage-title-muted">Hidden ({hidden.length})</h3>
+              <h3 className="media-manage-title media-manage-title-muted">{t('dash_hidden')} ({hidden.length})</h3>
               <div className="media-manage-grid">
                 {hidden.map((r) => (
                   <div className="media-manage-row is-hidden" key={r.key}>
@@ -679,14 +681,14 @@ function MediaAutoView(props: Props) {
                     </div>
                     <button
                       className="edit-icon-btn"
-                      title="Artwork and media settings"
+                      title={t('dash_artwork_settings')}
                       onClick={() => setSettingsIds(r.ids)}
                     >
                       <span className="mdi mdi-image-edit-outline" />
                     </button>
                     <button
                       className="edit-icon-btn"
-                      title="Show this device on the page"
+                      title={t('dash_show_device')}
                       onClick={() => layout.toggleMediaExclude(view.id, r.ids, false)}
                     >
                       <span className="mdi mdi-eye" />
@@ -738,7 +740,7 @@ function MediaAutoView(props: Props) {
         <div className="page-empty">
           <span className="mdi mdi-music-note-off page-empty-icon" />
           <h3>Nothing playing</h3>
-          <p>Media devices appear here while they’re playing.</p>
+          <p>Media devices appear here while they're playing.</p>
         </div>
       </div>
     );
@@ -792,6 +794,7 @@ function MediaDeviceSettings({
   onChange: (patch: Partial<MediaTileConfig>) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
@@ -809,7 +812,7 @@ function MediaDeviceSettings({
     <div className="ts-overlay" onClick={onClose}>
       <div className="ts-modal" onClick={(e) => e.stopPropagation()}>
         <div className="ts-head">
-          <h3>Media Tile</h3>
+          <h3>{t('dash_media_tile')}</h3>
           <button className="edit-icon-btn" title="Close" onClick={onClose}>
             <span className="mdi mdi-close" />
           </button>
@@ -817,12 +820,12 @@ function MediaDeviceSettings({
 
         <div className="ts-body">
           <div className="ts-entity">{title}</div>
-          {entityIds.length > 1 && <small className="ts-hint">Applies to all {entityIds.length} linked entities for this device.</small>}
+          {entityIds.length > 1 && <small className="ts-hint">{t('dash_linked_entities', { count: entityIds.length })}</small>}
 
           <label className="ts-toggle-field">
             <div className="ts-toggle-text">
-              <span>Show artwork</span>
-              <small>Use the now-playing thumbnail as the tile background.</small>
+              <span>{t('dash_show_artwork')}</span>
+              <small>{t('dash_show_artwork_desc')}</small>
             </div>
             <button
               className={`ts-switch ${config.mediaArtwork !== false ? 'on' : ''}`}
@@ -836,24 +839,24 @@ function MediaDeviceSettings({
 
           {config.mediaArtwork !== false && (
             <div className="ts-field">
-              <span>Artwork source</span>
-              <small className="ts-hint">Pull the thumbnail from a companion player when this one has no artwork. Leave on Auto to detect it automatically.</small>
+              <span>{t('dash_artwork_source')}</span>
+              <small className="ts-hint">{t('dash_artwork_source_desc')}</small>
               <div className="ts-chip-row">
                 {config.artworkEntity ? (
                   <span className="ts-chip">
                     {nameOf(config.artworkEntity)}
-                    <button onClick={() => onChange({ artworkEntity: undefined })} title="Remove">
+                    <button onClick={() => onChange({ artworkEntity: undefined })} title={t('dash_remove')}>
                       <span className="mdi mdi-close" />
                     </button>
                   </span>
                 ) : (
                   <button className="ts-add" onClick={() => setPickerOpen(true)}>
-                    <span className="mdi mdi-image-search" /> Auto
+                    <span className="mdi mdi-image-search" /> {t('dash_auto')}
                   </button>
                 )}
                 {config.artworkEntity && (
                   <button className="ts-add" onClick={() => setPickerOpen(true)}>
-                    <span className="mdi mdi-pencil" /> Change
+                    <span className="mdi mdi-pencil" /> {t('dash_change')}
                   </button>
                 )}
               </div>
@@ -863,7 +866,7 @@ function MediaDeviceSettings({
 
         <div className="ts-footer">
           <button className="toolbar-btn primary" onClick={onClose}>
-            <span className="mdi mdi-check" /> Done
+            <span className="mdi mdi-check" /> {t('dash_done')}
           </button>
         </div>
       </div>
@@ -873,7 +876,7 @@ function MediaDeviceSettings({
           entities={entities}
           existing={artworkPickerExclusions(entityIds)}
           domainFilter={['media_player']}
-          title="Search media players for artwork…"
+          title={t('dash_search_artwork')}
           onClose={() => setPickerOpen(false)}
           onPick={(id) => {
             onChange({ artworkEntity: id });
@@ -929,6 +932,7 @@ function locate(rows: RowState[], id: string): [number, number] | null {
 }
 
 function EditableView(props: Props) {
+  const { t } = useTranslation();
   const { view, entities, layout } = props;
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rows, setRows] = useState<RowState[]>(() => buildRows(viewRows(view)));
@@ -1032,13 +1036,13 @@ function EditableView(props: Props) {
               <input
                 className="row-title-input"
                 value={row.title ?? ''}
-                placeholder="Row name"
+                placeholder={t('dash_row_name')}
                 onChange={(ev) => layout.renameRow(view.id, ri, ev.target.value)}
               />
               <div className="edit-row-tools">
                 <button
                   className="edit-icon-btn"
-                  title="Move row up"
+                  title={t('dash_move_row_up')}
                   disabled={ri === 0}
                   onClick={() => layout.moveRow(view.id, ri, ri - 1)}
                 >
@@ -1046,7 +1050,7 @@ function EditableView(props: Props) {
                 </button>
                 <button
                   className="edit-icon-btn"
-                  title="Move row down"
+                  title={t('dash_move_row_down')}
                   disabled={ri === rows.length - 1}
                   onClick={() => layout.moveRow(view.id, ri, ri + 1)}
                 >
@@ -1054,17 +1058,18 @@ function EditableView(props: Props) {
                 </button>
                 <button
                   className="edit-icon-btn"
-                  title="Add column"
+                  title={t('dash_add_column')}
                   onClick={() => layout.addColumn(view.id, ri)}
                 >
                   <span className="mdi mdi-table-column-plus-after" />
                 </button>
                 <button
                   className="edit-icon-btn danger"
-                  title="Delete row"
+                  title={t('dash_delete_row')}
                   onClick={() => {
                     const n = row.columns.reduce((s, c) => s + c.items.length, 0);
-                    if (window.confirm(`Delete this row${n ? ` and its ${n} tile${n === 1 ? '' : 's'}` : ''}?`)) {
+                    const s = n !== 1 ? 's' : '';
+                    if (window.confirm(t('dash_delete_row_confirm', { n, s }))) {
                       layout.removeRow(view.id, ri);
                     }
                   }}
@@ -1084,12 +1089,12 @@ function EditableView(props: Props) {
                     <input
                       className="column-title-input"
                       value={col.title ?? ''}
-                      placeholder="Column name"
+                      placeholder={t('dash_column_name')}
                       onChange={(ev) => layout.renameColumn(view.id, ri, ci, ev.target.value)}
                     />
                     <button
                       className={`edit-icon-btn ${col.noCollapse ? 'active' : ''}`}
-                      title={col.noCollapse ? 'Smart grouping disabled — this section never collapses' : 'Never collapse this section (ignore smart grouping)'}
+                      title={col.noCollapse ? t('dash_grouping_disabled') : t('dash_never_collapse')}
                       aria-pressed={!!col.noCollapse}
                       onClick={() => layout.setColumnNoCollapse(view.id, ri, ci, !col.noCollapse)}
                     >
@@ -1097,11 +1102,12 @@ function EditableView(props: Props) {
                     </button>
                     <button
                       className="edit-icon-btn danger"
-                      title="Delete column"
+                      title={t('dash_delete_column')}
                       disabled={row.columns.length === 1}
                       onClick={() => {
                         const n = col.items.length;
-                        if (window.confirm(`Delete this column${n ? ` and its ${n} tile${n === 1 ? '' : 's'}` : ''}?`)) {
+                        const s = n !== 1 ? 's' : '';
+                        if (window.confirm(t('dash_delete_column_confirm', { n, s }))) {
                           layout.removeColumn(view.id, ri, ci);
                         }
                       }}
@@ -1122,11 +1128,11 @@ function EditableView(props: Props) {
                           {...props}
                         />
                       ))}
-                      {col.items.length === 0 && <div className="edit-empty">Drag tiles here</div>}
+                      {col.items.length === 0 && <div className="edit-empty">{t('dash_drag_here')}</div>}
                     </ColumnDroppable>
                   </SortableContext>
                   <button className="add-tile-btn" onClick={() => setPicker({ ri, ci })}>
-                    <span className="mdi mdi-plus" /> Add Tile
+                    <span className="mdi mdi-plus" /> {t('dash_add_tile')}
                   </button>
                 </div>
               ))}
@@ -1135,7 +1141,7 @@ function EditableView(props: Props) {
         ))}
 
         <button className="add-section-btn" onClick={() => layout.addRow(view.id)}>
-          <span className="mdi mdi-plus" /> Add Row
+          <span className="mdi mdi-plus" /> {t('dash_add_row')}
         </button>
       </div>
 
@@ -1223,6 +1229,7 @@ function SortableTile({
   getHistory,
   onOpenSettings,
 }: { item: Item; rowIdx: number; colIdx: number; entIdx: number; onOpenSettings: () => void } & Props) {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
@@ -1230,8 +1237,8 @@ function SortableTile({
   // Auto-cancel the delete confirmation after a few seconds if not acted on.
   useEffect(() => {
     if (!confirmDel) return;
-    const t = setTimeout(() => setConfirmDel(false), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setConfirmDel(false), 4000);
+    return () => clearTimeout(timer);
   }, [confirmDel]);
   const entity = entities[item.re.entity_id];
   // In edit mode every tile occupies a single uniform grid cell so the
@@ -1297,14 +1304,14 @@ function SortableTile({
       <div className="edit-tile-tools" onPointerDown={(e) => e.stopPropagation()}>
         <button
           className="edit-icon-btn"
-          title="Edit tile settings"
+          title={t('dash_edit_tile')}
           onClick={onOpenSettings}
         >
           <span className="mdi mdi-cog" />
         </button>
         <button
           className="edit-icon-btn size-btn"
-          title={`Size: ${size} — click to resize`}
+          title={t('dash_size_resize', { size })}
           onClick={() => layout.cycleTileSize(view.id, rowIdx, colIdx, entIdx)}
         >
           {size}
@@ -1312,15 +1319,15 @@ function SortableTile({
         {confirmDel ? (
           <button
             className="edit-icon-btn danger confirm-del"
-            title="Click again to delete this tile"
+            title={t('dash_click_to_delete')}
             onClick={() => layout.removeTile(view.id, rowIdx, colIdx, entIdx)}
           >
-            <span className="mdi mdi-check" /> Delete?
+            <span className="mdi mdi-check" /> {t('dash_delete_q')}
           </button>
         ) : (
           <button
             className="edit-icon-btn danger"
-            title="Remove tile"
+            title={t('dash_remove_tile')}
             onClick={() => setConfirmDel(true)}
           >
             <span className="mdi mdi-close" />
@@ -1357,6 +1364,7 @@ export function EntityPicker({
   domainFilter?: string[];
   title?: string;
 }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -1410,7 +1418,7 @@ export function EntityPicker({
           <input
             autoFocus
             className="picker-search"
-            placeholder={title ?? 'Search entities…'}
+            placeholder={title ?? t('dash_search_entities')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -1424,11 +1432,11 @@ export function EntityPicker({
               <span className="picker-item-name">
                 <span className={`mdi ${s.icon} picker-special-icon`} /> {s.name}
               </span>
-              <span className="picker-special-badge">Card</span>
+              <span className="picker-special-badge">{t('dash_card')}</span>
             </button>
           ))}
           {results.length === 0 && specials.length === 0 && (
-            <div className="picker-empty">No matching entities.</div>
+            <div className="picker-empty">{t('dash_no_entities')}</div>
           )}
           {results.map((e) => {
             const name = String(e.attributes.friendly_name ?? e.entity_id);
@@ -1444,4 +1452,3 @@ export function EntityPicker({
     </div>
   );
 }
-

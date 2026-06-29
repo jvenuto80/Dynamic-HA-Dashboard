@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { climateEntities } from '../config';
 import type { HassEntities } from 'home-assistant-js-websocket';
 
@@ -19,6 +20,7 @@ const MODE_ICON: Record<string, string> = {
 };
 
 export function ClimateCards({ entities, onSetTemp, onOpenDetail }: Props) {
+  const { t } = useTranslation();
   return (
     <>
       {climateEntities.map((ce) => {
@@ -27,6 +29,7 @@ export function ClimateCards({ entities, onSetTemp, onOpenDetail }: Props) {
 
         const currentTemp = entity.attributes.current_temperature as number;
         const targetTemp = entity.attributes.temperature as number;
+        const tempUnit = (entity.attributes.temperature_unit as string | undefined) ?? '°C';
         const mode = entity.state;
         const isOff = mode === 'off' || mode === 'unavailable';
         const accent = mode === 'cool' ? 'cool' : mode === 'off' ? 'off' : 'heat';
@@ -43,7 +46,7 @@ export function ClimateCards({ entities, onSetTemp, onOpenDetail }: Props) {
             <div className="climate-row-info">
               <div className="climate-row-name">{ce.name}</div>
               <div className="climate-row-sub">
-                {isOff ? 'Off' : `${mode} · ${currentTemp?.toFixed(0) ?? '--'}°F now`}
+                {isOff ? t('climate_off') : `${mode} · ${currentTemp?.toFixed(0) ?? '--'}${tempUnit}`}
               </div>
             </div>
             <div className="climate-row-controls" onClick={(e) => e.stopPropagation()}>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { resolvePersons } from '../lib/persons';
 import type { HassEntities } from 'home-assistant-js-websocket';
 
@@ -10,6 +11,7 @@ interface Props {
 const colors = ['#3b82f6', '#a855f7', '#10b981', '#f59e0b'];
 
 export function PersonTracker({ entities, variant = 'card' }: Props) {
+  const { t } = useTranslation();
   const persons = resolvePersons(entities);
   const list = (
     <div className="person-list">
@@ -46,7 +48,7 @@ export function PersonTracker({ entities, variant = 'card' }: Props) {
 
   return (
     <div className="glass-card persons-card">
-      <h3>People</h3>
+      <h3>{t('person_people')}</h3>
       {list}
     </div>
   );

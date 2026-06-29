@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import { cameraProxyUrl, useCameraFeed } from '../hooks/useCameraFeed';
 import { resolveArtwork } from '../lib/entityInfo';
@@ -61,6 +62,7 @@ export function DetailPanel({
   callHA,
   getHistory,
 }: Props) {
+  const { t } = useTranslation();
   const isOpen = entityId !== null;
   const entity = entityId ? entities[entityId] : null;
   const domain = entityId?.split('.')[0] || '';
@@ -82,7 +84,7 @@ export function DetailPanel({
     <button
       type="button"
       className={`flyout-eye ${hidden ? 'is-hidden' : ''}`}
-      title={hidden ? 'Show in flyout' : 'Hide from flyout'}
+      title={hidden ? t('detail_show_flyout') : t('detail_hide_flyout')}
       onClick={onClick}
     >
       <span className={`mdi ${hidden ? 'mdi-eye-off' : 'mdi-eye'}`} />
@@ -97,7 +99,7 @@ export function DetailPanel({
           <>
             <div className="detail-header">
               <h2>{name}</h2>
-              {editing && <span className="flyout-edit-badge"><span className="mdi mdi-pencil" /> Editing flyout</span>}
+              {editing && <span className="flyout-edit-badge"><span className="mdi mdi-pencil" /> {t('detail_editing_flyout')}</span>}
               <button className="detail-close" onClick={onClose}>
                 <span className="mdi mdi-close" />
               </button>
@@ -131,7 +133,7 @@ export function DetailPanel({
 
             {links && links.length > 0 && (
               <div className="glass-card detail-links">
-                <h4>Linked</h4>
+                <h4>{t('detail_linked')}</h4>
                 {links.map((id) => {
                   const le = entities[id];
                   if (!le) return null;
@@ -203,7 +205,7 @@ export function DetailPanel({
 
             {(!cfg.hideAttributes || editing) && (
               <div className={`glass-card flyout-section ${cfg.hideAttributes ? 'flyout-dim' : ''}`} style={{ marginTop: 16, position: 'relative' }}>
-                <h4 style={{ marginBottom: 12, fontSize: 14, color: 'var(--text-muted)' }}>Attributes</h4>
+                <h4 style={{ marginBottom: 12, fontSize: 14, color: 'var(--text-muted)' }}>{t('detail_attributes')}</h4>
                 {editing && <EyeToggle hidden={!!cfg.hideAttributes} onClick={() => toggle('hideAttributes')} />}
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                   {Object.entries(entity.attributes)
@@ -218,7 +220,7 @@ export function DetailPanel({
                             <button
                               type="button"
                               className={`flyout-attr-eye ${attrHidden ? 'is-hidden' : ''}`}
-                              title={attrHidden ? 'Show attribute' : 'Hide attribute'}
+                              title={attrHidden ? t('detail_show_attribute') : t('detail_hide_attribute')}
                               onClick={() => toggleAttr(key)}
                             >
                               <span className={`mdi ${attrHidden ? 'mdi-eye-off' : 'mdi-eye'}`} />
@@ -242,6 +244,7 @@ export function DetailPanel({
 }
 
 function DetailCamera({ cameraEntityId, entities }: { cameraEntityId: string; entities: HassEntities }) {
+  const { t } = useTranslation();
   const cam = entities[cameraEntityId];
   // useCameraFeed owns the refresh loop: it pauses on failed frames, hidden
   // tabs, and socket drops so a stale signed token never gets hammered against
@@ -253,7 +256,7 @@ function DetailCamera({ cameraEntityId, entities }: { cameraEntityId: string; en
     <div className="detail-camera glass-card">
       <img
         src={src}
-        alt={(cam?.attributes.friendly_name as string) || 'Camera'}
+        alt={(cam?.attributes.friendly_name as string) || t('detail_camera')}
         onLoad={onLoad}
         onError={onError}
       />
@@ -292,6 +295,7 @@ interface EntityProps {
 }
 
 function LightDetail({ entity, entityId, callHA }: EntityProps) {
+  const { t } = useTranslation();
   const brightness = entity.attributes.brightness as number | undefined;
   const isOn = entity.state === 'on';
 
@@ -324,19 +328,19 @@ function LightDetail({ entity, entityId, callHA }: EntityProps) {
   return (
     <div className="glass-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <span style={{ fontSize: 14, fontWeight: 500 }}>Power</span>
+        <span style={{ fontSize: 14, fontWeight: 500 }}>{t('detail_power')}</span>
         <button
           className="mode-btn"
           style={{ minWidth: 60 }}
           onClick={() => callHA('light', 'toggle', undefined, { entity_id: entityId })}
         >
-          {isOn ? 'ON' : 'OFF'}
+          {isOn ? t('detail_on') : t('detail_off')}
         </button>
       </div>
       {isOn && brightness !== undefined && (
         <div className="light-slider-row">
           <label>
-            <span>Brightness</span>
+            <span>{t('detail_brightness')}</span>
             <span>{Math.round((briValue / 255) * 100)}%</span>
           </label>
           <input
@@ -364,21 +368,21 @@ function LightDetail({ entity, entityId, callHA }: EntityProps) {
             className={`light-mode-btn ${mode === 'color' ? 'active' : ''}`}
             onClick={() => setMode('color')}
           >
-            <span className="mdi mdi-palette" /> Color
+            <span className="mdi mdi-palette" /> {t('detail_color')}
           </button>
           <button
             className={`light-mode-btn ${mode === 'temp' ? 'active' : ''}`}
             onClick={() => setMode('temp')}
           >
-            <span className="mdi mdi-thermometer" /> Warmth
+            <span className="mdi mdi-thermometer" /> {t('detail_warmth')}
           </button>
         </div>
       )}
 
       {isOn && supportsColor && (!showSwitcher || mode === 'color') && (
         <div className="light-color-row">
-          <span>Color</span>
-          <label className="light-color-swatch" style={{ background: currentHex }} title="Pick a color">
+          <span>{t('detail_color')}</span>
+          <label className="light-color-swatch" style={{ background: currentHex }} title={t('detail_pick_color')}>
             <input
               type="color"
               value={currentHex}
@@ -391,7 +395,7 @@ function LightDetail({ entity, entityId, callHA }: EntityProps) {
       {isOn && supportsTemp && (!showSwitcher || mode === 'temp') && (
         <div className="light-slider-row">
           <label>
-            <span>Warmth</span>
+            <span>{t('detail_warmth')}</span>
             <span>{kValue}K</span>
           </label>
           <input
@@ -418,16 +422,18 @@ function LightDetail({ entity, entityId, callHA }: EntityProps) {
 }
 
 function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
+  const { t } = useTranslation();
   const currentTemp = entity.attributes.current_temperature as number;
   const targetTemp = entity.attributes.temperature as number;
+  const tempUnit = (entity.attributes.temperature_unit as string | undefined) ?? '°C';
   const mode = entity.state;
   const modes = (entity.attributes.hvac_modes as string[]) || [];
   const fanModes = (entity.attributes.fan_modes as string[]) || [];
   const fanMode = entity.attributes.fan_mode as string;
   const presetModes = (entity.attributes.preset_modes as string[]) || [];
   const presetMode = entity.attributes.preset_mode as string | undefined;
-  const minTemp = (entity.attributes.min_temp as number) || 60;
-  const maxTemp = (entity.attributes.max_temp as number) || 90;
+  const minTemp = (entity.attributes.min_temp as number) || (tempUnit === '°F' ? 60 : 16);
+  const maxTemp = (entity.attributes.max_temp as number) || (tempUnit === '°F' ? 90 : 35);
   const step = (entity.attributes.target_temp_step as number) || 1;
 
   // `pending` holds the temperature the user is dragging toward. While set we show
@@ -516,8 +522,8 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
           </svg>
           <div className="climate-temp-display">
             <span className="value">{(displayTemp ?? currentTemp)?.toFixed(1) || '--'}</span>
-            <span className="unit">°F</span>
-            <span className="label">Current: {currentTemp?.toFixed(1) ?? '--'}°F</span>
+            <span className="unit">{tempUnit}</span>
+            <span className="label">{t('detail_current')} {currentTemp?.toFixed(1) ?? '--'}{tempUnit}</span>
           </div>
         </div>
         <div className="climate-controls">
@@ -525,7 +531,7 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
             <span className="mdi mdi-minus" />
           </button>
           <button className="align-btn" onClick={() => currentTemp && setTemp(Math.round(currentTemp))}>
-            <span className="mdi mdi-target" /> Align
+            <span className="mdi mdi-target" /> {t('detail_align')}
           </button>
           <button className="climate-btn" onClick={() => displayTemp && setTemp(displayTemp + step)}>
             <span className="mdi mdi-plus" />
@@ -533,7 +539,7 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
         </div>
       </div>
       <div className="glass-card" style={{ marginBottom: 12 }}>
-        <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>MODE</h4>
+        <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>{t('detail_mode')}</h4>
         <div className="climate-mode-row" style={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
           {modes.map((m) => (
             <button key={m} className={`mode-btn ${mode === m ? 'active' : ''}`}
@@ -545,7 +551,7 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
       </div>
       {presetModes.length > 0 && (
         <div className="glass-card" style={{ marginBottom: fanModes.length > 0 ? 12 : 0 }}>
-          <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>PRESET</h4>
+          <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>{t('detail_preset')}</h4>
           <div className="climate-mode-row" style={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
             {presetModes.map((m) => (
               <button key={m} className={`mode-btn ${presetMode === m ? 'active' : ''}`}
@@ -558,7 +564,7 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
       )}
       {fanModes.length > 0 && (
         <div className="glass-card">
-          <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>FAN MODE</h4>
+          <h4 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>{t('detail_fan_mode')}</h4>
           <div className="climate-mode-row" style={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
             {fanModes.map((m) => (
               <button key={m} className={`mode-btn ${fanMode === m ? 'active' : ''}`}
@@ -574,6 +580,7 @@ function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
 }
 
 function CoverDetail({ entity, entityId, callHA, reverse }: EntityProps & { reverse?: boolean }) {
+  const { t } = useTranslation();
   const position = entity.attributes.current_position as number | undefined;
   // `pending` holds the value the user is dragging toward. While it is set we
   // show it instead of the live position so the thumb tracks the finger smoothly
@@ -597,14 +604,14 @@ function CoverDetail({ entity, entityId, callHA, reverse }: EntityProps & { reve
   return (
     <div className="glass-card">
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, justifyContent: 'center' }}>
-        <button className="mode-btn" onClick={() => callHA('cover', 'open_cover', undefined, { entity_id: entityId })}>Open</button>
-        <button className="mode-btn" onClick={() => callHA('cover', 'stop_cover', undefined, { entity_id: entityId })}>Stop</button>
-        <button className="mode-btn" onClick={() => callHA('cover', 'close_cover', undefined, { entity_id: entityId })}>Close</button>
+        <button className="mode-btn" onClick={() => callHA('cover', 'open_cover', undefined, { entity_id: entityId })}>{t('detail_open')}</button>
+        <button className="mode-btn" onClick={() => callHA('cover', 'stop_cover', undefined, { entity_id: entityId })}>{t('detail_stop')}</button>
+        <button className="mode-btn" onClick={() => callHA('cover', 'close_cover', undefined, { entity_id: entityId })}>{t('detail_close')}</button>
       </div>
       {position !== undefined && (
         <div className="light-slider-row">
           <label>
-            <span>Position</span>
+            <span>{t('detail_position')}</span>
             <span>{actual}%</span>
           </label>
           <input
@@ -678,6 +685,7 @@ function Consumable({ icon, label, pct }: { icon: string; label: string; pct: nu
 }
 
 function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { entities: HassEntities }) {
+  const { t } = useTranslation();
   const a = entity.attributes;
   const base = entityId.split('.')[1];
   const state = entity.state;
@@ -703,10 +711,10 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
   // present) rather than the `select.<base>_cleaning_mode` entity, which the
   // integration reports as `unavailable` whenever the mop pad isn't mounted.
   const MODE_LABELS: Record<string, string> = {
-    'Sweeping and mopping': 'Vac & Mop',
-    'Sweeping': 'Vac',
-    'Mopping': 'Mop',
-    'Mopping after sweeping': 'Vac → Mop',
+    'Sweeping and mopping': t('detail_vacuum_mode_vac_mop'),
+    'Sweeping': t('detail_vacuum_mode_vac'),
+    'Mopping': t('detail_vacuum_mode_mop'),
+    'Mopping after sweeping': t('detail_vacuum_mode_vac_then_mop'),
   };
   const MODE_ORDER = ['Sweeping and mopping', 'Sweeping', 'Mopping', 'Mopping after sweeping'];
   const modes = [...modeList].sort((x, y) => MODE_ORDER.indexOf(x) - MODE_ORDER.indexOf(y));
@@ -731,10 +739,10 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
           : `mdi-battery-${Math.round(battery / 10) * 10}`;
 
   const consumables = [
-    { icon: 'mdi-broom', label: 'Main brush', pct: a.main_brush_left as number | undefined },
-    { icon: 'mdi-broom', label: 'Side brush', pct: a.side_brush_left as number | undefined },
-    { icon: 'mdi-air-filter', label: 'Filter', pct: a.filter_left as number | undefined },
-    { icon: 'mdi-eye-outline', label: 'Sensors', pct: entities[`sensor.${base}_sensor_dirty_left`]?.state },
+    { icon: 'mdi-broom', label: t('detail_main_brush'), pct: a.main_brush_left as number | undefined },
+    { icon: 'mdi-broom', label: t('detail_side_brush'), pct: a.side_brush_left as number | undefined },
+    { icon: 'mdi-air-filter', label: t('detail_filter'), pct: a.filter_left as number | undefined },
+    { icon: 'mdi-eye-outline', label: t('detail_sensors'), pct: entities[`sensor.${base}_sensor_dirty_left`]?.state },
   ]
     .map((c) => ({ ...c, pct: typeof c.pct === 'string' ? parseFloat(c.pct) : c.pct }))
     .filter((c) => c.pct != null && Number.isFinite(c.pct)) as { icon: string; label: string; pct: number }[];
@@ -752,7 +760,7 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
         <div className="vac-summary-text">
           <div className="vac-status">{hasError ? errorRaw : status}</div>
           <div className="vac-substatus">
-            {currentRoom && cleaning ? `In ${currentRoom}` : docked ? 'Docked' : ''}
+            {currentRoom && cleaning ? t('detail_in_room', { room: currentRoom }) : docked ? t('detail_docked') : ''}
             {cleaning && area != null ? `${currentRoom ? ' · ' : ''}${area} m²${time != null ? ` · ${time} min` : ''}` : ''}
           </div>
         </div>
@@ -770,22 +778,22 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
           onClick={() => callHA('vacuum', cleaning ? 'pause' : 'start', undefined, { entity_id: entityId })}
         >
           <span className={`mdi ${cleaning ? 'mdi-pause' : 'mdi-play'}`} />
-          {cleaning ? 'Pause' : state === 'paused' ? 'Resume' : 'Clean'}
+          {cleaning ? t('detail_pause') : state === 'paused' ? t('detail_resume') : t('detail_clean')}
         </button>
         <button className="vac-btn" onClick={() => callHA('vacuum', 'stop', undefined, { entity_id: entityId })}>
-          <span className="mdi mdi-stop" />Stop
+          <span className="mdi mdi-stop" />{t('detail_stop')}
         </button>
         <button className="vac-btn" onClick={() => callHA('vacuum', 'return_to_base', undefined, { entity_id: entityId })}>
-          <span className="mdi mdi-home-import-outline" />Dock
+          <span className="mdi mdi-home-import-outline" />{t('detail_dock')}
         </button>
         <button className="vac-btn" onClick={() => callHA('vacuum', 'locate', undefined, { entity_id: entityId })}>
-          <span className="mdi mdi-map-marker-radius" />Locate
+          <span className="mdi mdi-map-marker-radius" />{t('detail_locate')}
         </button>
       </div>
 
       {fanList.length > 0 && (
         <div className="vac-section">
-          <div className="vac-section-label">Suction</div>
+          <div className="vac-section-label">{t('detail_suction')}</div>
           <div className="vac-seg">
             {fanList.map((f) => (
               <button
@@ -802,7 +810,7 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
 
       {modes.length > 0 && (
         <div className="vac-section">
-          <div className="vac-section-label">Mode</div>
+          <div className="vac-section-label">{t('detail_mode_label')}</div>
           <div className="vac-seg">
             {modes.map((m) => (
               <button
@@ -820,7 +828,7 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
       {rooms.length > 0 && (
         <div className="vac-section">
           <div className="vac-section-label">
-            Rooms{selRooms.length > 0 ? ` · ${selRooms.length} selected` : ''}
+            {t('detail_rooms')}{selRooms.length > 0 ? ` · ${selRooms.length} ${t('detail_selected')}` : ''}
           </div>
           <div className="vac-rooms">
             {rooms.map((r) => (
@@ -835,14 +843,16 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
           </div>
           <button className="vac-btn vac-clean-rooms" disabled={!selRooms.length} onClick={cleanSelected}>
             <span className="mdi mdi-broom" />
-            {selRooms.length ? `Clean ${selRooms.length} room${selRooms.length > 1 ? 's' : ''}` : 'Select rooms to clean'}
+            {selRooms.length
+              ? t('detail_clean_rooms', { n: selRooms.length, s: selRooms.length > 1 ? 's' : '' })
+              : t('detail_select_rooms')}
           </button>
         </div>
       )}
 
       {consumables.length > 0 && (
         <div className="vac-section">
-          <div className="vac-section-label">Maintenance</div>
+          <div className="vac-section-label">{t('detail_maintenance')}</div>
           <div className="vac-consumables">
             {consumables.map((c) => (
               <Consumable key={c.label} icon={c.icon} label={c.label} pct={Math.round(c.pct)} />
@@ -855,6 +865,7 @@ function VacuumDetail({ entity, entityId, callHA, entities }: EntityProps & { en
 }
 
 function MediaDetail({ entity, entityId, callHA, entities, artworkEntity }: EntityProps & { entities: HassEntities; artworkEntity?: string }) {
+  const { t } = useTranslation();
   const title = entity.attributes.media_title as string | undefined;
   const artist = entity.attributes.media_artist as string | undefined;
   const app = entity.attributes.app_name as string | undefined;
@@ -898,7 +909,7 @@ function MediaDetail({ entity, entityId, callHA, entities, artworkEntity }: Enti
       {volume !== undefined && (
         <div className="light-slider-row">
           <label>
-            <span>Volume</span>
+            <span>{t('detail_volume')}</span>
             <span>{Math.round(volume * 100)}%</span>
           </label>
           <input
@@ -978,6 +989,7 @@ function DetailGraph({
   unit: string;
   getHistory: (entityId: string, hours?: number) => Promise<number[]>;
 }) {
+  const { t } = useTranslation();
   const [hours, setHours] = useState(24);
   const [data, setData] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1002,9 +1014,9 @@ function DetailGraph({
 
   let body = null;
   if (loading) {
-    body = <div className="detail-graph-empty">Loading…</div>;
+    body = <div className="detail-graph-empty">{t('detail_loading')}</div>;
   } else if (data.length < 2) {
-    body = <div className="detail-graph-empty">No history</div>;
+    body = <div className="detail-graph-empty">{t('detail_no_history')}</div>;
   } else {
     const min = Math.min(...data);
     const max = Math.max(...data);
@@ -1039,9 +1051,9 @@ function DetailGraph({
           <span className="detail-axis detail-axis-min">{min.toFixed(1)}</span>
         </div>
         <div className="detail-graph-stats">
-          <span><b>{min.toFixed(1)}</b>{unit} min</span>
-          <span><b>{avg.toFixed(1)}</b>{unit} avg</span>
-          <span><b>{max.toFixed(1)}</b>{unit} max</span>
+          <span><b>{min.toFixed(1)}</b>{unit} {t('detail_min')}</span>
+          <span><b>{avg.toFixed(1)}</b>{unit} {t('detail_avg')}</span>
+          <span><b>{max.toFixed(1)}</b>{unit} {t('detail_max')}</span>
         </div>
       </>
     );
@@ -1050,7 +1062,7 @@ function DetailGraph({
   return (
     <div className="glass-card detail-graph" style={{ marginTop: 16 }}>
       <div className="detail-graph-head">
-        <h4>History</h4>
+        <h4>{t('detail_history')}</h4>
         <div className="detail-graph-ranges">
           {RANGES.map((r) => (
             <button

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import {
   activeCalendarIds,
@@ -21,6 +22,7 @@ interface Props {
  * first, and a calendar legend when more than one feeds the list.
  */
 export function CalendarFlyout({ events, entities, onClose }: Props) {
+  const { t } = useTranslation();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -42,7 +44,7 @@ export function CalendarFlyout({ events, entities, onClose }: Props) {
         <div className="detail-header">
           <h2>
             <span className="mdi mdi-calendar-month" style={{ color: 'var(--accent-primary)', marginRight: 8 }} />
-            Next 7 days
+            {t('cal_next_7_days')}
           </h2>
           <button className="detail-close" onClick={onClose}>
             <span className="mdi mdi-close" />
@@ -52,7 +54,7 @@ export function CalendarFlyout({ events, entities, onClose }: Props) {
         {days.length === 0 ? (
           <div className="cal-empty">
             <span className="mdi mdi-calendar-check" />
-            <p>Nothing scheduled this week.</p>
+            <p>{t('cal_nothing_scheduled')}</p>
           </div>
         ) : (
           days.map((day) => (

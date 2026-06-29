@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { DashView } from '../types';
 
 interface Props {
@@ -19,6 +20,7 @@ export function Sidebar({
   onAddPage,
   onManagePages,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <nav className="sidebar">
       <div className="sidebar-logo">
@@ -36,13 +38,13 @@ export function Sidebar({
       ))}
       {editing && (
         <>
-          <button className="sidebar-btn sidebar-add" onClick={onAddPage} title="Add page">
+          <button className="sidebar-btn sidebar-add" onClick={onAddPage} title={t('sidebar_add_page')}>
             <span className="mdi mdi-plus" />
           </button>
           <button
             className="sidebar-btn sidebar-manage"
             onClick={onManagePages}
-            title="Manage pages"
+            title={t('sidebar_manage_pages')}
           >
             <span className="mdi mdi-playlist-edit" />
           </button>
@@ -51,7 +53,7 @@ export function Sidebar({
       <button
         className="sidebar-btn sidebar-settings"
         onClick={onOpenSettings}
-        title="Settings"
+        title={t('sidebar_settings')}
       >
         <span className="mdi mdi-cog" />
       </button>

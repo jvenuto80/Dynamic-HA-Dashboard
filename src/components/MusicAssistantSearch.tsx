@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import {
   MA_MEDIA_TYPES,
@@ -43,6 +44,7 @@ const isTouchDevice = () =>
  * player via music_assistant.play_media.
  */
 export function MusicAssistantSearch({ entities, searchMusic, playMusic, getMaPlayers, name, icon }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   // Stable identity: an inline `() => setOpen(false)` changes every render
   // (i.e. every entity stream tick), and the panel's focus effect used to
@@ -57,7 +59,7 @@ export function MusicAssistantSearch({ entities, searchMusic, playMusic, getMaPl
         </div>
         <div className="tile-info">
           <div className="tile-name">{name}</div>
-          <div className="tile-sub">Search &amp; play</div>
+          <div className="tile-sub">{t('music_search_play')}</div>
         </div>
         <span className="mdi mdi-magnify ma-tile-search" aria-hidden="true" />
       </button>
@@ -92,6 +94,7 @@ function MusicAssistantPanel({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   // Load the player list when the flyout opens. Limited to Music Assistant
   // players (others can't be targeted by music_assistant.play_media); only falls
   // back to all media players if the entity registry can't be read at all.
@@ -204,7 +207,7 @@ function MusicAssistantPanel({
       setRaw(res);
     } catch (err) {
       setRaw(null);
-      setError(err instanceof Error ? err.message : 'Search failed.');
+      setError(err instanceof Error ? err.message : t('music_search_failed'));
     } finally {
       setLoading(false);
     }
@@ -229,16 +232,16 @@ function MusicAssistantPanel({
 
   const play = async (item: MaItem) => {
     if (!player) {
-      flashToast('Select a media player first.');
+      flashToast(t('music_select_first'));
       return;
     }
     localStorage.setItem(PLAYER_KEY, player);
     try {
       await playMusic(player, item.uri, item.mediaType);
       const where = players.find((p) => p.id === player)?.name ?? 'player';
-      flashToast(`Playing “${item.name}” on ${where}`);
+      flashToast(t('music_playing', { title: item.name, player: where }));
     } catch (err) {
-      flashToast(err instanceof Error ? err.message : 'Could not play that.');
+      flashToast(err instanceof Error ? err.message : t('music_could_not_play'));
     }
   };
 
@@ -247,9 +250,9 @@ function MusicAssistantPanel({
       <div className="detail-header">
         <h2 className="ma-flyout-title">
           <span className="ma-logo mdi mdi-music-circle" />
-          Music Assistant
+          {t('music_assistant')}
         </h2>
-        <button className="detail-close" onClick={onClose} title="Close">
+        <button className="detail-close" onClick={onClose} title={t('music_close')}>
           <span className="mdi mdi-close" />
         </button>
       </div>
@@ -260,7 +263,7 @@ function MusicAssistantPanel({
           <input
             ref={inputRef}
             className="ma-search-input"
-            placeholder="Type your search term here…"
+            placeholder={t('music_search_placeholder')}
             value={term}
             enterKeyHint="search"
             onChange={(e) => setTerm(e.target.value)}
@@ -275,17 +278,17 @@ function MusicAssistantPanel({
 
         <div className="ma-controls">
           <div className="ma-field">
-            <span>Media player</span>
+            <span>{t('music_media_player')}</span>
             <MaSelect
               value={player}
-              placeholder={players.length ? 'Select a player' : 'No Music Assistant players'}
+              placeholder={players.length ? t('music_select_player') : t('music_no_players')}
               options={players.map((p) => ({ value: p.id, label: p.name }))}
               onChange={setPlayer}
             />
           </div>
           <div className="ma-controls-row">
             <div className="ma-field">
-              <span>Media type</span>
+              <span>{t('music_media_type')}</span>
               <MaSelect
                 value={mediaType}
                 options={MA_MEDIA_TYPES.map((t) => ({ value: t.value, label: t.label }))}
@@ -293,7 +296,7 @@ function MusicAssistantPanel({
               />
             </div>
             <div className="ma-field ma-field-narrow">
-              <span>Results</span>
+              <span>{t('music_results')}</span>
               <MaSelect
                 value={String(limit)}
                 options={[5, 10, 15, 20, 30, 50].map((n) => ({ value: String(n), label: String(n) }))}
@@ -311,7 +314,7 @@ function MusicAssistantPanel({
             onClick={() => setLibraryOnly((v) => !v)}
           >
             <span className={`mdi ${libraryOnly ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'}`} />
-            Local library
+            {t('music_local')}
           </button>
           <button
             type="button"
@@ -320,7 +323,7 @@ function MusicAssistantPanel({
             onClick={() => setFavouritesOnly((v) => !v)}
           >
             <span className={`mdi ${favouritesOnly ? 'mdi-heart' : 'mdi-heart-outline'}`} />
-            Favourites only
+            {t('music_favourites')}
           </button>
         </div>
 
@@ -332,17 +335,17 @@ function MusicAssistantPanel({
           )}
           {!error && loading && (
             <div className="ma-empty">
-              <span className="mdi mdi-loading mdi-spin" /> Searching…
+              <span className="mdi mdi-loading mdi-spin" /> {t('music_searching')}
             </div>
           )}
           {!error && !loading && searched && totalResults === 0 && (
             <div className="ma-empty">
-              <span className="mdi mdi-music-note-off" /> No results found.
+              <span className="mdi mdi-music-note-off" /> {t('music_no_results')}
             </div>
           )}
           {!error && !loading && !searched && (
             <div className="ma-empty ma-hint">
-              <span className="mdi mdi-magnify" /> Search your music library and streaming services.
+              <span className="mdi mdi-magnify" /> {t('music_search_desc')}
             </div>
           )}
           {!loading &&
@@ -358,7 +361,7 @@ function MusicAssistantPanel({
                       className="ma-item"
                       key={item.uri}
                       onClick={() => play(item)}
-                      title="Play on selected player"
+                      title={t('music_play_on')}
                     >
                       <span className="ma-item-art">
                         {item.image ? (
@@ -404,6 +407,7 @@ function MaSelect({
   placeholder?: string;
   onChange: (value: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const selected = options.find((o) => o.value === value);
@@ -438,7 +442,7 @@ function MaSelect({
         onClick={() => setOpen((v) => !v)}
       >
         <span className={`ma-dd-value ${selected ? '' : 'placeholder'}`}>
-          {selected ? selected.label : placeholder ?? 'Select…'}
+          {selected ? selected.label : placeholder ?? t('music_select')}
         </span>
         <span className="mdi mdi-chevron-down ma-dd-caret" />
       </button>
@@ -465,4 +469,3 @@ function MaSelect({
     </div>
   );
 }
-

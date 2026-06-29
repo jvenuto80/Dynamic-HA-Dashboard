@@ -97,7 +97,7 @@ export function useLayout() {
   const addRow = useCallback(
     (viewId: string) => {
       mutateView(viewId, (v) => {
-        v.rows!.push({ title: 'New Row', columns: [{ title: 'Column', entities: [] }] });
+        v.rows!.push({ title: '', columns: [{ title: '', entities: [] }] });
       });
     },
     [mutateView],
@@ -135,7 +135,7 @@ export function useLayout() {
   const addColumn = useCallback(
     (viewId: string, rowIdx: number) => {
       mutateView(viewId, (v) => {
-        v.rows![rowIdx]?.columns.push({ title: 'Column', entities: [] });
+        v.rows![rowIdx]?.columns.push({ title: '', entities: [] });
       });
     },
     [mutateView],

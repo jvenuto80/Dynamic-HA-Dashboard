@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import type { NocNode, NocPort } from '../types';
 import { Sparkline } from './Sparkline';
@@ -93,6 +94,7 @@ function PortsSection({
   onOpenDetail: (entityId: string) => void;
   onOpenNode?: (nodeId: string) => void;
 }) {
+  const { t } = useTranslation();
   const ports = node.ports ?? [];
   const [selId, setSelId] = useState<string | null>(ports[0]?.id ?? null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -154,8 +156,8 @@ function PortsSection({
   return (
     <div className="noc-fly-section">
       <h3 className="noc-fly-h3">
-        <span className="mdi mdi-ethernet" /> Ports
-        <span className="noc-fly-count ok">{upCount}/{ports.length} up</span>
+        <span className="mdi mdi-ethernet" /> {t('noc_ports')}
+        <span className="noc-fly-count ok">{upCount}/{ports.length} {t('noc_up')}</span>
       </h3>
       <div className="noc-ports noc-ports-lg">
         {ports.map((p, i) => {
@@ -179,7 +181,7 @@ function PortsSection({
           <div className="noc-port-detail-head">
             <span className={`noc-port-swatch noc-port-${speed}`} />
             <div className="noc-port-detail-id">
-              <strong>Port {sel.num}</strong>
+              <strong>{t('noc_port', { num: sel.num })}</strong>
               {sel.client && <span>{sel.client}</span>}
             </div>
             <span className="noc-port-detail-speed">{PORT_SPEED_META[speed].label}</span>
@@ -187,11 +189,11 @@ function PortsSection({
 
           <div className="noc-port-detail-grid">
             <div><span>Link</span><b>{PORT_SPEED_META[speed].short}</b></div>
-            {sel.poe && <div><span>PoE class</span><b>{sel.poe.toUpperCase()}</b></div>}
+            {sel.poe && <div><span>{t('noc_poe_class')}</span><b>{sel.poe.toUpperCase()}</b></div>}
             {poeOn !== undefined && (
-              <div><span>PoE power</span><b className={poeOn ? 'ok' : 'crit'}>{poeOn ? 'On' : 'Off'}</b></div>
+              <div><span>{t('noc_poe_power')}</span><b className={poeOn ? 'ok' : 'crit'}>{poeOn ? t('noc_on') : t('noc_off')}</b></div>
             )}
-            {sel.role && <div><span>Role</span><b>{sel.role}</b></div>}
+            {sel.role && <div><span>{t('noc_role')}</span><b>{sel.role}</b></div>}
           </div>
 
           {(sel.poeEntity || sel.poeCycleEntity || infoEntityId || selLinkNode) && (
@@ -202,7 +204,7 @@ function PortsSection({
                   className="noc-port-btn is-link"
                   onClick={() => onOpenNode(selLinkNode.id)}
                 >
-                  <span className="mdi mdi-transit-connection-variant" /> Open {selLinkNode.name}
+                  <span className="mdi mdi-transit-connection-variant" /> {t('noc_open_in', { name: selLinkNode.name })}
                 </button>
               )}
               {sel.poeEntity && (
@@ -213,7 +215,7 @@ function PortsSection({
                   onClick={() => setPoe(sel, !(poeOn ?? true))}
                 >
                   <span className={`mdi ${poeOn ? 'mdi-flash-off' : 'mdi-flash'}`} />
-                  {poeOn ? 'PoE off' : 'PoE on'}
+                  {poeOn ? t('noc_poe_toggle_off') : t('noc_poe_toggle_on')}
                 </button>
               )}
               {(sel.poeCycleEntity || sel.poeEntity) && (
@@ -224,23 +226,23 @@ function PortsSection({
                   onClick={() => powerCycle(sel)}
                 >
                   <span className="mdi mdi-restart" />
-                  {busy === sel.id ? 'Cycling…' : 'Power cycle'}
+                  {busy === sel.id ? t('noc_cycling') : t('noc_power_cycle')}
                 </button>
               )}
               {infoEntityId && (
                 <button
                   type="button"
                   className="noc-port-btn is-ghost"
-                  title={`Open ${infoEntityName} in Home Assistant (history & attributes)`}
+                  title={t('noc_open_ha_desc')}
                   onClick={() => onOpenDetail(infoEntityId)}
                 >
-                  <span className="mdi mdi-open-in-new" /> <span>{infoEntityName || 'Open in HA'}</span>
+                  <span className="mdi mdi-open-in-new" /> <span>{infoEntityName || t('noc_open_ha')}</span>
                 </button>
               )}
             </div>
           )}
           {(sel.poeEntity || sel.poeCycleEntity) && !callHA && (
-            <div className="noc-port-note">Connect to Home Assistant to control PoE.</div>
+            <div className="noc-port-note">{t('noc_connect_control')}</div>
           )}
         </div>
       )}
@@ -249,6 +251,7 @@ function PortsSection({
 }
 
 export function NocNodeFlyout({ node, nodes = [], entities, getHistory, onOpenDetail, onOpenNode, callHA, onClose }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [hist, setHist] = useState<Record<string, number[]>>({});
   const accent = node.accent ?? '#3b82f6';
@@ -371,9 +374,9 @@ export function NocNodeFlyout({ node, nodes = [], entities, getHistory, onOpenDe
         {containers.length > 0 && (
           <div className="noc-fly-section">
             <h3 className="noc-fly-h3">
-              <span className="mdi mdi-docker" /> Containers
+              <span className="mdi mdi-docker" /> {t('noc_containers')}
               <span className={`noc-fly-count ${downCount ? 'crit' : 'ok'}`}>
-                {downCount ? `${downCount} down` : 'all up'}
+                {downCount ? `${downCount} ${t('noc_down')}` : t('noc_all_up')}
               </span>
             </h3>
             <div className="noc-fly-containers">
@@ -386,7 +389,7 @@ export function NocNodeFlyout({ node, nodes = [], entities, getHistory, onOpenDe
                 >
                   <span className={`noc-led noc-led-${c.up ? 'ok' : 'crit'}`} />
                   <span className="noc-container-name">{c.name}</span>
-                  <span className="noc-container-state">{c.up ? 'running' : 'down'}</span>
+                  <span className="noc-container-state">{c.up ? t('noc_running') : t('noc_down')}</span>
                 </button>
               ))}
             </div>
@@ -394,8 +397,8 @@ export function NocNodeFlyout({ node, nodes = [], entities, getHistory, onOpenDe
         )}
 
         <div className="noc-fly-section">
-          <h3 className="noc-fly-h3"><span className="mdi mdi-chart-line" /> Metrics</h3>
-          {node.metrics.length === 0 && <div className="noc-fly-empty">No metrics configured.</div>}
+          <h3 className="noc-fly-h3"><span className="mdi mdi-chart-line" /> {t('noc_metrics')}</h3>
+          {node.metrics.length === 0 && <div className="noc-fly-empty">{t('noc_no_metrics')}</div>}
           {node.metrics.map((m) => {
             const e = entities[m.entity_id];
             const val = numericState(e);

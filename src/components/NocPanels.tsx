@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import type { NocApiStat, NocConfig, NocDonut, NocMetric, NocNode, NocPanel, NocPowerUnit } from '../types';
 import { formatMetric, numericState } from '../lib/noc';
@@ -33,18 +34,18 @@ function storageMetrics(nodes: NocNode[]): { node: NocNode; metric: NocMetric }[
 
 /** Build sensible default panels from the configured nodes. Used by the
  *  builder's "auto-populate" so the user gets editable starting points. */
-export function deriveDefaultPanels(noc: NocConfig): NocPanel[] {
+export function deriveDefaultPanels(noc: NocConfig, t: (key: string) => string): NocPanel[] {
   const nodes = noc.nodes ?? [];
   const panels: NocPanel[] = [];
-  const t = Date.now().toString(36);
+  const ts = Date.now().toString(36);
 
   const wanIds = noc.wanLatency ?? [];
   if (wanIds.length) {
     panels.push({
-      id: `panel-wan-${t}`,
+      id: `panel-wan-${ts}`,
       type: 'wan',
-      title: 'Internet · WAN',
-      subtitle: 'Live latency from your gateway',
+      title: t('noc_internet_wan'),
+      subtitle: t('noc_live_latency'),
       span: 1.5,
       stats: wanIds.map((id, i) => ({
         id: `stat-${i}`,
@@ -59,10 +60,10 @@ export function deriveDefaultPanels(noc: NocConfig): NocPanel[] {
   const storage = storageMetrics(nodes);
   if (storage.length) {
     panels.push({
-      id: `panel-storage-${t}`,
+      id: `panel-storage-${ts}`,
       type: 'storage',
-      title: 'Storage',
-      subtitle: 'Capacity across your fleet',
+      title: t('noc_storage'),
+      subtitle: t('noc_capacity'),
       donuts: storage.map(({ node, metric }, i) => ({
         id: `donut-${i}`,
         entity_id: metric.entity_id,
@@ -76,10 +77,10 @@ export function deriveDefaultPanels(noc: NocConfig): NocPanel[] {
   const ups = upsNodes(nodes);
   if (ups.length) {
     panels.push({
-      id: `panel-power-${t}`,
+      id: `panel-power-${ts}`,
       type: 'power',
-      title: 'Power',
-      subtitle: ups.length > 1 ? 'Dual UPS battery backup' : 'UPS battery backup',
+      title: t('noc_power'),
+      subtitle: ups.length > 1 ? t('noc_dual_ups') : t('noc_ups_backup'),
       units: ups.map((n, i) => ({
         id: `unit-${i}`,
         name: n.name,
@@ -96,13 +97,13 @@ export function deriveDefaultPanels(noc: NocConfig): NocPanel[] {
 }
 
 /** Panels to actually render: explicit config when present, else derived. */
-export function effectivePanels(noc: NocConfig): NocPanel[] {
+export function effectivePanels(noc: NocConfig, t: (key: string) => string): NocPanel[] {
   if (noc.panels && noc.panels.length) return noc.panels;
-  return deriveDefaultPanels(noc);
+  return deriveDefaultPanels(noc, t);
 }
 
-export function defaultTitle(type: NocPanel['type']): string {
-  return type === 'wan' ? 'Internet · WAN' : type === 'storage' ? 'Storage' : 'Power';
+export function defaultTitle(type: NocPanel['type'], t: (key: string) => string): string {
+  return type === 'wan' ? t('noc_internet_wan') : type === 'storage' ? t('noc_storage') : t('noc_power');
 }
 
 function useApiStats(apiStats: NocApiStat[]): Record<string, number | undefined> {
@@ -280,7 +281,8 @@ function PowerPanel({ panel, entities }: { panel: NocPanel; entities: HassEntiti
 }
 
 export function NocPanels({ noc, entities, getHistory }: Props) {
-  const panels = effectivePanels(noc);
+  const { t } = useTranslation();
+  const panels = effectivePanels(noc, t);
   if (!panels.length) return null;
 
   return (
@@ -291,7 +293,7 @@ export function NocPanels({ noc, entities, getHistory }: Props) {
           key={panel.id}
           style={{ gridColumn: (panel.span ?? 1) >= 1.5 ? 'span 2' : 'span 1' }}
         >
-          <h3 className="noc-panel-h"><span className="noc-panel-dot" /> {panel.title ?? defaultTitle(panel.type)}</h3>
+          <h3 className="noc-panel-h"><span className="noc-panel-dot" /> {panel.title ?? defaultTitle(panel.type, t)}</h3>
           {panel.subtitle && <div className="noc-panel-sub">{panel.subtitle}</div>}
           {panel.type === 'wan' && <WanPanel panel={panel} entities={entities} getHistory={getHistory} />}
           {panel.type === 'storage' && <StoragePanel panel={panel} entities={entities} />}

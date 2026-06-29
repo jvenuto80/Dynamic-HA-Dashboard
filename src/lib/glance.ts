@@ -67,7 +67,7 @@ export const METRIC_OPTIONS: { metric: GlanceMetric; name: string }[] = [
   { metric: 'locks', name: 'Unlocked' },
   { metric: 'covers', name: 'Covers open' },
   { metric: 'climate', name: 'Indoor temperature' },
-  { metric: 'people', name: 'Who’s home' },
+  { metric: 'people', name: "Who's home" },
   { metric: 'media', name: 'Now playing' },
 ];
 

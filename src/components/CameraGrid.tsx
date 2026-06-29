@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cameras } from '../config';
 import { cameraProxyUrl, useCameraFeed } from '../hooks/useCameraFeed';
 import type { HassEntities } from 'home-assistant-js-websocket';
@@ -19,6 +20,7 @@ function columnsFor(count: number): number {
 }
 
 export function CameraGrid({ entities }: Props) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
 
   // Close popup on Escape.
@@ -74,7 +76,7 @@ export function CameraGrid({ entities }: Props) {
               <div className="camera-label">
                 <span>{cam.name}</span>
                 <span className={`status-badge ${isAvailable ? '' : 'offline'}`}>
-                  {isAvailable ? 'Live' : 'Offline'}
+                  {isAvailable ? t('cam_live') : t('cam_offline')}
                 </span>
               </div>
             </div>
@@ -89,7 +91,7 @@ export function CameraGrid({ entities }: Props) {
               <span className="camera-modal-title">{selectedCam.name}</span>
               <button
                 className="camera-modal-close"
-                title="Close"
+                title={t('cam_close')}
                 onClick={() => setSelected(null)}
               >
                 <span className="mdi mdi-close" />
