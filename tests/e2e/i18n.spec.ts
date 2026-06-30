@@ -19,6 +19,50 @@
 import { test, expect } from 'playwright/test';
 import { setLanguage, resetStorage, skipOnboarding, LANGUAGES, ALL_LANG_CODES } from './helpers';
 
+// Показывает оверлей «кликни для следующего теста» после каждого теста.
+// Активен только когда установлена переменная PWTEST_STEP_BY_STEP=1.
+// Использует waitForFunction(timeout:0) — ждёт бесконечно, без таймаута.
+test.afterEach(async ({ page }, testInfo) => {
+  if (!process.env.PWTEST_STEP_BY_STEP) return;
+  testInfo.setTimeout(0); // снимаем таймаут для afterEach — ждём сколько нужно
+
+  const passed = testInfo.status === 'passed';
+
+  // Шаг 1: синхронно инжектируем оверлей и флаг __pwDone (без Promise внутри evaluate)
+  await page.evaluate(({ title, ok }: { title: string; ok: boolean }) => {
+    (window as any).__pwDone = false;
+    const ov = document.createElement('div');
+    ov.id = '__pw-step';
+    ov.style.cssText =
+      'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;background:rgba(0,0,0,0.7);z-index:99999;cursor:pointer;' +
+      'font-family:system-ui,sans-serif;user-select:none;';
+    ov.innerHTML =
+      `<div style="background:#1a1a2e;color:#fff;padding:36px 56px;border-radius:18px;` +
+      `text-align:center;max-width:540px;box-shadow:0 12px 48px rgba(0,0,0,.6);">` +
+      `<div style="font-size:52px;margin-bottom:10px">${ok ? '✅' : '❌'}</div>` +
+      `<div style="font-size:20px;font-weight:700;margin-bottom:8px;` +
+      `color:${ok ? '#4ade80' : '#f87171'}">${ok ? 'PASSED' : 'FAILED'}</div>` +
+      `<div style="font-size:13px;color:#94a3b8;margin-bottom:28px;` +
+      `word-break:break-word;max-width:420px">${title}</div>` +
+      `<div style="font-size:16px;color:#38bdf8;font-weight:600;letter-spacing:.5px">` +
+      `▶ КЛИКНИ ЧТОБЫ ПРОДОЛЖИТЬ</div></div>`;
+    ov.addEventListener('click', () => {
+      ov.remove();
+      (window as any).__pwDone = true;
+    });
+    document.body.appendChild(ov);
+  }, { title: testInfo.title, ok: passed });
+
+  // Шаг 2: ждём клика бесконечно (timeout:0 = без ограничений)
+  // Если пользователь закрыл браузер — игнорируем ошибку
+  try {
+    await page.waitForFunction(() => (window as any).__pwDone === true, { timeout: 0 });
+  } catch {
+    // browser was closed before click — not a test failure
+  }
+});
+
 // ── 1. Default language ───────────────────────────────────────────────────────
 
 test.describe('Default language', () => {

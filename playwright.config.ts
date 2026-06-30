@@ -28,9 +28,7 @@ export default defineConfig({
 
   use: {
     baseURL: 'http://localhost:4173',
-    // Capture trace on first retry to ease debugging failures.
     trace: 'on-first-retry',
-    // Screenshot on failure saved to test-results/.
     screenshot: 'only-on-failure',
     viewport: { width: 1280, height: 900 },
   },
