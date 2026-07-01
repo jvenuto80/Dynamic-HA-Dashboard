@@ -91,7 +91,7 @@ export const LANGUAGES: LangFixture[] = [
     connect_btn: 'Verbinden',
     today: 'HEUTE',
     settings_title: 'Einstellungen',
-    settings_language: 'Schnittstellensprache',
+    settings_language: 'Sprache',
   },
   {
     code: 'fr',
