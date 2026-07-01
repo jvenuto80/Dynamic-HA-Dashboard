@@ -388,6 +388,10 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               <select value={lang} onChange={(e) => pickLang(e.target.value)}>
                 <option value="en">English</option>
                 <option value="ru">Русский</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="pl">Polski</option>
+                <option value="nl">Nederlands</option>
               </select>
               <small className="settings-hint">
                 {t('settings_language_hint')}
