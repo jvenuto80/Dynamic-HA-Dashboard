@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
 import { cameraProxyUrl, useCameraFeed } from '../hooks/useCameraFeed';
+import { useHaTempUnit } from '../hooks/useHomeAssistant';
 import { resolveArtwork } from '../lib/entityInfo';
 import { useArtworkColor } from '../hooks/useArtworkColor';
 import type { TileAction, FlyoutConfig } from '../types';
@@ -423,9 +424,10 @@ function LightDetail({ entity, entityId, callHA }: EntityProps) {
 
 function ClimateDetail({ entity, entityId, callHA }: EntityProps) {
   const { t } = useTranslation();
+  const haTempUnit = useHaTempUnit();
   const currentTemp = entity.attributes.current_temperature as number;
   const targetTemp = entity.attributes.temperature as number;
-  const tempUnit = (entity.attributes.temperature_unit as string | undefined) ?? '°C';
+  const tempUnit = (entity.attributes.temperature_unit as string | undefined) ?? haTempUnit;
   const mode = entity.state;
   const modes = (entity.attributes.hvac_modes as string[]) || [];
   const fanModes = (entity.attributes.fan_modes as string[]) || [];

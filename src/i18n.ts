@@ -416,6 +416,27 @@ const ru = {
   // Language picker
   settings_language: 'Язык интерфейса',
   settings_language_hint: 'Изменение применяется сразу.',
+
+  // Sidebar
+  sidebar_add_page: 'Добавить страницу',
+  sidebar_manage_pages: 'Управление страницами',
+  sidebar_settings: 'Настройки',
+
+  // Dashboard extras
+  dash_close: 'Закрыть',
+  dash_delete_row_empty: 'Удалить этот ряд?',
+  dash_nothing_playing: 'Ничего не воспроизводится',
+  dash_nothing_playing_desc: 'Медиаустройства появляются здесь во время воспроизведения.',
+
+  // Glance metric names (edit-mode "Shows" dropdown)
+  glance_metric_lights: 'Свет включён',
+  glance_metric_switches: 'Выключатели включены',
+  glance_metric_fans: 'Вентиляторы включены',
+  glance_metric_locks: 'Не заперто',
+  glance_metric_covers: 'Шторы открыты',
+  glance_metric_climate: 'Температура в доме',
+  glance_metric_people: 'Кто дома',
+  glance_metric_media: 'Сейчас играет',
 };
 
 const en: typeof ru = {
@@ -632,7 +653,7 @@ const en: typeof ru = {
   dash_move_row_down: 'Move row down',
   dash_add_column: 'Add column',
   dash_delete_row: 'Delete row',
-  dash_delete_row_confirm: 'Delete this row and its {{n}} tile(s)',
+  dash_delete_row_confirm: 'Delete this row and its {{n}} tile(s)?',
   dash_column_name: 'Column name',
   dash_grouping_disabled: 'Smart grouping disabled — this section never collapses',
   dash_never_collapse: 'Never collapse this section (ignore smart grouping)',
@@ -810,6 +831,27 @@ const en: typeof ru = {
   // Language picker
   settings_language: 'Interface language',
   settings_language_hint: 'Takes effect immediately.',
+
+  // Sidebar
+  sidebar_add_page: 'Add page',
+  sidebar_manage_pages: 'Manage pages',
+  sidebar_settings: 'Settings',
+
+  // Dashboard extras
+  dash_close: 'Close',
+  dash_delete_row_empty: 'Delete this row?',
+  dash_nothing_playing: 'Nothing playing',
+  dash_nothing_playing_desc: "Media devices appear here while they're playing.",
+
+  // Glance metric names (edit-mode "Shows" dropdown)
+  glance_metric_lights: 'Lights on',
+  glance_metric_switches: 'Switches on',
+  glance_metric_fans: 'Fans on',
+  glance_metric_locks: 'Unlocked',
+  glance_metric_covers: 'Covers open',
+  glance_metric_climate: 'Indoor temperature',
+  glance_metric_people: "Who's home",
+  glance_metric_media: 'Now playing',
 };
 
 const de: typeof ru = {
@@ -1202,6 +1244,27 @@ const de: typeof ru = {
 
   settings_language: 'Sprache',
   settings_language_hint: 'Gilt sofort.',
+
+  // Sidebar
+  sidebar_add_page: 'Seite hinzufügen',
+  sidebar_manage_pages: 'Seiten verwalten',
+  sidebar_settings: 'Einstellungen',
+
+  // Dashboard extras
+  dash_close: 'Schließen',
+  dash_delete_row_empty: 'Diese Zeile löschen?',
+  dash_nothing_playing: 'Nichts wird abgespielt',
+  dash_nothing_playing_desc: 'Mediengeräte erscheinen hier, während sie abspielen.',
+
+  // Glance metric names (edit-mode "Shows" dropdown)
+  glance_metric_lights: 'Lichter an',
+  glance_metric_switches: 'Schalter an',
+  glance_metric_fans: 'Ventilatoren an',
+  glance_metric_locks: 'Entriegelt',
+  glance_metric_covers: 'Abdeckungen offen',
+  glance_metric_climate: 'Innentemperatur',
+  glance_metric_people: 'Wer ist zuhause',
+  glance_metric_media: 'Läuft gerade',
 };
 
 const fr: typeof ru = {
@@ -1594,6 +1657,27 @@ const fr: typeof ru = {
 
   settings_language: "Langue de l'interface",
   settings_language_hint: 'Prend effet immédiatement.',
+
+  // Sidebar
+  sidebar_add_page: 'Ajouter une page',
+  sidebar_manage_pages: 'Gérer les pages',
+  sidebar_settings: 'Paramètres',
+
+  // Dashboard extras
+  dash_close: 'Fermer',
+  dash_delete_row_empty: 'Supprimer cette ligne ?',
+  dash_nothing_playing: 'Aucune lecture en cours',
+  dash_nothing_playing_desc: 'Les appareils multimédias apparaissent ici pendant la lecture.',
+
+  // Glance metric names (edit-mode "Shows" dropdown)
+  glance_metric_lights: 'Lumières allumées',
+  glance_metric_switches: 'Interrupteurs allumés',
+  glance_metric_fans: 'Ventilateurs allumés',
+  glance_metric_locks: 'Déverrouillé',
+  glance_metric_covers: 'Volets ouverts',
+  glance_metric_climate: 'Température intérieure',
+  glance_metric_people: 'Qui est à la maison',
+  glance_metric_media: 'En cours de lecture',
 };
 
 const pl: typeof ru = {
@@ -1986,6 +2070,27 @@ const pl: typeof ru = {
 
   settings_language: 'Język interfejsu',
   settings_language_hint: 'Zmiana działa natychmiast.',
+
+  // Sidebar
+  sidebar_add_page: 'Dodaj stronę',
+  sidebar_manage_pages: 'Zarządzaj stronami',
+  sidebar_settings: 'Ustawienia',
+
+  // Dashboard extras
+  dash_close: 'Zamknij',
+  dash_delete_row_empty: 'Usunąć ten wiersz?',
+  dash_nothing_playing: 'Nic nie jest odtwarzane',
+  dash_nothing_playing_desc: 'Urządzenia multimedialne pojawiają się tutaj podczas odtwarzania.',
+
+  // Glance metric names (edit-mode "Shows" dropdown)
+  glance_metric_lights: 'Włączone światła',
+  glance_metric_switches: 'Włączone przełączniki',
+  glance_metric_fans: 'Włączone wentylatory',
+  glance_metric_locks: 'Odblokowane',
+  glance_metric_covers: 'Otwarte rolety',
+  glance_metric_climate: 'Temperatura wewnętrzna',
+  glance_metric_people: 'Kto jest w domu',
+  glance_metric_media: 'Teraz odtwarzane',
 };
 
 const nl: typeof ru = {
@@ -2378,6 +2483,27 @@ const nl: typeof ru = {
 
   settings_language: 'Interfacetaal',
   settings_language_hint: 'Wordt direct van kracht.',
+
+  // Sidebar
+  sidebar_add_page: 'Pagina toevoegen',
+  sidebar_manage_pages: "Pagina's beheren",
+  sidebar_settings: 'Instellingen',
+
+  // Dashboard extras
+  dash_close: 'Sluiten',
+  dash_delete_row_empty: 'Deze rij verwijderen?',
+  dash_nothing_playing: 'Er speelt niets',
+  dash_nothing_playing_desc: 'Media-apparaten verschijnen hier terwijl ze afspelen.',
+
+  // Glance metric names (edit-mode "Shows" dropdown)
+  glance_metric_lights: 'Verlichting aan',
+  glance_metric_switches: 'Schakelaars aan',
+  glance_metric_fans: 'Ventilatoren aan',
+  glance_metric_locks: 'Ontgrendeld',
+  glance_metric_covers: 'Zonwering open',
+  glance_metric_climate: 'Binnentemperatuur',
+  glance_metric_people: 'Wie is thuis',
+  glance_metric_media: 'Wordt nu afgespeeld',
 };
 
 i18n.use(initReactI18next).init({

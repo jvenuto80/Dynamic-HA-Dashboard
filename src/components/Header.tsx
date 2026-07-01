@@ -5,6 +5,7 @@ import { PersonTracker } from './PersonTracker';
 import { resolvePersons } from '../lib/persons';
 import { resolveWeatherId, getWeatherIcon, getWeatherColor } from '../lib/weather';
 import { dedupeMediaPlayers } from '../lib/mediaDevices';
+import { useHaTempUnit } from '../hooks/useHomeAssistant';
 import { useTranslation } from 'react-i18next';
 
 interface ForecastDay {
@@ -39,6 +40,7 @@ function getHomeNames(entities: HassEntities): string[] {
 
 export function Header({ entities, getForecast, hideGreeting, hideWeather, hidePeople }: Props) {
   const { t, i18n } = useTranslation();
+  const haTempUnit = useHaTempUnit();
   const greeting = (() => {
     const h = new Date().getHours();
     if (h < 5) return t('greeting_night');
@@ -50,7 +52,7 @@ export function Header({ entities, getForecast, hideGreeting, hideWeather, hideP
   const weatherId = resolveWeatherId(entities);
   const weather = weatherId ? entities[weatherId] : undefined;
   const temp = weather?.attributes?.temperature as number | undefined;
-  const tempUnit = (weather?.attributes?.temperature_unit as string | undefined) ?? '°C';
+  const tempUnit = (weather?.attributes?.temperature_unit as string | undefined) ?? haTempUnit;
   const state = weather?.state || '';
   const humidity = weather?.attributes?.humidity as number | undefined;
 

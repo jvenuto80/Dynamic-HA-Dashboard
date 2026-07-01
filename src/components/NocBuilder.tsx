@@ -167,7 +167,9 @@ export function NocBuilder({ view, entities, layout, getHistory }: Props) {
     setPanels(ensurePanels().map((p) => (p.id === panelId ? { ...p, ...patch } : p)));
   const addPanel = (type: NocPanelType) => {
     const id = `panel-${type}-${Date.now().toString(36)}`;
-    const base: NocPanel = { id, type, title: defaultTitle(type, t), span: type === 'wan' ? 1.5 : 1 };
+    // Leave `title` unset so the panel header falls back to defaultTitle() at
+    // render time and stays translated when the interface language changes.
+    const base: NocPanel = { id, type, span: type === 'wan' ? 1.5 : 1 };
     if (type === 'wan') Object.assign(base, { stats: [], series: [] });
     if (type === 'storage') base.donuts = [];
     if (type === 'power') base.units = [];

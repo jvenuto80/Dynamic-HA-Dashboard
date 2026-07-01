@@ -3,6 +3,7 @@ import {
   createConnection,
   createLongLivedTokenAuth,
   subscribeEntities,
+  subscribeConfig,
   callService,
   type HassEntities,
   type Connection,
@@ -21,6 +22,28 @@ function broadcastConnected(value: boolean) {
   if (haConnected === value) return;
   haConnected = value;
   window.dispatchEvent(new CustomEvent('ha:connection', { detail: value }));
+}
+
+// Module-level mirror of the server's temperature unit (°C/°F), same idiom as
+// haConnected above. Climate entities don't publish `temperature_unit` as a
+// state attribute — their values arrive converted to the server's configured
+// unit — so displays must read the unit from the HA config.
+let haTempUnit = '';
+function broadcastTempUnit(value: string) {
+  if (haTempUnit === value) return;
+  haTempUnit = value;
+  window.dispatchEvent(new CustomEvent('ha:temp-unit', { detail: value }));
+}
+
+/** The HA server's configured temperature unit; '°C' until the config arrives. */
+export function useHaTempUnit(): string {
+  const [unit, setUnit] = useState(haTempUnit);
+  useEffect(() => {
+    const onUnit = (e: Event) => setUnit((e as CustomEvent<string>).detail);
+    window.addEventListener('ha:temp-unit', onUnit);
+    return () => window.removeEventListener('ha:temp-unit', onUnit);
+  }, []);
+  return unit || '°C';
 }
 
 export function useHomeAssistant() {
@@ -63,6 +86,10 @@ export function useHomeAssistant() {
 
         subscribeEntities(conn, (ents) => {
           if (!cancelled) setEntities(ents);
+        });
+
+        subscribeConfig(conn, (config) => {
+          if (!cancelled) broadcastTempUnit(config.unit_system?.temperature ?? '');
         });
       } catch (err) {
         if (!cancelled) {

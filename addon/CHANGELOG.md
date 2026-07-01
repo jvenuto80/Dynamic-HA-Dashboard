@@ -1,4 +1,23 @@
 # Changelog
+## 1.7.1
+
+- **Fixed: thermostats showed the wrong temperature unit.** Climate cards and the
+  detail flyout assumed °C whenever an entity didn't publish its own unit — but
+  climate entities never do, so on a °F server every thermostat read like
+  "74°C". Glance now reads the unit from your Home Assistant server config, so
+  the climate cards, detail flyout, and header weather all follow your actual
+  system unit (°C / °F).
+
+- **Fixed: three sidebar tooltips showed raw translation keys** (e.g.
+  `sidebar_settings`) instead of real text, because those keys were missing from
+  every locale. Added them — plus translations for the media "Nothing playing"
+  message, the glance metric picker, and a couple of other strings that had been
+  left in English — across all six languages.
+
+- **Fixed:** deleting an empty row no longer asks to delete "its 0 tiles", and
+  freshly-added Network panels now follow the interface language when you switch
+  it.
+
 ## 1.7.0
 
 - **New: four more languages — German, French, Polish & Dutch (#36).** Glance now

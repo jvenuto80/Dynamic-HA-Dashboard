@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { climateEntities } from '../config';
+import { useHaTempUnit } from '../hooks/useHomeAssistant';
 import type { HassEntities } from 'home-assistant-js-websocket';
 
 interface Props {
@@ -21,6 +22,7 @@ const MODE_ICON: Record<string, string> = {
 
 export function ClimateCards({ entities, onSetTemp, onOpenDetail }: Props) {
   const { t } = useTranslation();
+  const haTempUnit = useHaTempUnit();
   return (
     <>
       {climateEntities.map((ce) => {
@@ -29,7 +31,7 @@ export function ClimateCards({ entities, onSetTemp, onOpenDetail }: Props) {
 
         const currentTemp = entity.attributes.current_temperature as number;
         const targetTemp = entity.attributes.temperature as number;
-        const tempUnit = (entity.attributes.temperature_unit as string | undefined) ?? '°C';
+        const tempUnit = (entity.attributes.temperature_unit as string | undefined) ?? haTempUnit;
         const mode = entity.state;
         const isOff = mode === 'off' || mode === 'unavailable';
         const accent = mode === 'cool' ? 'cool' : mode === 'off' ? 'off' : 'heat';

@@ -450,7 +450,7 @@ function GlanceButtonEditor({
               >
                 {METRIC_OPTIONS.map((o) => (
                   <option key={o.metric} value={o.metric}>
-                    {o.name}
+                    {t(o.nameKey)}
                   </option>
                 ))}
               </select>

@@ -739,8 +739,8 @@ function MediaAutoView(props: Props) {
         )}
         <div className="page-empty">
           <span className="mdi mdi-music-note-off page-empty-icon" />
-          <h3>Nothing playing</h3>
-          <p>Media devices appear here while they're playing.</p>
+          <h3>{t('dash_nothing_playing')}</h3>
+          <p>{t('dash_nothing_playing_desc')}</p>
         </div>
       </div>
     );
@@ -813,7 +813,7 @@ function MediaDeviceSettings({
       <div className="ts-modal" onClick={(e) => e.stopPropagation()}>
         <div className="ts-head">
           <h3>{t('dash_media_tile')}</h3>
-          <button className="edit-icon-btn" title="Close" onClick={onClose}>
+          <button className="edit-icon-btn" title={t('dash_close')} onClick={onClose}>
             <span className="mdi mdi-close" />
           </button>
         </div>
@@ -1068,8 +1068,7 @@ function EditableView(props: Props) {
                   title={t('dash_delete_row')}
                   onClick={() => {
                     const n = row.columns.reduce((s, c) => s + c.items.length, 0);
-                    const s = n !== 1 ? 's' : '';
-                    if (window.confirm(t('dash_delete_row_confirm', { n, s }))) {
+                    if (window.confirm(n ? t('dash_delete_row_confirm', { n }) : t('dash_delete_row_empty'))) {
                       layout.removeRow(view.id, ri);
                     }
                   }}
@@ -1422,7 +1421,7 @@ export function EntityPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button className="edit-icon-btn" title="Close" onClick={onClose}>
+          <button className="edit-icon-btn" title={t('dash_close')} onClick={onClose}>
             <span className="mdi mdi-close" />
           </button>
         </div>

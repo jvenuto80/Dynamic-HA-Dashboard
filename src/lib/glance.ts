@@ -60,15 +60,15 @@ export const METRICS: Record<GlanceMetric, MetricDef> = {
   media: { label: 'playing', icon: 'mdi-play-circle', toggleable: false },
 };
 
-export const METRIC_OPTIONS: { metric: GlanceMetric; name: string }[] = [
-  { metric: 'lights', name: 'Lights on' },
-  { metric: 'switches', name: 'Switches on' },
-  { metric: 'fans', name: 'Fans on' },
-  { metric: 'locks', name: 'Unlocked' },
-  { metric: 'covers', name: 'Covers open' },
-  { metric: 'climate', name: 'Indoor temperature' },
-  { metric: 'people', name: "Who's home" },
-  { metric: 'media', name: 'Now playing' },
+export const METRIC_OPTIONS: { metric: GlanceMetric; nameKey: string }[] = [
+  { metric: 'lights', nameKey: 'glance_metric_lights' },
+  { metric: 'switches', nameKey: 'glance_metric_switches' },
+  { metric: 'fans', nameKey: 'glance_metric_fans' },
+  { metric: 'locks', nameKey: 'glance_metric_locks' },
+  { metric: 'covers', nameKey: 'glance_metric_covers' },
+  { metric: 'climate', nameKey: 'glance_metric_climate' },
+  { metric: 'people', nameKey: 'glance_metric_people' },
+  { metric: 'media', nameKey: 'glance_metric_media' },
 ];
 
 /** Default glance buttons used when a view has none configured yet. */
