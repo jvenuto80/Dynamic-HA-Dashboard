@@ -1,0 +1,29 @@
+name: Version consistency
+
+# Guard against the two version fields drifting apart. Home Assistant reads
+# addon/config.yaml; npm reads package.json. If they disagree, a release can
+# bump one and silently leave HA on the old version — exactly what happened
+# with 1.7.1. This fails the PR before that can merge.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  versions-match:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: package.json must equal addon/config.yaml
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          cfg="$(sed -nE 's/^version:[[:space:]]*"?([^"]+)"?/\1/p' addon/config.yaml | head -1)"
+          echo "package.json      = $pkg"
+          echo "addon/config.yaml = $cfg"
+          if [ "$pkg" != "$cfg" ]; then
+            echo "::error::Version mismatch: package.json ($pkg) != addon/config.yaml ($cfg). Bump both with 'node scripts/release.mjs <version>'."
+            exit 1
+          fi

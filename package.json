@@ -15,7 +15,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ci": "npm run build && playwright test",
     "screenshots": "node scripts/screenshots.mjs",
-    "record": "node scripts/record-clips.mjs"
+    "record": "node scripts/record-clips.mjs",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

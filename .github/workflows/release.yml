@@ -1,0 +1,47 @@
+name: Release
+
+# Publish a GitHub release automatically when a version tag is pushed.
+# The release body is the matching section from addon/CHANGELOG.md, so the
+# changelog stays the single source of truth for what shipped.
+#
+#   node scripts/release.mjs <version>   # bumps the version files
+#   git commit -am "Release <version>"
+#   git tag v<version> && git push && git push origin v<version>   # ← fires this
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive version from tag
+        id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify addon/config.yaml matches the tag
+        run: |
+          cfg="$(sed -nE 's/^version:[[:space:]]*"?([^"]+)"?/\1/p' addon/config.yaml | head -1)"
+          if [ "$cfg" != "${{ steps.v.outputs.version }}" ]; then
+            echo "::error::addon/config.yaml is $cfg but the tag is ${{ steps.v.outputs.version }}. Bump with 'node scripts/release.mjs' before tagging."
+            exit 1
+          fi
+
+      - name: Extract release notes from the changelog
+        run: node scripts/changelog-section.mjs "${{ steps.v.outputs.version }}" > RELEASE_NOTES.md
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "v${{ steps.v.outputs.version }}" \
+            --notes-file RELEASE_NOTES.md \
+            --verify-tag
