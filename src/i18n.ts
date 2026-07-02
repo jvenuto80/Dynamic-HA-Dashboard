@@ -437,6 +437,14 @@ const ru = {
   glance_metric_climate: 'Температура в доме',
   glance_metric_people: 'Кто дома',
   glance_metric_media: 'Сейчас играет',
+
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Цветовая вспышка сцены',
+  settings_scene_wash_hint: 'Быстрая цветовая заливка экрана в цвете сцены при её активации.',
+  scene_wash_burst: 'Радиальная вспышка',
+  scene_wash_curtain: 'Занавес',
+  scene_wash_glow: 'Свечение по краям',
+  scene_wash_off: 'Выкл.',
 };
 
 const en: typeof ru = {
@@ -852,6 +860,14 @@ const en: typeof ru = {
   glance_metric_climate: 'Indoor temperature',
   glance_metric_people: "Who's home",
   glance_metric_media: 'Now playing',
+
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Scene color wash',
+  settings_scene_wash_hint: 'Quick full-screen wash in the scene’s color when a scene is activated.',
+  scene_wash_burst: 'Radial burst',
+  scene_wash_curtain: 'Curtain sweep',
+  scene_wash_glow: 'Edge glow',
+  scene_wash_off: 'Off',
 };
 
 const de: typeof ru = {
@@ -1265,6 +1281,14 @@ const de: typeof ru = {
   glance_metric_climate: 'Innentemperatur',
   glance_metric_people: 'Wer ist zuhause',
   glance_metric_media: 'Läuft gerade',
+
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Szenen-Farbwelle',
+  settings_scene_wash_hint: 'Kurze bildschirmfüllende Farbwelle in der Szenenfarbe beim Aktivieren einer Szene.',
+  scene_wash_burst: 'Radialer Impuls',
+  scene_wash_curtain: 'Vorhang',
+  scene_wash_glow: 'Randglühen',
+  scene_wash_off: 'Aus',
 };
 
 const fr: typeof ru = {
@@ -1678,6 +1702,14 @@ const fr: typeof ru = {
   glance_metric_climate: 'Température intérieure',
   glance_metric_people: 'Qui est à la maison',
   glance_metric_media: 'En cours de lecture',
+
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Vague de couleur de scène',
+  settings_scene_wash_hint: "Brève vague de couleur plein écran, dans la couleur de la scène, à son activation.",
+  scene_wash_burst: 'Éclat radial',
+  scene_wash_curtain: 'Rideau',
+  scene_wash_glow: 'Halo des bords',
+  scene_wash_off: 'Désactivé',
 };
 
 const pl: typeof ru = {
@@ -2091,6 +2123,14 @@ const pl: typeof ru = {
   glance_metric_climate: 'Temperatura wewnętrzna',
   glance_metric_people: 'Kto jest w domu',
   glance_metric_media: 'Teraz odtwarzane',
+
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Kolorowy efekt sceny',
+  settings_scene_wash_hint: 'Krótka pełnoekranowa fala w kolorze sceny przy jej aktywacji.',
+  scene_wash_burst: 'Rozbłysk radialny',
+  scene_wash_curtain: 'Kurtyna',
+  scene_wash_glow: 'Poświata krawędzi',
+  scene_wash_off: 'Wył.',
 };
 
 const nl: typeof ru = {
@@ -2504,6 +2544,14 @@ const nl: typeof ru = {
   glance_metric_climate: 'Binnentemperatuur',
   glance_metric_people: 'Wie is thuis',
   glance_metric_media: 'Wordt nu afgespeeld',
+
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Kleurgolf bij scène',
+  settings_scene_wash_hint: 'Korte schermvullende kleurgolf in de kleur van de scène bij activering.',
+  scene_wash_burst: 'Radiale golf',
+  scene_wash_curtain: 'Gordijn',
+  scene_wash_glow: 'Randgloed',
+  scene_wash_off: 'Uit',
 };
 
 i18n.use(initReactI18next).init({

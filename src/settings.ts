@@ -22,6 +22,7 @@ export interface AppSettings {
   syncSettings: boolean; // sync shared preferences across devices via the add-on server (issue #8)
   statusDots: boolean; // quiet per-tile dots that pulse once when a value changes (issue #15)
   smartGrouping: boolean; // auto-collapse idle sections into a summary bar, expand on activity/tap (issue #16)
+  sceneWash: import('./lib/sceneWash').SceneWashStyle; // full-screen color wash on scene activation (issue #17)
 }
 
 const STORAGE_KEY = 'ha-dashboard-settings';
@@ -68,6 +69,7 @@ const DEFAULTS: AppSettings = {
   syncSettings: true,
   statusDots: true,
   smartGrouping: false,
+  sceneWash: 'burst',
 };
 
 let cache: AppSettings | null = null;
@@ -119,6 +121,7 @@ export type ExportableSettings = Pick<
   | 'screensaverShortcut'
   | 'statusDots'
   | 'smartGrouping'
+  | 'sceneWash'
 >;
 
 const EXPORTABLE_KEYS: (keyof ExportableSettings)[] = [
@@ -136,6 +139,7 @@ const EXPORTABLE_KEYS: (keyof ExportableSettings)[] = [
   'screensaverShortcut',
   'statusDots',
   'smartGrouping',
+  'sceneWash',
 ];
 
 /** Snapshot the appearance preferences for inclusion in a backup file. */
@@ -156,6 +160,7 @@ export function getExportableSettings(): ExportableSettings {
     screensaverShortcut: s.screensaverShortcut,
     statusDots: s.statusDots,
     smartGrouping: s.smartGrouping,
+    sceneWash: s.sceneWash,
   };
 }
 
@@ -311,7 +316,7 @@ const SYNCED_KEYS: (keyof ExportableSettings)[] = [
 
 const SETTINGS_ENDPOINT = `${import.meta.env.BASE_URL}settings`.replace(/\/\/+/g, '/');
 
-const SYNCED_EXTRA: (keyof AppSettings)[] = ['nowPlayingTakeover', 'calendarChip', 'calendarEntities', 'statusDots', 'smartGrouping'];
+const SYNCED_EXTRA: (keyof AppSettings)[] = ['nowPlayingTakeover', 'calendarChip', 'calendarEntities', 'statusDots', 'smartGrouping', 'sceneWash'];
 
 function syncedSubset(s: AppSettings): Record<string, unknown> {
   const out: Record<string, unknown> = {};
