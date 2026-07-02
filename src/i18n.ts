@@ -438,6 +438,9 @@ const ru = {
   glance_metric_people: 'Кто дома',
   glance_metric_media: 'Сейчас играет',
 
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Потянуть для обновления',
+  settings_pull_refresh_hint: 'На сенсорных экранах: потяните страницу вниз от самого верха, чтобы перезагрузить панель.',
   // Assist (issue #19)
   assist_open: 'Открыть Assist',
   assist_title: 'Assist',
@@ -868,6 +871,9 @@ const en: typeof ru = {
   glance_metric_people: "Who's home",
   glance_metric_media: 'Now playing',
 
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Pull to refresh',
+  settings_pull_refresh_hint: 'On touch screens: drag the page down from the very top to reload the dashboard.',
   // Assist (issue #19)
   assist_open: 'Open Assist',
   assist_title: 'Assist',
@@ -1296,6 +1302,9 @@ const de: typeof ru = {
   glance_metric_people: 'Wer ist zuhause',
   glance_metric_media: 'Läuft gerade',
 
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Zum Aktualisieren ziehen',
+  settings_pull_refresh_hint: 'Auf Touchscreens: Seite vom oberen Rand nach unten ziehen, um das Dashboard neu zu laden.',
   // Assist (issue #19)
   assist_open: 'Assist öffnen',
   assist_title: 'Assist',
@@ -1724,6 +1733,9 @@ const fr: typeof ru = {
   glance_metric_people: 'Qui est à la maison',
   glance_metric_media: 'En cours de lecture',
 
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Tirer pour actualiser',
+  settings_pull_refresh_hint: "Sur écran tactile : faites glisser la page vers le bas depuis le haut pour recharger le tableau de bord.",
   // Assist (issue #19)
   assist_open: 'Ouvrir Assist',
   assist_title: 'Assist',
@@ -2152,6 +2164,9 @@ const pl: typeof ru = {
   glance_metric_people: 'Kto jest w domu',
   glance_metric_media: 'Teraz odtwarzane',
 
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Pociągnij, aby odświeżyć',
+  settings_pull_refresh_hint: 'Na ekranach dotykowych: przeciągnij stronę w dół od samej góry, aby przeładować panel.',
   // Assist (issue #19)
   assist_open: 'Otwórz Assist',
   assist_title: 'Assist',
@@ -2580,6 +2595,9 @@ const nl: typeof ru = {
   glance_metric_people: 'Wie is thuis',
   glance_metric_media: 'Wordt nu afgespeeld',
 
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Trekken om te vernieuwen',
+  settings_pull_refresh_hint: 'Op aanraakschermen: sleep de pagina vanaf de bovenkant omlaag om het dashboard te herladen.',
   // Assist (issue #19)
   assist_open: 'Assist openen',
   assist_title: 'Assist',
