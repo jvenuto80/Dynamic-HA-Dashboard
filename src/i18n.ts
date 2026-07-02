@@ -438,6 +438,13 @@ const ru = {
   glance_metric_people: 'Кто дома',
   glance_metric_media: 'Сейчас играет',
 
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Цветовая вспышка сцены',
+  settings_scene_wash_hint: 'Быстрая цветовая заливка экрана в цвете сцены при её активации.',
+  scene_wash_burst: 'Радиальная вспышка',
+  scene_wash_curtain: 'Занавес',
+  scene_wash_glow: 'Свечение по краям',
+  scene_wash_off: 'Выкл.',
   // Pull-to-refresh (issue #21)
   settings_pull_refresh: 'Потянуть для обновления',
   settings_pull_refresh_hint: 'На сенсорных экранах: потяните страницу вниз от самого верха, чтобы перезагрузить панель.',
@@ -871,6 +878,13 @@ const en: typeof ru = {
   glance_metric_people: "Who's home",
   glance_metric_media: 'Now playing',
 
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Scene color wash',
+  settings_scene_wash_hint: 'Quick full-screen wash in the scene’s color when a scene is activated.',
+  scene_wash_burst: 'Radial burst',
+  scene_wash_curtain: 'Curtain sweep',
+  scene_wash_glow: 'Edge glow',
+  scene_wash_off: 'Off',
   // Pull-to-refresh (issue #21)
   settings_pull_refresh: 'Pull to refresh',
   settings_pull_refresh_hint: 'On touch screens: drag the page down from the very top to reload the dashboard.',
@@ -1302,6 +1316,13 @@ const de: typeof ru = {
   glance_metric_people: 'Wer ist zuhause',
   glance_metric_media: 'Läuft gerade',
 
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Szenen-Farbwelle',
+  settings_scene_wash_hint: 'Kurze bildschirmfüllende Farbwelle in der Szenenfarbe beim Aktivieren einer Szene.',
+  scene_wash_burst: 'Radialer Impuls',
+  scene_wash_curtain: 'Vorhang',
+  scene_wash_glow: 'Randglühen',
+  scene_wash_off: 'Aus',
   // Pull-to-refresh (issue #21)
   settings_pull_refresh: 'Zum Aktualisieren ziehen',
   settings_pull_refresh_hint: 'Auf Touchscreens: Seite vom oberen Rand nach unten ziehen, um das Dashboard neu zu laden.',
@@ -1733,6 +1754,13 @@ const fr: typeof ru = {
   glance_metric_people: 'Qui est à la maison',
   glance_metric_media: 'En cours de lecture',
 
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Vague de couleur de scène',
+  settings_scene_wash_hint: "Brève vague de couleur plein écran, dans la couleur de la scène, à son activation.",
+  scene_wash_burst: 'Éclat radial',
+  scene_wash_curtain: 'Rideau',
+  scene_wash_glow: 'Halo des bords',
+  scene_wash_off: 'Désactivé',
   // Pull-to-refresh (issue #21)
   settings_pull_refresh: 'Tirer pour actualiser',
   settings_pull_refresh_hint: "Sur écran tactile : faites glisser la page vers le bas depuis le haut pour recharger le tableau de bord.",
@@ -2164,6 +2192,13 @@ const pl: typeof ru = {
   glance_metric_people: 'Kto jest w domu',
   glance_metric_media: 'Teraz odtwarzane',
 
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Kolorowy efekt sceny',
+  settings_scene_wash_hint: 'Krótka pełnoekranowa fala w kolorze sceny przy jej aktywacji.',
+  scene_wash_burst: 'Rozbłysk radialny',
+  scene_wash_curtain: 'Kurtyna',
+  scene_wash_glow: 'Poświata krawędzi',
+  scene_wash_off: 'Wył.',
   // Pull-to-refresh (issue #21)
   settings_pull_refresh: 'Pociągnij, aby odświeżyć',
   settings_pull_refresh_hint: 'Na ekranach dotykowych: przeciągnij stronę w dół od samej góry, aby przeładować panel.',
@@ -2595,6 +2630,13 @@ const nl: typeof ru = {
   glance_metric_people: 'Wie is thuis',
   glance_metric_media: 'Wordt nu afgespeeld',
 
+  // Scene color wash (issue #17)
+  settings_scene_wash: 'Kleurgolf bij scène',
+  settings_scene_wash_hint: 'Korte schermvullende kleurgolf in de kleur van de scène bij activering.',
+  scene_wash_burst: 'Radiale golf',
+  scene_wash_curtain: 'Gordijn',
+  scene_wash_glow: 'Randgloed',
+  scene_wash_off: 'Uit',
   // Pull-to-refresh (issue #21)
   settings_pull_refresh: 'Trekken om te vernieuwen',
   settings_pull_refresh_hint: 'Op aanraakschermen: sleep de pagina vanaf de bovenkant omlaag om het dashboard te herladen.',

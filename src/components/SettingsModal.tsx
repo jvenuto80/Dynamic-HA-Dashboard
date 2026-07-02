@@ -21,6 +21,7 @@ import type { HassEntities } from 'home-assistant-js-websocket';
 import { weatherEntities } from '../lib/weather';
 import { discoverCalendars } from '../lib/calendar';
 import { DATE_FORMATS, DURATION_STYLES, type DateFormatId, type DurationStyle } from '../lib/format';
+import { playSceneWash, SCENE_WASH_STYLES, type SceneWashStyle } from '../lib/sceneWash';
 
 interface Props {
   onClose: () => void;
@@ -57,6 +58,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const [syncSettings, setSyncSettings] = useState(initial.syncSettings);
   const [statusDots, setStatusDots] = useState(initial.statusDots);
   const [smartGrouping, setSmartGrouping] = useState(initial.smartGrouping);
+  const [sceneWash, setSceneWash] = useState<SceneWashStyle>(initial.sceneWash);
   const [pullToRefresh, setPullToRefresh] = useState(initial.pullToRefresh);
   const [assistButton, setAssistButton] = useState(initial.assistButton);
   const [test, setTest] = useState<TestState>('idle');
@@ -115,6 +117,14 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     window.dispatchEvent(new CustomEvent('ha:smart-grouping', { detail: next }));
   };
 
+  const pickSceneWash = (style: SceneWashStyle) => {
+    setSceneWash(style);
+    // Live-apply without persisting yet, then play a sample in the accent
+    // color so the choice can be felt right away.
+    window.dispatchEvent(new CustomEvent('ha:scene-wash', { detail: style }));
+    if (style !== 'off') playSceneWash(accent, undefined, style);
+  };
+
   const togglePullToRefresh = () => {
     const next = !pullToRefresh;
     setPullToRefresh(next);
@@ -161,7 +171,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const save = (reload: boolean) => {
     const url = haUrl.trim();
     const token = haToken.trim();
-    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots, smartGrouping, pullToRefresh, assistButton });
+    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots, smartGrouping, sceneWash, pullToRefresh, assistButton });
     // Share the non-credential preferences with other devices (issue #8).
     void pushSettingsToServer();
     // Sync the opt-in shared connection on the server. Store the *effective* URL
@@ -198,6 +208,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     );
     window.dispatchEvent(
       new CustomEvent('ha:smart-grouping', { detail: getSettings().smartGrouping }),
+    );
+    window.dispatchEvent(
+      new CustomEvent('ha:scene-wash', { detail: getSettings().sceneWash }),
     );
     window.dispatchEvent(
       new CustomEvent('ha:pull-refresh', { detail: getSettings().pullToRefresh }),
@@ -482,6 +495,19 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
               >
                 <span className="ts-switch-knob" />
               </button>
+            </label>
+            <label className="ts-field">
+              <span>{t('settings_scene_wash')}</span>
+              <select value={sceneWash} onChange={(e) => pickSceneWash(e.target.value as SceneWashStyle)}>
+                {SCENE_WASH_STYLES.map((s) => (
+                  <option key={s} value={s}>
+                    {t(`scene_wash_${s}`)}
+                  </option>
+                ))}
+              </select>
+              <small className="settings-hint">
+                {t('settings_scene_wash_hint')}
+              </small>
             </label>
             <label className="ts-toggle-field">
               <div className="ts-toggle-text">
