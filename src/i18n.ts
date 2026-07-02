@@ -445,6 +445,23 @@ const ru = {
   scene_wash_curtain: 'Занавес',
   scene_wash_glow: 'Свечение по краям',
   scene_wash_off: 'Выкл.',
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Потянуть для обновления',
+  settings_pull_refresh_hint: 'На сенсорных экранах: потяните страницу вниз от самого верха, чтобы перезагрузить панель.',
+  // Assist (issue #19)
+  assist_open: 'Открыть Assist',
+  assist_title: 'Assist',
+  assist_close: 'Закрыть',
+  assist_hint: 'Спросите что-нибудь или дайте команду — например, «Выключи свет на кухне».',
+  assist_placeholder: 'Введите команду…',
+  assist_listening: 'Слушаю…',
+  assist_send: 'Отправить',
+  assist_speak: 'Голосовой ввод',
+  assist_speech_unavailable: 'Голосовой ввод недоступен в этом браузере — введите текст.',
+  assist_error: 'Не удалось связаться с Assist.',
+  assist_done: 'Готово.',
+  settings_assist: 'Кнопка Assist',
+  settings_assist_hint: 'Плавающий микрофон, открывающий Home Assistant Assist.',
 };
 
 const en: typeof ru = {
@@ -868,6 +885,23 @@ const en: typeof ru = {
   scene_wash_curtain: 'Curtain sweep',
   scene_wash_glow: 'Edge glow',
   scene_wash_off: 'Off',
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Pull to refresh',
+  settings_pull_refresh_hint: 'On touch screens: drag the page down from the very top to reload the dashboard.',
+  // Assist (issue #19)
+  assist_open: 'Open Assist',
+  assist_title: 'Assist',
+  assist_close: 'Close',
+  assist_hint: 'Ask a question or give a command — e.g. "Turn off the kitchen lights".',
+  assist_placeholder: 'Type a command…',
+  assist_listening: 'Listening…',
+  assist_send: 'Send',
+  assist_speak: 'Voice input',
+  assist_speech_unavailable: "Voice input isn't available in this browser — type instead.",
+  assist_error: "Couldn't reach Assist.",
+  assist_done: 'Done.',
+  settings_assist: 'Assist button',
+  settings_assist_hint: 'Floating microphone that opens Home Assistant Assist.',
 };
 
 const de: typeof ru = {
@@ -1289,6 +1323,23 @@ const de: typeof ru = {
   scene_wash_curtain: 'Vorhang',
   scene_wash_glow: 'Randglühen',
   scene_wash_off: 'Aus',
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Zum Aktualisieren ziehen',
+  settings_pull_refresh_hint: 'Auf Touchscreens: Seite vom oberen Rand nach unten ziehen, um das Dashboard neu zu laden.',
+  // Assist (issue #19)
+  assist_open: 'Assist öffnen',
+  assist_title: 'Assist',
+  assist_close: 'Schließen',
+  assist_hint: 'Stellen Sie eine Frage oder geben Sie einen Befehl — z. B. „Schalte das Küchenlicht aus“.',
+  assist_placeholder: 'Befehl eingeben…',
+  assist_listening: 'Ich höre…',
+  assist_send: 'Senden',
+  assist_speak: 'Spracheingabe',
+  assist_speech_unavailable: 'Spracheingabe ist in diesem Browser nicht verfügbar — bitte tippen.',
+  assist_error: 'Assist ist nicht erreichbar.',
+  assist_done: 'Erledigt.',
+  settings_assist: 'Assist-Schaltfläche',
+  settings_assist_hint: 'Schwebendes Mikrofon, das Home Assistant Assist öffnet.',
 };
 
 const fr: typeof ru = {
@@ -1710,6 +1761,23 @@ const fr: typeof ru = {
   scene_wash_curtain: 'Rideau',
   scene_wash_glow: 'Halo des bords',
   scene_wash_off: 'Désactivé',
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Tirer pour actualiser',
+  settings_pull_refresh_hint: "Sur écran tactile : faites glisser la page vers le bas depuis le haut pour recharger le tableau de bord.",
+  // Assist (issue #19)
+  assist_open: 'Ouvrir Assist',
+  assist_title: 'Assist',
+  assist_close: 'Fermer',
+  assist_hint: 'Posez une question ou donnez une commande — p. ex. « Éteins la lumière de la cuisine ».',
+  assist_placeholder: 'Saisissez une commande…',
+  assist_listening: 'Je vous écoute…',
+  assist_send: 'Envoyer',
+  assist_speak: 'Entrée vocale',
+  assist_speech_unavailable: "L'entrée vocale n'est pas disponible dans ce navigateur — tapez votre commande.",
+  assist_error: "Impossible de joindre Assist.",
+  assist_done: 'Terminé.',
+  settings_assist: 'Bouton Assist',
+  settings_assist_hint: 'Microphone flottant qui ouvre Home Assistant Assist.',
 };
 
 const pl: typeof ru = {
@@ -2131,6 +2199,23 @@ const pl: typeof ru = {
   scene_wash_curtain: 'Kurtyna',
   scene_wash_glow: 'Poświata krawędzi',
   scene_wash_off: 'Wył.',
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Pociągnij, aby odświeżyć',
+  settings_pull_refresh_hint: 'Na ekranach dotykowych: przeciągnij stronę w dół od samej góry, aby przeładować panel.',
+  // Assist (issue #19)
+  assist_open: 'Otwórz Assist',
+  assist_title: 'Assist',
+  assist_close: 'Zamknij',
+  assist_hint: 'Zadaj pytanie lub wydaj polecenie — np. „Wyłącz światło w kuchni”.',
+  assist_placeholder: 'Wpisz polecenie…',
+  assist_listening: 'Słucham…',
+  assist_send: 'Wyślij',
+  assist_speak: 'Wprowadzanie głosowe',
+  assist_speech_unavailable: 'Wprowadzanie głosowe jest niedostępne w tej przeglądarce — wpisz tekst.',
+  assist_error: 'Nie udało się połączyć z Assist.',
+  assist_done: 'Gotowe.',
+  settings_assist: 'Przycisk Assist',
+  settings_assist_hint: 'Pływający mikrofon otwierający Home Assistant Assist.',
 };
 
 const nl: typeof ru = {
@@ -2552,6 +2637,23 @@ const nl: typeof ru = {
   scene_wash_curtain: 'Gordijn',
   scene_wash_glow: 'Randgloed',
   scene_wash_off: 'Uit',
+  // Pull-to-refresh (issue #21)
+  settings_pull_refresh: 'Trekken om te vernieuwen',
+  settings_pull_refresh_hint: 'Op aanraakschermen: sleep de pagina vanaf de bovenkant omlaag om het dashboard te herladen.',
+  // Assist (issue #19)
+  assist_open: 'Assist openen',
+  assist_title: 'Assist',
+  assist_close: 'Sluiten',
+  assist_hint: 'Stel een vraag of geef een opdracht — bijv. "Zet het keukenlicht uit".',
+  assist_placeholder: 'Typ een opdracht…',
+  assist_listening: 'Ik luister…',
+  assist_send: 'Versturen',
+  assist_speak: 'Spraakinvoer',
+  assist_speech_unavailable: 'Spraakinvoer is niet beschikbaar in deze browser — typ in plaats daarvan.',
+  assist_error: 'Kan Assist niet bereiken.',
+  assist_done: 'Klaar.',
+  settings_assist: 'Assist-knop',
+  settings_assist_hint: 'Zwevende microfoon die Home Assistant Assist opent.',
 };
 
 i18n.use(initReactI18next).init({

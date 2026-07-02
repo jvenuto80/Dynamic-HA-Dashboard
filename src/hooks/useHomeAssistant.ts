@@ -199,6 +199,24 @@ export function useHomeAssistant() {
     [],
   );
 
+  /** Send a natural-language command/question to HA Assist (issue #19).
+   *  Uses the same `conversation/process` WebSocket command the HA frontend's
+   *  Assist text box uses, so it works with whatever conversation agent the
+   *  server has configured (built-in Assist, cloud, LLM…). Pass the previous
+   *  result's `conversation_id` to keep follow-ups in context. */
+  const converse = useCallback(
+    async (text: string, opts?: { conversationId?: string; language?: string }): Promise<ConversationResult> => {
+      if (!connRef.current) throw new Error('Not connected to Home Assistant.');
+      return (await connRef.current.sendMessagePromise({
+        type: 'conversation/process',
+        text,
+        ...(opts?.conversationId ? { conversation_id: opts.conversationId } : {}),
+        ...(opts?.language ? { language: opts.language } : {}),
+      })) as ConversationResult;
+    },
+    [],
+  );
+
   // ── Music Assistant ──
   // The `music_assistant.search` service needs the integration's config entry id.
   // Resolve it lazily and cache it (undefined = not yet looked up, null = none).
@@ -276,5 +294,14 @@ export function useHomeAssistant() {
     return maPlayerIds.current;
   }, []);
 
-  return { entities, connected, error, callHA, getState, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers };
+  return { entities, connected, error, callHA, getState, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse };
+}
+
+/** Shape of a `conversation/process` result (the fields Glance uses). */
+export interface ConversationResult {
+  conversation_id?: string | null;
+  response: {
+    response_type: 'action_done' | 'query_answer' | 'error';
+    speech?: { plain?: { speech?: string } };
+  };
 }
