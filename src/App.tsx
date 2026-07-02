@@ -34,7 +34,23 @@ export default function App() {
   const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse } = useHomeAssistant();
   const layout = useLayout();
   const { views } = layout;
-  const [activeView, setActiveView] = useState<string>('main');
+  // Remember the page across reloads so pull-to-refresh (which reloads the app)
+  // lands back on the page you were on, not the first one. sessionStorage means
+  // a cold app launch still starts on 'main'.
+  const [activeView, setActiveView] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem('ha-dashboard-active-view') ?? 'main';
+    } catch {
+      return 'main';
+    }
+  });
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('ha-dashboard-active-view', activeView);
+    } catch {
+      /* private mode / storage disabled — page just won't persist */
+    }
+  }, [activeView]);
   const [detailEntity, setDetailEntity] = useState<string | null>(null);
   // Full-bleed now-playing "lock screen" (issue #18), opened by tapping a
   // playing media tile that carries artwork.

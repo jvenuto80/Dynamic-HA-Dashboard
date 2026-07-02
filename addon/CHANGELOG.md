@@ -1,4 +1,15 @@
 # Changelog
+## 1.8.1
+
+- **Fixed: pull-to-refresh jumped back to the first page.** Pulling to refresh
+  reloads the app, but the current page wasn't remembered, so you always landed
+  on the first page instead of the one you were on. The active page now persists
+  across the reload.
+
+- **Fixed: NOC tab header cramped on phones.** On narrow screens the NOC title
+  collapsed and overlapped its chips. The title now takes its own full-width
+  line with the chips wrapping neatly below.
+
 ## 1.8.0
 
 - **New: Assist voice/chat button ([#19](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/19)).** A floating mic button opens a chat-style
