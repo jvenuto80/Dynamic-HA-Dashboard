@@ -14,6 +14,7 @@ import { DetailPanel } from './components/DetailPanel';
 import { EntityPicker } from './components/DashboardView';
 import { SettingsModal } from './components/SettingsModal';
 import { NowPlayingTakeover } from './components/NowPlayingTakeover';
+import { AssistFlyout, AssistFab } from './components/AssistFlyout';
 import { Screensaver } from './components/Screensaver';
 import { CalendarFlyout } from './components/CalendarFlyout';
 import { activeCalendarIds, parseEventsResponse, type CalendarEvent, type CalendarServiceResponse } from './lib/calendar';
@@ -29,7 +30,7 @@ import type { RoomEntity, DashView } from './types';
 
 export default function App() {
   const { t } = useTranslation();
-  const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers } = useHomeAssistant();
+  const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse } = useHomeAssistant();
   const layout = useLayout();
   const { views } = layout;
   const [activeView, setActiveView] = useState<string>('main');
@@ -69,6 +70,22 @@ export default function App() {
     window.addEventListener('ha:np-takeover', onChange);
     return () => window.removeEventListener('ha:np-takeover', onChange);
   }, []);
+
+  // ── Assist flyout (issue #19) ──
+  // Floating mic button (bottom-right) that opens an HA Assist chat panel.
+  // Hidden via Settings → Appearance, while editing, and during onboarding.
+  const [assistOpen, setAssistOpen] = useState(false);
+  const [assistEnabled, setAssistEnabled] = useState(() => getSettings().assistButton);
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const enabled = (e as CustomEvent<boolean>).detail;
+      setAssistEnabled(enabled);
+      if (!enabled) setAssistOpen(false);
+    };
+    window.addEventListener('ha:assist-button', onChange);
+    return () => window.removeEventListener('ha:assist-button', onChange);
+  }, []);
+  const showAssistFab = assistEnabled && connected && !editing && !needsOnboarding && !booting;
 
   // ── Idle screensaver (issue #20) ──
   // After the configured idle minutes (Settings → Appearance; 0 = off) the
@@ -372,6 +389,9 @@ export default function App() {
       </main>
 
       <PageDots views={views} activeView={activeView} onJump={goToView} />
+
+      {showAssistFab && !assistOpen && <AssistFab onOpen={() => setAssistOpen(true)} />}
+      {assistOpen && <AssistFlyout converse={converse} onClose={() => setAssistOpen(false)} />}
 
       <DetailPanel
         entityId={detailEntity}
