@@ -217,6 +217,48 @@ async function run() {
   await shot(page, '40-settings');
   await closeFlyout(page);
 
+  // 4.5 Assist flyout — open the mic button, ask a harmless question, capture
+  // the chat exchange. "What time is it?" is a read-only query (no device is
+  // toggled), and Assist answers from whatever conversation agent HA uses.
+  const assistFab = page.locator('.assist-fab').first();
+  if (await assistFab.count()) {
+    await assistFab.click().catch(() => {});
+    const ok = await page
+      .waitForSelector('.assist-panel', { timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    if (ok) {
+      await sleep(400);
+      await page.locator('.assist-input').fill('What time is it?').catch(() => {});
+      await page.locator('.assist-send').click().catch(() => {});
+      // Wait for Assist's reply bubble (real round-trip), then let it settle.
+      await page.waitForSelector('.assist-msg.assist', { timeout: 8000 }).catch(() => {});
+      await sleep(1000);
+      await shot(page, '70-assist');
+      await page.keyboard.press('Escape').catch(() => {});
+      await sleep(400);
+    } else {
+      console.log('assist panel did not open — skipped');
+    }
+  } else {
+    console.log('no assist button (disabled?) — skipped assist shot');
+  }
+
+  // 4.6 Settings → Appearance, scrolled to the scene-wash picker so the new
+  // Scene color wash / Assist / Pull-to-refresh controls are visible.
+  await page.locator('.sidebar-settings').click().catch(() => {});
+  await page.waitForSelector('.settings-modal, .ts-modal', { timeout: 8000 }).catch(() => {});
+  await sleep(700);
+  const washField = page.locator('.ts-field', { has: page.locator('select option[value="burst"]') }).first();
+  if (await washField.count()) {
+    await washField.scrollIntoViewIfNeeded().catch(() => {});
+    await sleep(500);
+    await shot(page, '41-settings-appearance');
+  } else {
+    console.log('scene-wash setting not found — skipped appearance shot');
+  }
+  await closeFlyout(page);
+
   // 5. Ambient overrides via URL params.
   const ambient = [
     ['precip=rain', '50-ambient-rain'],

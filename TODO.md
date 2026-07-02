@@ -145,11 +145,11 @@ Decision: leaving as `localStorage` for now since it works on a single device.
 
 ### Delightful extras
 
-- [ ] Scene transition flash — quick full-screen color wash matching the scene. ([#17](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/17))
+- [x] ~~Scene transition flash — quick full-screen color wash matching the scene.~~ ([#17](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/17)) **Done (1.8.0):** activating a scene plays a full-screen wash in the scene's own color. Style is selectable in Settings → Appearance → Scene color wash — Radial burst (from the tapped pill), Curtain sweep, Edge glow, or Off — with a live preview as you choose. Fire-and-forget WAAPI overlay, respects `prefers-reduced-motion`.
 - [x] ~~Now-playing lock-screen mode — full-bleed album art takeover on tap.~~ ([#18](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/18)) **Done (1.1.10):** tapping a playing media tile (artwork showing) opens a full-bleed lock-screen takeover — blurred album-art backdrop, large art, title/artist, live progress, transport controls and volume; the tile's ⋯ button still opens the regular flyout.
-- [ ] Voice/Assist floating mic button into HA Assist. ([#19](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/19))
+- [x] ~~Voice/Assist floating mic button into HA Assist.~~ ([#19](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/19)) **Done (1.8.0):** a floating mic button opens a chat-style Assist panel. Commands go through HA's `conversation/process` API (any conversation agent), with follow-up context; voice input via the browser's SpeechRecognition where available, falling back to text. Toggle in Settings → Appearance → Assist button.
 - [x] ~~Idle "screensaver" — drift to clock + ambient art for wall-tablet use.~~ ([#20](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/20)) **Done (1.1.10):** opt-in via Settings → Appearance → Idle screensaver (off by default). After the chosen idle time the dashboard dims to a big drifting clock (OLED-safe), date, outside temp, and an ambient now-playing pill over blurred album art when music plays. Any touch wakes it.
-- [ ] Pull-to-refresh with a custom elastic indicator. ([#21](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/21))
+- [x] ~~Pull-to-refresh with a custom elastic indicator.~~ ([#21](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/21)) **Done (1.8.0):** on touch screens, drag down from the top to stretch an elastic indicator with rubber-band resistance; it arms with an accent glow + haptic tick, and releasing reloads the app. Yields to swipe nav, disabled in edit mode, respects `prefers-reduced-motion`. Toggle in Settings → Appearance → Pull to refresh.
 
 ### Performance polish (makes it *feel* premium)
 

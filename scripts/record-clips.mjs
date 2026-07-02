@@ -275,6 +275,74 @@ async function main() {
     await sleep(2600);
   }, { tail: 7 });
 
+  // 9. Assist — open the mic flyout, ask a harmless question, receive the reply.
+  //    "What time is it?" is read-only; no device is toggled.
+  await clip(browser, '09-assist', async (page) => {
+    const fab = page.locator('.assist-fab').first();
+    if (!(await fab.count())) return;
+    await fab.click();
+    await page.waitForSelector('.assist-panel', { timeout: 5000 }).catch(() => {});
+    await sleep(700);
+    // Type the query at a human-ish pace so the clip reads naturally.
+    await page.locator('.assist-input').pressSequentially('What time is it?', { delay: 55 }).catch(() => {});
+    await sleep(300);
+    await page.locator('.assist-send').click().catch(() => {});
+    await page.waitForSelector('.assist-msg.assist', { timeout: 8000 }).catch(() => {});
+    await sleep(1800);
+  }, { tail: 9 });
+
+  // 10. Scene color wash — driven from the Settings live-preview so no real
+  //     scene is activated (zero device side effects). Cycling the dropdown
+  //     replays the wash in the accent color; we show all three styles.
+  await clip(browser, '10-scene-wash', async (page) => {
+    await page.locator('.sidebar-settings').click().catch(() => {});
+    await page.waitForSelector('.settings-modal, .ts-modal', { timeout: 8000 }).catch(() => {});
+    const wash = page
+      .locator('.ts-field select', { has: page.locator('option[value="burst"]') })
+      .first();
+    if (!(await wash.count())) return;
+    await wash.scrollIntoViewIfNeeded().catch(() => {});
+    await sleep(600);
+    for (const style of ['burst', 'curtain', 'glow']) {
+      await wash.selectOption(style).catch(() => {});
+      await sleep(1600); // let each wash play out
+    }
+  }, { tail: 6 });
+
+  // 11. Pull-to-refresh — synthetic touch drag on the scroll container to stretch
+  //     the elastic indicator past the threshold (accent glow), then release into
+  //     the refresh spinner. Playwright can't drag with touch, so dispatch the
+  //     TouchEvents by hand, animating the pull over ~1s.
+  await clip(browser, '11-pull-refresh', async (page) => {
+    await sleep(600);
+    await page.evaluate(async () => {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const main = document.querySelector('.main-content');
+      if (!main) return;
+      const touch = (y) => new Touch({ identifier: 1, target: main, clientX: 480, clientY: y });
+      const fire = (type, y) =>
+        main.dispatchEvent(
+          new TouchEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            touches: type === 'touchend' ? [] : [touch(y)],
+            changedTouches: [touch(y)],
+          }),
+        );
+      const startY = 90;
+      fire('touchstart', startY);
+      // Ease the finger down to ~420px over ~1s so the rubber-band stretches.
+      for (let i = 1; i <= 24; i++) {
+        fire('touchmove', startY + (330 * i) / 24);
+        await sleep(42);
+      }
+      await sleep(500); // hold at the armed position
+      fire('touchend', startY + 330); // release → refresh spinner + reload
+    });
+    // Let the spinner show and the reload begin before the clip ends.
+    await sleep(1400);
+  }, { tail: 5 });
+
   await browser.close();
 
   // Tidy: drop the raw webm scratch dir.

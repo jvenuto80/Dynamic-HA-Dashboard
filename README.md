@@ -41,21 +41,26 @@ architecture, and troubleshooting, head to the **[Glance Wiki](https://github.co
 
 | | |
 |---|---|
-| ![Main dashboard](screenshots/01-main.png) | ![Now-playing flyout](screenshots/20-flyout-media.png) |
-| **Main dashboard** — editable tile/room layout | **Media flyout** — now-playing artwork, scrubber, transport |
-| ![NOC servers board](screenshots/10-noc.png) | ![Edit mode](screenshots/30-edit-mode.png) |
-| **NOC (servers) board** — nodes, switch **port maps**, alerts | **Edit mode** — drag-and-drop tile arrangement |
+| ![Main dashboard](screenshots/01-main.png) | ![Assist voice/chat](screenshots/70-assist.png) |
+| **Main dashboard** — editable tile/room layout | **Voice & Assist** — ask or command; answered inline |
+| ![Now-playing flyout](screenshots/20-flyout-media.png) | ![NOC servers board](screenshots/10-noc.png) |
+| **Media flyout** — now-playing artwork, scrubber, transport | **NOC (servers) board** — nodes, switch **port maps**, alerts |
 
 The same layout reflows from a full-size wall display down to a phone, where the
-sidebar gives way to **swipe navigation**.
+sidebar gives way to **swipe navigation** and **pull-to-refresh**.
 
 <p align="center"><img src="screenshots/60-mobile.png" alt="Mobile layout" width="280" /></p>
 
-> 🖼️ **[See the full gallery and motion clips →](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Screenshots)** — light/vacuum/Music-Assistant flyouts, settings, and every ambient backdrop.
+> 🖼️ **[See the full gallery and motion clips →](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Screenshots)** — light/vacuum/Music-Assistant flyouts, edit mode, settings, and every ambient backdrop.
 
-**View switching** — staggered tile-entrance cascade
+### In motion
 
-![View switching](media/01-view-switching.gif)
+| | |
+|---|---|
+| ![View switching](media/01-view-switching.gif) | ![Scene color wash](media/10-scene-wash.gif) |
+| **View switching** — staggered tile-entrance cascade | **Scene color wash** — the room flashes in the scene's color |
+| ![Assist](media/09-assist.gif) | ![Pull to refresh](media/11-pull-refresh.gif) |
+| **Assist** — voice or text, answered inline | **Pull-to-refresh** — elastic drag-to-reload |
 
 ---
 
@@ -63,15 +68,17 @@ sidebar gives way to **swipe navigation**.
 
 - 🧩 **Editable tile / room layout** — drag-and-drop tiles, multiple pages, per-tile settings. No JSON editing. → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features)
 - 🎚️ **Rich device controls** — slide-to-dim lights, slide-to-position covers, climate, locks, scenes, scripts.
+- 🗣️ **Voice & Assist** — a floating mic button opens **Home Assistant Assist**; speak or type a command and your conversation agent answers, inline. → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features#voice--assist)
 - 🎵 **Media + Music Assistant** — auto now-playing page, device de-dup, library search and cast. → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features#media--music-assistant)
 - 🧹 **Vacuum control center** — live map, room select, suction & mode (built for Dreame, degrades gracefully).
 - 🖥️ **NOC monitoring board** — servers, switches, UPSes, Docker, UniFi-style **switch port maps** with PoE power-cycle. → [NOC Dashboard](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/NOC-Servers-Dashboard)
 - 🌦️ **Ambient backdrop** — weather-reactive rain/snow, lightning in storms, time-of-day tint.
+- ✨ **Delightful motion** — spring-open flyouts, staggered tile cascades, and a **scene color wash** that flashes the room in the scene's own color (burst / curtain / glow). → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features#premium-feel-polish)
 - 🎨 **Theming** — 4 themes, full accent recolor, configurable date/time & duration formats.
 - 🌍 **Six languages** — English, Russian, German, French, Polish & Dutch; switch in **Settings → Appearance → Interface language**, remembered per device.
 - 👥 **Zero-config people & weather** — `person.*` and `weather.*` entities are auto-discovered.
 - 💾 **Backup & restore** — export your whole dashboard to a portable JSON file. → [Backup & Restore](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Layout-Backup-and-Restore)
-- 📱 **Responsive + kiosk-ready** — wall display to phone, with swipe nav and Fully Kiosk support.
+- 📱 **Responsive + kiosk-ready** — wall display to phone, with **swipe navigation**, **pull-to-refresh**, and Fully Kiosk support.
 - 🏠 **Runs as a Home Assistant add-on** — Supervisor-managed, served in the sidebar via Ingress.
 
 ---
