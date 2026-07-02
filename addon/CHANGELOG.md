@@ -1,4 +1,24 @@
 # Changelog
+## 1.8.0
+
+- **New: Assist voice/chat button ([#19](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/19)).** A floating mic button opens a chat-style
+  Home Assistant Assist panel. Ask a question or give a command by voice (where
+  the browser supports speech recognition) or by typing; replies come from
+  whatever conversation agent your server uses, and follow-ups keep context.
+  Turn it off in **Settings → Appearance → "Assist button"**.
+
+- **New: pull-to-refresh with an elastic indicator ([#21](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/21)).** On touch screens,
+  drag down from the top of the page to stretch a rubber-band indicator; release
+  past the threshold to reload — the tablet/kiosk "unstick it" gesture. Toggle
+  in **Settings → Appearance → "Pull to refresh"**.
+
+- **New: scene color wash ([#17](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/17)).** Activating a scene plays a quick full-screen wash
+  in that scene's color. Pick the style in **Settings → Appearance → "Scene
+  color wash"** — Radial burst (from the tapped pill), Curtain sweep, Edge glow,
+  or Off — and preview each one live as you choose.
+
+  All three respect reduced-motion preferences and sync across devices.
+
 ## 1.7.1
 
 - **Fixed: thermostats showed the wrong temperature unit.** Climate cards and the
