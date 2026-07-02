@@ -437,6 +437,21 @@ const ru = {
   glance_metric_climate: 'Температура в доме',
   glance_metric_people: 'Кто дома',
   glance_metric_media: 'Сейчас играет',
+
+  // Assist (issue #19)
+  assist_open: 'Открыть Assist',
+  assist_title: 'Assist',
+  assist_close: 'Закрыть',
+  assist_hint: 'Спросите что-нибудь или дайте команду — например, «Выключи свет на кухне».',
+  assist_placeholder: 'Введите команду…',
+  assist_listening: 'Слушаю…',
+  assist_send: 'Отправить',
+  assist_speak: 'Голосовой ввод',
+  assist_speech_unavailable: 'Голосовой ввод недоступен в этом браузере — введите текст.',
+  assist_error: 'Не удалось связаться с Assist.',
+  assist_done: 'Готово.',
+  settings_assist: 'Кнопка Assist',
+  settings_assist_hint: 'Плавающий микрофон, открывающий Home Assistant Assist.',
 };
 
 const en: typeof ru = {
@@ -852,6 +867,21 @@ const en: typeof ru = {
   glance_metric_climate: 'Indoor temperature',
   glance_metric_people: "Who's home",
   glance_metric_media: 'Now playing',
+
+  // Assist (issue #19)
+  assist_open: 'Open Assist',
+  assist_title: 'Assist',
+  assist_close: 'Close',
+  assist_hint: 'Ask a question or give a command — e.g. "Turn off the kitchen lights".',
+  assist_placeholder: 'Type a command…',
+  assist_listening: 'Listening…',
+  assist_send: 'Send',
+  assist_speak: 'Voice input',
+  assist_speech_unavailable: "Voice input isn't available in this browser — type instead.",
+  assist_error: "Couldn't reach Assist.",
+  assist_done: 'Done.',
+  settings_assist: 'Assist button',
+  settings_assist_hint: 'Floating microphone that opens Home Assistant Assist.',
 };
 
 const de: typeof ru = {
@@ -1265,6 +1295,21 @@ const de: typeof ru = {
   glance_metric_climate: 'Innentemperatur',
   glance_metric_people: 'Wer ist zuhause',
   glance_metric_media: 'Läuft gerade',
+
+  // Assist (issue #19)
+  assist_open: 'Assist öffnen',
+  assist_title: 'Assist',
+  assist_close: 'Schließen',
+  assist_hint: 'Stellen Sie eine Frage oder geben Sie einen Befehl — z. B. „Schalte das Küchenlicht aus“.',
+  assist_placeholder: 'Befehl eingeben…',
+  assist_listening: 'Ich höre…',
+  assist_send: 'Senden',
+  assist_speak: 'Spracheingabe',
+  assist_speech_unavailable: 'Spracheingabe ist in diesem Browser nicht verfügbar — bitte tippen.',
+  assist_error: 'Assist ist nicht erreichbar.',
+  assist_done: 'Erledigt.',
+  settings_assist: 'Assist-Schaltfläche',
+  settings_assist_hint: 'Schwebendes Mikrofon, das Home Assistant Assist öffnet.',
 };
 
 const fr: typeof ru = {
@@ -1678,6 +1723,21 @@ const fr: typeof ru = {
   glance_metric_climate: 'Température intérieure',
   glance_metric_people: 'Qui est à la maison',
   glance_metric_media: 'En cours de lecture',
+
+  // Assist (issue #19)
+  assist_open: 'Ouvrir Assist',
+  assist_title: 'Assist',
+  assist_close: 'Fermer',
+  assist_hint: 'Posez une question ou donnez une commande — p. ex. « Éteins la lumière de la cuisine ».',
+  assist_placeholder: 'Saisissez une commande…',
+  assist_listening: 'Je vous écoute…',
+  assist_send: 'Envoyer',
+  assist_speak: 'Entrée vocale',
+  assist_speech_unavailable: "L'entrée vocale n'est pas disponible dans ce navigateur — tapez votre commande.",
+  assist_error: "Impossible de joindre Assist.",
+  assist_done: 'Terminé.',
+  settings_assist: 'Bouton Assist',
+  settings_assist_hint: 'Microphone flottant qui ouvre Home Assistant Assist.',
 };
 
 const pl: typeof ru = {
@@ -2091,6 +2151,21 @@ const pl: typeof ru = {
   glance_metric_climate: 'Temperatura wewnętrzna',
   glance_metric_people: 'Kto jest w domu',
   glance_metric_media: 'Teraz odtwarzane',
+
+  // Assist (issue #19)
+  assist_open: 'Otwórz Assist',
+  assist_title: 'Assist',
+  assist_close: 'Zamknij',
+  assist_hint: 'Zadaj pytanie lub wydaj polecenie — np. „Wyłącz światło w kuchni”.',
+  assist_placeholder: 'Wpisz polecenie…',
+  assist_listening: 'Słucham…',
+  assist_send: 'Wyślij',
+  assist_speak: 'Wprowadzanie głosowe',
+  assist_speech_unavailable: 'Wprowadzanie głosowe jest niedostępne w tej przeglądarce — wpisz tekst.',
+  assist_error: 'Nie udało się połączyć z Assist.',
+  assist_done: 'Gotowe.',
+  settings_assist: 'Przycisk Assist',
+  settings_assist_hint: 'Pływający mikrofon otwierający Home Assistant Assist.',
 };
 
 const nl: typeof ru = {
@@ -2504,6 +2579,21 @@ const nl: typeof ru = {
   glance_metric_climate: 'Binnentemperatuur',
   glance_metric_people: 'Wie is thuis',
   glance_metric_media: 'Wordt nu afgespeeld',
+
+  // Assist (issue #19)
+  assist_open: 'Assist openen',
+  assist_title: 'Assist',
+  assist_close: 'Sluiten',
+  assist_hint: 'Stel een vraag of geef een opdracht — bijv. "Zet het keukenlicht uit".',
+  assist_placeholder: 'Typ een opdracht…',
+  assist_listening: 'Ik luister…',
+  assist_send: 'Versturen',
+  assist_speak: 'Spraakinvoer',
+  assist_speech_unavailable: 'Spraakinvoer is niet beschikbaar in deze browser — typ in plaats daarvan.',
+  assist_error: 'Kan Assist niet bereiken.',
+  assist_done: 'Klaar.',
+  settings_assist: 'Assist-knop',
+  settings_assist_hint: 'Zwevende microfoon die Home Assistant Assist opent.',
 };
 
 i18n.use(initReactI18next).init({
