@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useLayout } from './hooks/useLayout';
 import { useSwipeNav } from './hooks/useSwipeNav';
+import { usePullRefresh, PullRefreshIndicator } from './hooks/usePullRefresh';
 import { useIdle } from './hooks/useIdle';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -166,6 +167,22 @@ export default function App() {
   );
 
   useSwipeNav(mainRef, { onSwipe: goAdjacent });
+
+  // ── Pull-to-refresh (issue #21) ──
+  // Touch-drag down from the top of the page stretches an elastic indicator;
+  // release past the threshold reloads the app (fresh code + a clean HA
+  // socket). Off while editing — a downward drag there is tile drag-and-drop.
+  const ptrRef = useRef<HTMLDivElement>(null);
+  const [ptrEnabled, setPtrEnabled] = useState(() => getSettings().pullToRefresh);
+  useEffect(() => {
+    const onChange = (e: Event) => setPtrEnabled((e as CustomEvent<boolean>).detail);
+    window.addEventListener('ha:pull-refresh', onChange);
+    return () => window.removeEventListener('ha:pull-refresh', onChange);
+  }, []);
+  usePullRefresh(mainRef, ptrRef, {
+    enabled: ptrEnabled && !editing,
+    onRefresh: () => window.location.reload(),
+  });
 
   // Map of entity_id -> configured tile (camera, links, quick actions) for the flyout.
   const configFor = useMemo(() => {
@@ -372,6 +389,8 @@ export default function App() {
       </main>
 
       <PageDots views={views} activeView={activeView} onJump={goToView} />
+
+      <PullRefreshIndicator innerRef={ptrRef} />
 
       <DetailPanel
         entityId={detailEntity}

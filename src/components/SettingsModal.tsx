@@ -57,6 +57,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const [syncSettings, setSyncSettings] = useState(initial.syncSettings);
   const [statusDots, setStatusDots] = useState(initial.statusDots);
   const [smartGrouping, setSmartGrouping] = useState(initial.smartGrouping);
+  const [pullToRefresh, setPullToRefresh] = useState(initial.pullToRefresh);
   const [test, setTest] = useState<TestState>('idle');
   const [testMsg, setTestMsg] = useState('');
   const [lang, setLang] = useState(() => localStorage.getItem('ha-dashboard-lang') ?? 'en');
@@ -113,6 +114,13 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     window.dispatchEvent(new CustomEvent('ha:smart-grouping', { detail: next }));
   };
 
+  const togglePullToRefresh = () => {
+    const next = !pullToRefresh;
+    setPullToRefresh(next);
+    // Live-apply the gesture without persisting yet.
+    window.dispatchEvent(new CustomEvent('ha:pull-refresh', { detail: next }));
+  };
+
   const toggleTakeover = () => {
     const next = !nowPlayingTakeover;
     setNowPlayingTakeover(next);
@@ -145,7 +153,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const save = (reload: boolean) => {
     const url = haUrl.trim();
     const token = haToken.trim();
-    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots, smartGrouping });
+    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots, smartGrouping, pullToRefresh });
     // Share the non-credential preferences with other devices (issue #8).
     void pushSettingsToServer();
     // Sync the opt-in shared connection on the server. Store the *effective* URL
@@ -182,6 +190,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     );
     window.dispatchEvent(
       new CustomEvent('ha:smart-grouping', { detail: getSettings().smartGrouping }),
+    );
+    window.dispatchEvent(
+      new CustomEvent('ha:pull-refresh', { detail: getSettings().pullToRefresh }),
     );
     onClose();
   };
@@ -457,6 +468,22 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 role="switch"
                 aria-checked={statusDots}
                 onClick={toggleStatusDots}
+              >
+                <span className="ts-switch-knob" />
+              </button>
+            </label>
+            <label className="ts-toggle-field">
+              <div className="ts-toggle-text">
+                <span>{t('settings_pull_refresh')}</span>
+                <small>
+                  {t('settings_pull_refresh_hint')}
+                </small>
+              </div>
+              <button
+                className={`ts-switch ${pullToRefresh ? 'on' : ''}`}
+                role="switch"
+                aria-checked={pullToRefresh}
+                onClick={togglePullToRefresh}
               >
                 <span className="ts-switch-knob" />
               </button>

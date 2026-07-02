@@ -6952,3 +6952,97 @@ button.noc-port:hover { transform: translateY(-1px); }
   color: var(--text-muted);
   flex: none;
 }
+
+/* ── Pull-to-refresh (issue #21) ── */
+
+/* Own the top overscroll so the browser's native pull-to-refresh (Chrome on
+   Android) never fights the custom gesture. */
+.main-content {
+  overscroll-behavior-y: contain;
+}
+
+.ptr-indicator {
+  position: fixed;
+  top: calc(6px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  width: 46px;
+  height: 46px;
+  margin-left: -23px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 22, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  z-index: 80;
+  pointer-events: none;
+  /* Driven by the gesture: --ptr-pull is the resisted finger travel,
+     --ptr-frac is progress toward the release threshold (0..1). */
+  opacity: min(1, calc(var(--ptr-frac, 0) * 1.6));
+  transform: translateY(calc(var(--ptr-pull, 0px) - 64px))
+    scale(calc(0.55 + 0.45 * var(--ptr-frac, 0)));
+  /* Springy snap-back when the finger lets go below the threshold. */
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.3s ease;
+}
+
+/* While the finger is down the indicator tracks it 1:1 — no easing lag. */
+.ptr-indicator.pulling {
+  transition: none;
+}
+
+.ptr-arrow,
+.ptr-spinner {
+  position: absolute;
+  font-size: 22px;
+  color: var(--text-secondary);
+  transition: color 0.15s ease;
+}
+
+/* The arrow winds up as the pull approaches the threshold, then flips. */
+.ptr-arrow {
+  transform: rotate(calc(var(--ptr-frac, 0) * 180deg));
+}
+
+.ptr-spinner {
+  display: none;
+}
+
+.ptr-indicator.armed {
+  border-color: rgba(var(--accent-rgb), 0.6);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 18px rgba(var(--accent-rgb), 0.35);
+}
+
+.ptr-indicator.armed .ptr-arrow {
+  color: var(--accent-orange);
+}
+
+.ptr-indicator.refreshing {
+  opacity: 1;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ptr-indicator.refreshing .ptr-arrow {
+  display: none;
+}
+
+.ptr-indicator.refreshing .ptr-spinner {
+  display: block;
+  color: var(--accent-orange);
+  animation: ptr-spin 0.8s linear infinite;
+}
+
+@keyframes ptr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+[data-theme='light'] .ptr-indicator {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+}
