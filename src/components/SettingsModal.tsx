@@ -58,6 +58,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const [statusDots, setStatusDots] = useState(initial.statusDots);
   const [smartGrouping, setSmartGrouping] = useState(initial.smartGrouping);
   const [pullToRefresh, setPullToRefresh] = useState(initial.pullToRefresh);
+  const [assistButton, setAssistButton] = useState(initial.assistButton);
   const [test, setTest] = useState<TestState>('idle');
   const [testMsg, setTestMsg] = useState('');
   const [lang, setLang] = useState(() => localStorage.getItem('ha-dashboard-lang') ?? 'en');
@@ -121,6 +122,13 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     window.dispatchEvent(new CustomEvent('ha:pull-refresh', { detail: next }));
   };
 
+  const toggleAssistButton = () => {
+    const next = !assistButton;
+    setAssistButton(next);
+    // Live-apply the floating mic without persisting yet.
+    window.dispatchEvent(new CustomEvent('ha:assist-button', { detail: next }));
+  };
+
   const toggleTakeover = () => {
     const next = !nowPlayingTakeover;
     setNowPlayingTakeover(next);
@@ -153,7 +161,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
   const save = (reload: boolean) => {
     const url = haUrl.trim();
     const token = haToken.trim();
-    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots, smartGrouping, pullToRefresh });
+    saveSettings({ haUrl: url, haToken: token, theme, accent, ambientEffects, compactSections, rememberOnServer, weatherEntity, dateFormat, durationStyle, screensaverMinutes, nowPlayingTakeover, calendarChip, calendarEntities, screensaverShortcut, syncSettings, statusDots, smartGrouping, pullToRefresh, assistButton });
     // Share the non-credential preferences with other devices (issue #8).
     void pushSettingsToServer();
     // Sync the opt-in shared connection on the server. Store the *effective* URL
@@ -193,6 +201,9 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
     );
     window.dispatchEvent(
       new CustomEvent('ha:pull-refresh', { detail: getSettings().pullToRefresh }),
+    );
+    window.dispatchEvent(
+      new CustomEvent('ha:assist-button', { detail: getSettings().assistButton }),
     );
     onClose();
   };
@@ -484,6 +495,22 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 role="switch"
                 aria-checked={pullToRefresh}
                 onClick={togglePullToRefresh}
+              >
+                <span className="ts-switch-knob" />
+              </button>
+            </label>
+            <label className="ts-toggle-field">
+              <div className="ts-toggle-text">
+                <span>{t('settings_assist')}</span>
+                <small>
+                  {t('settings_assist_hint')}
+                </small>
+              </div>
+              <button
+                className={`ts-switch ${assistButton ? 'on' : ''}`}
+                role="switch"
+                aria-checked={assistButton}
+                onClick={toggleAssistButton}
               >
                 <span className="ts-switch-knob" />
               </button>
