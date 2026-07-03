@@ -19,7 +19,7 @@ Options if we want the rest of the settings to follow across devices:
     the host. Fine on a private LAN, but a conscious decision.
   - Possible compromise: sync only theme/accent/URL via `settings.json`, keep
     the **token in `localStorage`** so it never hits disk.
-- [x] ~~**Store settings in Home Assistant itself**~~ ([#8](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/8)) **Done (1.2.0):** shared (non-credential) preferences sync via the add-on's `/settings` endpoint → `/data/settings.json` (inside HA, included in HA backups). Devices adopt the server copy on boot; Settings saves push it. The token and the per-device idle-screensaver timer are deliberately never synced; opt out via Settings → "Sync preferences across devices".
+- [x] ~~**Store settings in Home Assistant itself**~~ ([#8](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/8)) **Done (1.2.0):** shared (non-credential) preferences sync via the app's `/settings` endpoint → `/data/settings.json` (inside HA, included in HA backups). Devices adopt the server copy on boot; Settings saves push it. The token and the per-device idle-screensaver timer are deliberately never synced; opt out via Settings → "Sync preferences across devices".
 - [ ] SQLite — **not worth it** for ~4 fields of flat prefs (decided against).
 
 Decision: leaving as `localStorage` for now since it works on a single device.
@@ -48,14 +48,14 @@ Decision: leaving as `localStorage` for now since it works on a single device.
 
 ## Deployment
 
-- [x] ~~**Ship as a Home Assistant Add-on (Option B)**~~ — runs as a
-  Supervisor-managed add-on via Ingress. Scaffolding lives in [`addon/`](addon/):
+- [x] ~~**Ship as a Home Assistant App (Option B)**~~ — runs as a
+  Supervisor-managed app via Ingress. Scaffolding lives in [`addon/`](addon/):
   `config.yaml` (ingress, `ingress_port: 3000`, sidebar panel), `build.yaml`
   (per-arch `ghcr.io/hassio-addons/base`), `Dockerfile` (multi-stage: clones +
   `npm run build`, runtime runs `vite preview`), `run.sh` (bashio startup, seeds
   the generic starter template into `/data/layouts.json` on first run, exports
   `LAYOUT_FILE`/`PORT`), plus `README.md`/`CHANGELOG.md`. Root `repository.yaml`
-  registers the add-on repo.
+  registers the app repo.
   - **Token: user-entered, never baked** — added via the in-app **Settings** UI
     (`localStorage`), never written to disk or into the image.
   - Vite `base: './'` + `BASE_URL`-relative `/layout` fetch + `preview.host`/
@@ -69,7 +69,7 @@ Decision: leaving as `localStorage` for now since it works on a single device.
 - [ ] **Automate template/layout backups via HA automations** ([#9](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/9)) — provide a way to
   schedule recurring backups of the layout (`layouts.json` / the export JSON)
   driven by Home Assistant automations (e.g. a REST command or service the
-  add-on exposes that an HA automation can call on a schedule), so the dashboard
+  app exposes that an HA automation can call on a schedule), so the dashboard
   config is snapshotted automatically without manual Export. Document the
   example automation in the wiki.
 - [x] **Glance button exclusions should be global per button type, not per page.**
