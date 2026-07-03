@@ -1,0 +1,51 @@
+# AppArmor profile for the Glance — HA Dashboard add-on.
+# The profile name MUST match the add-on slug (see addon/config.yaml: slug).
+#
+# UNTESTED: verify on a real Supervisor before releasing. A too-strict profile
+# can stop the add-on from starting. After installing this version, confirm the
+# add-on boots (Settings → Add-ons → logs) and the dashboard/layout API work,
+# then keep it. If it fails to start, relax the offending rule or remove the
+# file to fall back to the default profile.
+#include <tunables/global>
+
+profile dynamic_ha_dashboard flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Network sockets: vite preview binds a listener and Node makes outbound
+  # fetches (the /fetch-json proxy). No raw/packet sockets needed.
+  network inet tcp,
+  network inet udp,
+  network inet6 tcp,
+  network inet6 udp,
+
+  # Send signals only to our own process group.
+  signal (send) set=(kill,term,int,hup,cont),
+
+  # S6-Overlay init system (from the hassio base image).
+  /init ix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /usr/lib/** mr,
+  /run/{s6,s6-rc*,service}/** ix,
+  /package/** ix,
+  /command/** ix,
+  /etc/s6-overlay/** ix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /run/{,**} rwk,
+  /dev/tty rw,
+
+  # Bashio (run.sh uses it) + scratch space.
+  /usr/lib/bashio/** ix,
+  /tmp/** rwk,
+
+  # Persistent add-on data: the only place we write app state.
+  /data/** rw,
+
+  # Built dashboard + Node runtime (read/execute only, no writes to /app).
+  /app/** r,
+  /usr/bin/node ix,
+  /usr/bin/npm ix,
+  /usr/bin/npx ix,
+}

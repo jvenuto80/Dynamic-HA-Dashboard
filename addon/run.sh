@@ -19,6 +19,7 @@ export SETTINGS_FILE="/data/settings.json"
 export PORT=3000
 
 bashio::log.info "Starting Dynamic HA Dashboard on port ${PORT}…"
+bashio::log.info "Server-side connection storage is ingress-authenticated; if you publish the optional host port, only expose it on a trusted network."
 
 cd /app
 # vite preview serves the built app AND the /layout persistence API.
