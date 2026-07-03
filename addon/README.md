@@ -1,6 +1,6 @@
-# Glance — Dynamic HA Dashboard (Home Assistant Add-on)
+# Glance — Dynamic HA Dashboard (Home Assistant App)
 
-Run **Glance** (the Dynamic HA Dashboard) as a Supervisor-managed add-on, available
+Run **Glance** (the Dynamic HA Dashboard) as a Supervisor-managed app, available
 right from the Home Assistant sidebar via **Ingress** (no extra exposed port,
 inherits HA's authentication).
 
@@ -8,18 +8,18 @@ inherits HA's authentication).
 
 **One-click** — add this repository to your Home Assistant:
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjvenuto80%2FDynamic-HA-Dashboard)
+[![Open your Home Assistant instance and show the add app repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjvenuto80%2FDynamic-HA-Dashboard)
 
 Then find **Glance — HA Dashboard** in the store, **Install**, **Start**, and
 **Open Web UI** (or use the **Glance** sidebar panel).
 
 > **Note:** the button only *adds the repository* (you still click **Add** in
-> the dialog, then install the add-on). On some HA/browser versions it just
-> opens the Add-on Store without the dialog — if so, use the manual steps below.
+> the dialog, then install the app). On some HA/browser versions it just
+> opens the App Store without the dialog — if so, use the manual steps below.
 
 **Manual** — if the button doesn't work:
 
-1. In Home Assistant go to **Settings → Add-ons → Add-on Store**.
+1. In Home Assistant go to **Settings → Apps → App Store**.
 2. Click the **⋮** menu (top right) → **Repositories**, and add:
    ```
    https://github.com/jvenuto80/Dynamic-HA-Dashboard
@@ -29,7 +29,7 @@ Then find **Glance — HA Dashboard** in the store, **Install**, **Start**, and
 
 ## First-time setup
 
-The add-on does **not** store your Home Assistant token. On first open:
+The app does **not** store your Home Assistant token. On first open:
 
 1. Click the **gear / Settings** icon in the dashboard.
 2. Under **Home Assistant**, enter your server URL and a **Long-Lived Access
@@ -43,7 +43,7 @@ The token is kept in that browser's `localStorage` only — it is never written 
 disk or baked into the image.
 
 > **Tip — set it up once for all your devices:** turn on **Remember connection
-> on this server** in Settings. That stores the URL + token on the add-on's
+> on this server** in Settings. That stores the URL + token on the app's
 > `/data`, so other devices (tablets, kiosks) auto-connect on first open without
 > pasting the token again. It's off by default; turning it back off clears the
 > stored connection. Anyone who can open the dashboard can use the saved
@@ -53,7 +53,7 @@ disk or baked into the image.
 > only through the **Ingress** sidebar by default, so a tablet pointed straight
 > at `http://<ha-ip>:3000` won't auto-adopt it. To let direct-port kiosks
 > auto-configure seamlessly, enable the **`share_connection_on_lan`** option on
-> the add-on's **Configuration** tab. This serves the HA token to anyone on that
+> the app's **Configuration** tab. This serves the HA token to anyone on that
 > network, so only turn it on if you trust your LAN (and keep the port off the
 > internet).
 
@@ -68,7 +68,7 @@ disk or baked into the image.
   and Dutch. Pick yours under **Settings → Appearance → Interface language**; the
   choice applies instantly and is remembered per device.
 - Your customizations (views, tiles, and at-a-glance buttons) are saved to the
-  add-on's persistent `/data/layouts.json` and survive restarts and updates.
+  app's persistent `/data/layouts.json` and survive restarts and updates.
 
 ### Bringing an existing layout over
 
@@ -81,7 +81,7 @@ If you already built a dashboard on another device:
    appearance preferences (theme, accent, weather source, and date &amp; duration
    formats). It deliberately leaves out your HA URL and token, so it's safe to
    share or carry between machines.
-2. On this add-on, **connect first** — **Settings → Home Assistant**, enter your
+2. On this app, **connect first** — **Settings → Home Assistant**, enter your
    URL + **Long-Lived Access Token**, then **Save & reload**.
 3. Then **Settings → Dashboard data → Import layout**, pick the file. The board
    and its look are both restored.
@@ -101,12 +101,12 @@ If you already built a dashboard on another device:
   error and without exposing Glance to the internet. The **Server URL** box is
   hidden in that mode because it isn't needed.
 - The **Server URL** setting only applies when you point a browser at the
-  add-on's **direct port** (kiosk mode, below) or run it standalone. In that
+  app's **direct port** (kiosk mode, below) or run it standalone. In that
   case make sure the URL is reachable from the device viewing the dashboard —
   on tablets/kiosks use the **IP form** (`http://<HA-IP>:8123`);
   `homeassistant.local` often won't resolve there.
 - **Two ports, don't mix them:** the **Server URL** setting uses HA's API on
-  **8123**, while a kiosk browser opens the *dashboard* on the add-on's direct
+  **8123**, while a kiosk browser opens the *dashboard* on the app's direct
   port **3000** (see below). There is no port 8124.
 
 ## Port / kiosk access (Fully Kiosk Browser, tablets, wall displays)
@@ -116,15 +116,15 @@ port — it inherits Home Assistant's authentication). If you want to point a
 **Fully Kiosk Browser**, tablet, or wall display straight at the dashboard, give
 it a direct port:
 
-1. Open the add-on → **Configuration** tab. You'll see a **Network** card with a
+1. Open the app → **Configuration** tab. You'll see a **Network** card with a
    row labeled **`3000/tcp`** and an empty box to its left.
 2. In that empty box, type the **host port** you want to reach the dashboard on —
    enter **`3000`** (or any other free port).
-3. Click **Save**, then go to the **Info** tab and **Restart** the add-on.
+3. Click **Save**, then go to the **Info** tab and **Restart** the app.
 
 Then browse to **`http://<home-assistant-ip>:<port>`** — for example
 `http://192.168.1.10:3000` if you entered `3000`. Leaving the box **empty** keeps
-the add-on on Ingress only (sidebar panel).
+the app on Ingress only (sidebar panel).
 
 > Use the HA **IP address** in the kiosk URL (e.g. `http://192.168.1.10:3000`), not
 > `homeassistant.local` — tablets/Fully Kiosk often can't resolve the `.local`
@@ -134,7 +134,7 @@ the add-on on Ingress only (sidebar panel).
 > The box on the **left** is the **host** port (the number you type in your
 > browser). The **`3000/tcp`** label on the **right** is the container's fixed
 > port — don't change that. There is no separate top-level "Network" tab; the
-> card lives on the **Configuration** tab (visible once the add-on is started).
+> card lives on the **Configuration** tab (visible once the app is started).
 
 ### Ingress vs. direct port — what to know
 

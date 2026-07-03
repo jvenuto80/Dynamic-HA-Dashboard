@@ -24,14 +24,14 @@ architecture, and troubleshooting, head to the **[Glance Wiki](https://github.co
 
 | | |
 |---|---|
-| 🚀 **[Installation](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Installation)** | Run as an HA add-on or locally; kiosk / direct-port setup |
+| 🚀 **[Installation](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Installation)** | Run as an HA app or locally; kiosk / direct-port setup |
 | ⚙️ **[Configuration](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Configuration)** | Connect to HA, no-code first-run setup, themes, persistence |
 | ✨ **[Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features)** | Tiles, glance strip, media + Music Assistant, vacuum, ambient |
 | 🍳 **[Recipes](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Recipes)** | Quick how-tos: camera on a tile, reverse a slider, UniFi NOC |
 | 🖥️ **[NOC / Servers Dashboard](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/NOC-Servers-Dashboard)** | Infrastructure monitoring board, switch port maps |
 | 💾 **[Layout: Backup & Restore](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Layout-Backup-and-Restore)** | Export/import your dashboard between devices |
 | 🏗️ **[Architecture](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Architecture)** | Source layout, data flow, settings persistence |
-| 🛠️ **[Add-on Development](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Add-on-Development)** | Build, versioning, releasing |
+| 🛠️ **[App Development](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/App-Development)** | Build, versioning, releasing |
 | ❓ **[Troubleshooting / FAQ](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Troubleshooting)** | Common issues and fixes |
 | 🖼️ **[Screenshots & Motion](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Screenshots)** | The full gallery and animation clips |
 
@@ -79,7 +79,7 @@ sidebar gives way to **swipe navigation** and **pull-to-refresh**.
 - 👥 **Zero-config people & weather** — `person.*` and `weather.*` entities are auto-discovered.
 - 💾 **Backup & restore** — export your whole dashboard to a portable JSON file. → [Backup & Restore](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Layout-Backup-and-Restore)
 - 📱 **Responsive + kiosk-ready** — wall display to phone, with **swipe navigation**, **pull-to-refresh**, and Fully Kiosk support.
-- 🏠 **Runs as a Home Assistant add-on** — Supervisor-managed, served in the sidebar via Ingress.
+- 🏠 **Runs as a Home Assistant app** — Supervisor-managed, served in the sidebar via Ingress.
 
 ---
 
@@ -99,12 +99,12 @@ or copy `.env.example` → `.env`. Full first-run walkthrough → **[Configurati
 
 ---
 
-## Run as a Home Assistant Add-on
+## Run as a Home Assistant App
 
 Prefer to run it on the HA server itself? Glance ships as a Supervisor-managed
-add-on, served in the sidebar via **Ingress**.
+app, served in the sidebar via **Ingress**.
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjvenuto80%2FDynamic-HA-Dashboard)
+[![Open your Home Assistant instance and show the add app repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjvenuto80%2FDynamic-HA-Dashboard)
 
 Click the button to add the repository in your own HA, then install **Glance — HA
 Dashboard**. Requires a Supervisor (HA OS or Supervised).
