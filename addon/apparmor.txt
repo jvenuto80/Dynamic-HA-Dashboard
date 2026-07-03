@@ -43,8 +43,12 @@ profile dynamic_ha_dashboard flags=(attach_disconnected,mediate_deleted) {
   # Persistent add-on data: the only place we write app state.
   /data/** rw,
 
-  # Built dashboard + Node runtime (read/execute only, no writes to /app).
-  /app/** r,
+  # Built dashboard + Node runtime. Read + memory-map + inherit-execute (no
+  # writes to /app): `m` lets Node dlopen native addons (e.g. the rollup
+  # *.node bindings) and `ix` lets it spawn the bundled native binaries
+  # (esbuild, used to load vite.config.ts when `vite preview` starts). Plain
+  # `r` here stops the add-on from starting.
+  /app/** rmix,
   /usr/bin/node ix,
   /usr/bin/npm ix,
   /usr/bin/npx ix,

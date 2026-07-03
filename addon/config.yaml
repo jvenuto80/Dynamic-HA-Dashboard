@@ -16,5 +16,8 @@ ports:
   3000/tcp: null
 ports_description:
   3000/tcp: Web UI port — optional. Leave empty to use Ingress only; set a host port (e.g. 3000) for direct/kiosk access (Fully Kiosk Browser, tablets).
-options: {}
-schema: {}
+options:
+  share_connection_on_lan: false
+schema:
+  share_connection_on_lan: bool
+

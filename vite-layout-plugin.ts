@@ -90,6 +90,12 @@ const CONNECTION_FILE = process.env.CONNECTION_FILE
 const SETTINGS_FILE = process.env.SETTINGS_FILE
   ? resolve(process.env.SETTINGS_FILE)
   : resolve(process.cwd(), 'settings.json');
+// Opt-in (add-on option `share_connection_on_lan`): also serve the stored
+// connection over the direct host port, without the ingress-auth gate, so LAN
+// kiosks at http://<ha-ip>:3000 auto-adopt the shared token seamlessly. This
+// exposes the HA token to anyone on that network — only enable it on a trusted
+// LAN. Off by default; the token stays ingress-only unless this is set.
+const ALLOW_LAN_CONNECTION = process.env.ALLOW_LAN_CONNECTION === '1';
 const ROUTE = '/layout';
 const CONNECTION_ROUTE = '/connection';
 const SETTINGS_ROUTE = '/settings';
@@ -245,10 +251,12 @@ export function layoutApi(): Plugin {
       // The connection route stores/serves the HA token: gate it behind an
       // ingress-authenticated Home Assistant user and never cache it. Requests
       // that didn't come through ingress (e.g. the optional direct host port)
-      // carry no user header and are refused — the token stays ingress-only.
+      // carry no user header and are refused — the token stays ingress-only,
+      // UNLESS the operator opted into LAN sharing (`share_connection_on_lan`)
+      // to let direct-port kiosks auto-adopt the connection on a trusted LAN.
       if (url === CONNECTION_ROUTE) {
         res.setHeader('Cache-Control', 'no-store');
-        if (!isLoopback(req) && !ingressUserId(req)) {
+        if (!ALLOW_LAN_CONNECTION && !isLoopback(req) && !ingressUserId(req)) {
           res.statusCode = 401;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'authentication required' }));

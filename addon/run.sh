@@ -18,8 +18,19 @@ export CONNECTION_FILE="/data/connection.json"
 export SETTINGS_FILE="/data/settings.json"
 export PORT=3000
 
+# Opt-in: serve the stored connection (URL + token) over the direct host port so
+# LAN kiosks auto-configure without pasting the token. Trades the ingress-auth
+# gate for LAN trust — only enable on a network you control.
+if bashio::config.true 'share_connection_on_lan'; then
+    export ALLOW_LAN_CONNECTION=1
+fi
+
 bashio::log.info "Starting Dynamic HA Dashboard on port ${PORT}…"
-bashio::log.info "Server-side connection storage is ingress-authenticated; if you publish the optional host port, only expose it on a trusted network."
+if [ "${ALLOW_LAN_CONNECTION:-}" = "1" ]; then
+    bashio::log.warning "share_connection_on_lan is ON: the stored HA token is served over the direct port to anyone on this LAN. Only use on a trusted network."
+else
+    bashio::log.info "Server-side connection storage is ingress-authenticated; to let direct-port kiosks auto-configure, enable 'share_connection_on_lan' (trusted LAN only)."
+fi
 
 cd /app
 # vite preview serves the built app AND the /layout persistence API.
