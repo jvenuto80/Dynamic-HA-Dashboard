@@ -107,7 +107,9 @@ app, served in the sidebar via **Ingress**.
 [![Open your Home Assistant instance and show the add app repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjvenuto80%2FDynamic-HA-Dashboard)
 
 Click the button to add the repository in your own HA, then install **Glance — HA
-Dashboard**. Requires a Supervisor (HA OS or Supervised).
+Dashboard**. This install method needs a Supervisor (HA OS or Supervised); on HA
+Container/Core (no app store) you can self-host Glance instead and point it at HA
+— see the **[Installation](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Installation)** guide (Option 2).
 
 > 📘 **Full install guide** — manual steps, kiosk / direct-port access, and updating →
 > **[Installation](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Installation)**. First-time token setup →
