@@ -48,6 +48,14 @@ disk or baked into the image.
 > pasting the token again. It's off by default; turning it back off clears the
 > stored connection. Anyone who can open the dashboard can use the saved
 > connection, so leave it off if you don't want that.
+>
+> **Kiosks on the direct port:** for security the stored connection is served
+> only through the **Ingress** sidebar by default, so a tablet pointed straight
+> at `http://<ha-ip>:3000` won't auto-adopt it. To let direct-port kiosks
+> auto-configure seamlessly, enable the **`share_connection_on_lan`** option on
+> the add-on's **Configuration** tab. This serves the HA token to anyone on that
+> network, so only turn it on if you trust your LAN (and keep the port off the
+> internet).
 
 ## Your layout
 

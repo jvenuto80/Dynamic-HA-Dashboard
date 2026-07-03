@@ -1,0 +1,55 @@
+# AppArmor profile for the Glance — HA Dashboard add-on.
+# The profile name MUST match the add-on slug (see addon/config.yaml: slug).
+#
+# Based on the documented Home Assistant add-on profile. The broad `file,` rule
+# grants file read/write/lock/map (but NOT execute); execute is then granted
+# per path with `ix`. This is the known-good baseline that lets the s6-overlay
+# init, bashio, and Node/vite start. It still hardens the add-on: no Linux
+# capabilities are granted, and only inet/inet6 stream+datagram sockets are
+# allowed (no raw/packet sockets).
+#include <tunables/global>
+
+profile dynamic_ha_dashboard flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Broad file access (read / write / lock / memory-map) — but NOT execute.
+  # Execute is granted only for the specific paths listed below.
+  file,
+
+  # Network: the listener (vite preview) and outbound fetch (/fetch-json proxy,
+  # incl. DNS). No raw/packet sockets.
+  network inet tcp,
+  network inet udp,
+  network inet6 tcp,
+  network inet6 udp,
+
+  # Send signals only to our own process group.
+  signal (send) set=(kill,term,int,hup,cont),
+
+  # S6-Overlay init system (from the hassio base image).
+  /init ix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /run/{s6,s6-rc*,service}/** ix,
+  /package/** ix,
+  /command/** ix,
+  /etc/s6-overlay/** ix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /run/{,**} rwk,
+  /dev/tty rw,
+
+  # Bashio (run.sh uses it) + scratch space.
+  /usr/lib/bashio/** ix,
+  /tmp/** rwk,
+
+  # Persistent add-on data.
+  /data/** rw,
+
+  # Built dashboard + Node runtime. `file,` above already grants read + memory-
+  # map (so Node can dlopen the rollup *.node bindings); `ix` here lets Node
+  # spawn the bundled native binaries (esbuild, loaded when `vite preview`
+  # reads vite.config.ts). No write access is needed to /app.
+  /app/** ix,
+}
