@@ -1,4 +1,27 @@
 # Changelog
+## 2.0.0
+
+- **Security: the add-on now follows Home Assistant's [app security
+  guidelines](https://developers.home-assistant.io/docs/apps/security/) ([#43](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/43)).**
+  The server-side helper API that backs the dashboard has been locked down:
+  - the stored Home Assistant token is served only to **ingress-authenticated**
+    users — requests over the optional direct host port are refused;
+  - the built-in JSON proxy now blocks internal/loopback/link-local/metadata and
+    the Supervisor network, so it can't be abused to reach internal services
+    (SSRF), while still allowing your own LAN services;
+  - cross-site (CSRF) writes are rejected;
+  - the add-on ships an **AppArmor** profile (verified booting on a real
+    Supervisor) — no Linux capabilities, no raw/packet sockets.
+
+- **New: `share_connection_on_lan` add-on option (default off).** If you run a
+  **direct-port kiosk** (a tablet pointed at `http://<home-assistant>:3000`
+  rather than through the sidebar), turn this on so it keeps auto-adopting the
+  saved connection. Left off, the saved token stays ingress-only. Set it on the
+  add-on's **Configuration** tab, then restart the add-on.
+
+  > Heads-up on update: direct-port kiosks will stop auto-connecting until you
+  > enable this option — enable it and restart, and they're back.
+
 ## 1.8.1
 
 - **Fixed: pull-to-refresh jumped back to the first page.** Pulling to refresh
