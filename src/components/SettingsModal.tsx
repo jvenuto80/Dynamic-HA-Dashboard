@@ -427,6 +427,7 @@ export function SettingsModal({ onClose, entities, views, onResetLayout, onStart
                 <option value="fr">Français</option>
                 <option value="pl">Polski</option>
                 <option value="nl">Nederlands</option>
+                <option value="es">Español</option>
               </select>
               <small className="settings-hint">
                 {t('settings_language_hint')}
