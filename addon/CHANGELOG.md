@@ -1,4 +1,15 @@
 # Changelog
+## 2.0.1
+
+- **Fixed: wall tablets occasionally logged "Login attempt or request with
+  invalid authentication" in Home Assistant ([#24](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/24)).** A tablet waking from
+  screen-off could briefly hold a dead-but-not-yet-closed connection and request
+  a camera frame with an expired signed token, which Home Assistant logs as a
+  failed login. The dashboard now verifies the connection is genuinely alive on
+  wake before requesting any camera image — and camera thumbnails hold their last
+  frame until it does — so no stale request goes out. Live feeds also resume
+  faster after wake (about a third of a second instead of up to fifteen).
+
 ## 2.0.0
 
 - **Security: the app now follows Home Assistant's [app security
