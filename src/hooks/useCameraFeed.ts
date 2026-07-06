@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { HassEntity } from 'home-assistant-js-websocket';
 import { HA_URL } from '../config';
-import { isHaConnected } from './useHomeAssistant';
+import { isHaConnected, verifyHaConnection } from './useHomeAssistant';
+import { RESYNC_FLUSH_MS, STALE_AFTER_MS } from '../lib/connectionHealth';
 
 /** Build the base (un-busted) proxy URL for a camera entity, preferring HA's
  *  signed `entity_picture` over the raw `access_token` fallback. Both embed a
@@ -22,13 +23,9 @@ function bustUrl(base: string | undefined): string | undefined {
   return `${base}${base.includes('?') ? '&' : '?'}_=${Date.now()}`;
 }
 
-/** Tab hidden longer than this and we assume the cached token may have rotated
- *  out while the socket was suspended (HA honors the last two tokens, so short
- *  gaps are safe). */
-const STALE_AFTER_MS = 30_000;
-/** When holding for a fresh signed URL, resume anyway after this long — if the
- *  token never actually rotated while we were away it is still valid, and if it
- *  did, the error-hold catches the single failed frame. */
+/** After a reconnect, resume anyway once the resync has had this long to land —
+ *  if it didn't rotate the URL, the cached token is genuinely still current
+ *  (the socket is fresh and live), so resuming is safe. */
 const HOLD_FALLBACK_MS = 15_000;
 
 /**
@@ -43,10 +40,16 @@ const HOLD_FALLBACK_MS = 15_000;
  *    previous one resolves, so at most one is in flight.
  *  - A failed frame pauses the loop until HA pushes a rotated signed URL
  *    (a new `baseUrl`), which retries once.
- *  - Hiding the tab stops the loop. Resuming after a long gap, or losing the
- *    WebSocket, holds the loop until the post-reconnect state resync delivers
- *    a fresh `baseUrl` — with a fallback resume in case the token never
- *    rotated and no new URL is coming.
+ *  - Hiding the tab stops the loop. Resuming after a long gap first proves the
+ *    socket is alive (verifyHaConnection ping) — a tablet waking from
+ *    screen-off often holds a zombie socket that still reads as connected, and
+ *    firing the frozen token it left behind is exactly the 401 HA logs. A pong
+ *    resumes with the cached URL (guaranteed current, since rotations arrive
+ *    in-order before it); a dead socket is force-reconnected and the loop
+ *    stays held until the resync delivers a fresh `baseUrl`.
+ *  - Losing the WebSocket holds the loop until reconnect; after reconnect, a
+ *    fallback resume covers the case where the token never rotated and no new
+ *    URL is coming.
  *
  * While held, `src` keeps its last value so the `<img>` shows the last frame
  * (the browser won't re-request an unchanged URL).
@@ -82,24 +85,13 @@ export function useCameraFeed(
     setSrc(bustUrl(baseRef.current));
   }, []);
 
-  /** Stop polling and wait for a fresh signed URL; optionally resume blind
-   *  after HOLD_FALLBACK_MS (only once we expect the resync to have landed). */
-  const holdForFresh = useCallback(
-    (withFallback: boolean) => {
-      if (hold.current === 'error') return;
-      hold.current = 'stale';
-      clearNext();
-      clearFallback();
-      if (withFallback) {
-        fallbackTimer.current = window.setTimeout(() => {
-          if (hold.current !== 'stale') return;
-          hold.current = 'none';
-          fire();
-        }, HOLD_FALLBACK_MS);
-      }
-    },
-    [fire],
-  );
+  /** Stop polling and wait for a fresh signed URL (or an explicit resume). */
+  const holdForFresh = useCallback(() => {
+    if (hold.current === 'error') return;
+    hold.current = 'stale';
+    clearNext();
+    clearFallback();
+  }, []);
 
   // A new signed URL (token rotation or post-reconnect resync) clears any hold
   // and drives a single fresh attempt.
@@ -117,6 +109,7 @@ export function useCameraFeed(
   }, [baseUrl, fire]);
 
   useEffect(() => {
+    let disposed = false;
     const onVis = () => {
       if (document.hidden) {
         hiddenAt.current = Date.now();
@@ -126,15 +119,31 @@ export function useCameraFeed(
       const gap = hiddenAt.current != null ? Date.now() - hiddenAt.current : 0;
       hiddenAt.current = null;
       if (hold.current !== 'none') return;
-      if (gap > STALE_AFTER_MS) holdForFresh(true);
-      else fire();
+      if (gap > STALE_AFTER_MS) {
+        // The cached token may have rotated out while we were away. Hold, and
+        // only resume once a pong proves the socket was alive the whole time
+        // (so every rotation was received). A dead socket resolves false after
+        // force-reconnecting; the resync's fresh baseUrl (or the onConn
+        // fallback below) resumes us instead.
+        holdForFresh();
+        void verifyHaConnection().then((alive) => {
+          if (disposed || !alive || hold.current !== 'stale') return;
+          clearFallback();
+          fallbackTimer.current = window.setTimeout(() => {
+            if (hold.current !== 'stale') return;
+            hold.current = 'none';
+            fire();
+          }, RESYNC_FLUSH_MS);
+        });
+      } else {
+        fire();
+      }
     };
     const onConn = (e: Event) => {
       const connected = (e as CustomEvent<boolean>).detail;
       if (!connected) {
-        // Socket down: stop, and don't arm the fallback — nothing can succeed
-        // until we reconnect.
-        holdForFresh(false);
+        // Socket down: stop; nothing can succeed until we reconnect.
+        holdForFresh();
       } else if (hold.current === 'stale') {
         // Reconnected: the resync usually rotates baseUrl within a second; if
         // the token never rotated, resume blind after the fallback.
@@ -149,6 +158,7 @@ export function useCameraFeed(
     document.addEventListener('visibilitychange', onVis);
     window.addEventListener('ha:connection', onConn);
     return () => {
+      disposed = true;
       document.removeEventListener('visibilitychange', onVis);
       window.removeEventListener('ha:connection', onConn);
       clearNext();

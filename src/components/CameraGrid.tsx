@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cameras } from '../config';
 import { cameraProxyUrl, useCameraFeed } from '../hooks/useCameraFeed';
+import { useSignedUrlsFresh } from '../hooks/useHomeAssistant';
 import type { HassEntities } from 'home-assistant-js-websocket';
 
 interface Props {
@@ -19,9 +20,32 @@ function columnsFor(count: number): number {
   return 4;
 }
 
+/** Grid thumbnail. `url` is undefined while the camera is unavailable or the
+ *  signed URLs are suspect (post-wake, pre-verify) — then the last successfully
+ *  requested frame stays up instead, so no stale-token request is ever fired
+ *  (HA logs each one as "invalid authentication"). Mounting during the suspect
+ *  window (the screensaver's shortcut can land here at the instant of wake)
+ *  shows the offline glyph until verification lands. A failed frame hides
+ *  itself until HA rotates the URL. */
+function CameraThumb({ url, name }: { url: string | undefined; name: string }) {
+  const lastGood = useRef<string | undefined>(undefined);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  if (url) lastGood.current = url;
+  const src = url ?? lastGood.current;
+  if (!src || src === failedSrc) {
+    return (
+      <div className="camera-offline">
+        <span className="mdi mdi-camera-off" />
+      </div>
+    );
+  }
+  return <img src={src} alt={name} loading="lazy" onError={() => setFailedSrc(src)} />;
+}
+
 export function CameraGrid({ entities }: Props) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
+  const signedFresh = useSignedUrlsFresh();
 
   // Close popup on Escape.
   useEffect(() => {
@@ -57,8 +81,10 @@ export function CameraGrid({ entities }: Props) {
           const entity = entities[cam.entity_id];
           const isAvailable = entity && entity.state !== 'unavailable';
           // Grid thumbnails use the un-busted signed URL: they refresh whenever
-          // HA rotates the token (a new entity_picture), always fresh by design.
-          const imgUrl = isAvailable ? cameraProxyUrl(entity, cam.entity_id) : undefined;
+          // HA rotates the token (a new entity_picture) — but only while the
+          // cached URL is trusted; see CameraThumb.
+          const imgUrl =
+            isAvailable && signedFresh ? cameraProxyUrl(entity, cam.entity_id) : undefined;
 
           return (
             <div
@@ -66,8 +92,8 @@ export function CameraGrid({ entities }: Props) {
               className="camera-card"
               onClick={() => isAvailable && setSelected(cam.entity_id)}
             >
-              {isAvailable && imgUrl ? (
-                <img src={imgUrl} alt={cam.name} loading="lazy" />
+              {isAvailable ? (
+                <CameraThumb url={imgUrl} name={cam.name} />
               ) : (
                 <div className="camera-offline">
                   <span className="mdi mdi-camera-off" />

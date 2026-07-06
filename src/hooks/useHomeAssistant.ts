@@ -9,6 +9,7 @@ import {
   type Connection,
 } from 'home-assistant-js-websocket';
 import { HA_URL, HA_TOKEN } from '../config';
+import { pingAlive, RESYNC_FLUSH_MS, STALE_AFTER_MS } from '../lib/connectionHealth';
 
 // Module-level mirror of the WebSocket connection state, so leaf hooks (e.g.
 // useCameraFeed) can gate work on connectivity without prop-drilling. Changes
@@ -22,6 +23,55 @@ function broadcastConnected(value: boolean) {
   if (haConnected === value) return;
   haConnected = value;
   window.dispatchEvent(new CustomEvent('ha:connection', { detail: value }));
+}
+
+// The live connection object, so verifyHaConnection can ping it.
+let haConnection: Connection | null = null;
+let verifyInflight: Promise<boolean> | null = null;
+
+/** Prove the socket is genuinely alive before trusting cached signed URLs —
+ *  a tablet waking from screen-off often holds a zombie socket that still
+ *  reads as connected. Round-trips a ping; a dead socket is force-reconnected
+ *  (resolving false), and the reconnect resync then rotates the URLs. Because
+ *  WebSocket messages are ordered, a pong also guarantees any token-rotation
+ *  pushes queued while the tab was frozen have been received. Concurrent
+ *  callers (every camera tile wakes at once) share a single ping. */
+export function verifyHaConnection(): Promise<boolean> {
+  if (verifyInflight) return verifyInflight;
+  const conn = haConnection;
+  if (!conn || !haConnected) return Promise.resolve(false);
+  verifyInflight = pingAlive(conn).finally(() => {
+    verifyInflight = null;
+  });
+  return verifyInflight;
+}
+
+// Whether cached signed URLs (camera_proxy / media_player_proxy tokens baked
+// into entity attributes) can be trusted right now. Goes false when the socket
+// drops or the tab wakes from a long freeze (the tokens may have rotated out
+// while entity state was frozen); back true once a pong proves the socket was
+// alive all along, or a post-reconnect resync delivers current state. Static
+// renders (e.g. the camera grid) gate on this so a stale-token request is
+// never fired — HA logs each one as "invalid authentication" (http.ban).
+let signedUrlsFresh = true;
+// Set when a reconnect is underway: the next entities push is the resync that
+// makes signed URLs trustworthy again.
+let resyncPending = false;
+function broadcastSignedFresh(value: boolean) {
+  if (signedUrlsFresh === value) return;
+  signedUrlsFresh = value;
+  window.dispatchEvent(new CustomEvent('ha:signed-fresh', { detail: value }));
+}
+
+/** Reactive mirror of signed-URL trustworthiness (see above). */
+export function useSignedUrlsFresh(): boolean {
+  const [fresh, setFresh] = useState(signedUrlsFresh);
+  useEffect(() => {
+    const onFresh = (e: Event) => setFresh((e as CustomEvent<boolean>).detail);
+    window.addEventListener('ha:signed-fresh', onFresh);
+    return () => window.removeEventListener('ha:signed-fresh', onFresh);
+  }, []);
+  return fresh;
 }
 
 // Module-level mirror of the server's temperature unit (°C/°F), same idiom as
@@ -71,6 +121,7 @@ export function useHomeAssistant() {
         }
 
         connRef.current = conn;
+        haConnection = conn;
         setConnected(true);
         broadcastConnected(true);
         setError(null);
@@ -78,13 +129,23 @@ export function useHomeAssistant() {
         conn.addEventListener('disconnected', () => {
           setConnected(false);
           broadcastConnected(false);
+          // Entity state is now frozen; its signed URLs will rot as HA keeps
+          // rotating tokens.
+          broadcastSignedFresh(false);
         });
         conn.addEventListener('ready', () => {
           setConnected(true);
           broadcastConnected(true);
+          // The re-subscription's full state fetch is on its way; the next
+          // entities push carries current tokens.
+          resyncPending = true;
         });
 
         subscribeEntities(conn, (ents) => {
+          if (resyncPending) {
+            resyncPending = false;
+            broadcastSignedFresh(true);
+          }
           if (!cancelled) setEntities(ents);
         });
 
@@ -102,8 +163,36 @@ export function useHomeAssistant() {
 
     connect();
 
+    // Global wake guard. A tablet waking from screen-off often holds a zombie
+    // socket that still reads as connected while entity state — and every
+    // signed URL in it — is hours old. Mark signed URLs suspect immediately,
+    // then ping: a pong proves the socket (and thus the cached tokens) was
+    // live all along; a dead socket is force-reconnected by pingAlive, and
+    // the resync push above flips freshness back.
+    let hiddenAt: number | null = null;
+    const onVis = () => {
+      if (document.hidden) {
+        hiddenAt = Date.now();
+        return;
+      }
+      const gap = hiddenAt != null ? Date.now() - hiddenAt : 0;
+      hiddenAt = null;
+      if (gap <= STALE_AFTER_MS) return;
+      broadcastSignedFresh(false);
+      void verifyHaConnection().then((alive) => {
+        if (!alive) return;
+        window.setTimeout(() => {
+          // Skip if the socket dropped in the interim — the resync will re-arm.
+          if (haConnected) broadcastSignedFresh(true);
+        }, RESYNC_FLUSH_MS);
+      });
+    };
+    document.addEventListener('visibilitychange', onVis);
+
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVis);
+      if (haConnection === connRef.current) haConnection = null;
       connRef.current?.close();
     };
   }, []);
