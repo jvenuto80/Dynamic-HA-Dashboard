@@ -1,5 +1,5 @@
 /**
- * Playwright i18n smoke test — verifies all 6 languages render correctly
+ * Playwright i18n smoke test — verifies all 7 languages render correctly
  * on the onboarding screen (visible without HA connection).
  *
  * Run: node scripts/test-i18n.mjs
@@ -71,6 +71,16 @@ const LANGS = [
       subtitle: 'Laten we verbinding maken met uw Home Assistant',
       token: 'Langetermijntoegangstoken',
       connect: 'Verbinden',
+    },
+  },
+  {
+    code: 'es',
+    label: 'Español',
+    expected: {
+      heading: 'Bienvenido a Glance',
+      subtitle: 'Conectemos con tu Home Assistant',
+      token: 'Token de acceso de larga duración',
+      connect: 'Conectar',
     },
   },
 ];

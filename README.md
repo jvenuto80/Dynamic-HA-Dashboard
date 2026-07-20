@@ -75,7 +75,7 @@ sidebar gives way to **swipe navigation** and **pull-to-refresh**.
 - 🌦️ **Ambient backdrop** — weather-reactive rain/snow, lightning in storms, time-of-day tint.
 - ✨ **Delightful motion** — spring-open flyouts, staggered tile cascades, and a **scene color wash** that flashes the room in the scene's own color (burst / curtain / glow). → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features#premium-feel-polish)
 - 🎨 **Theming** — 4 themes, full accent recolor, configurable date/time & duration formats.
-- 🌍 **Six languages** — English, Russian, German, French, Polish & Dutch; switch in **Settings → Appearance → Interface language**, remembered per device.
+- 🌍 **Seven languages** — English, Russian, German, French, Polish, Dutch & Spanish; switch in **Settings → Appearance → Interface language**, remembered per device.
 - 👥 **Zero-config people & weather** — `person.*` and `weather.*` entities are auto-discovered.
 - 💾 **Backup & restore** — export your whole dashboard to a portable JSON file. → [Backup & Restore](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Layout-Backup-and-Restore)
 - 📱 **Responsive + kiosk-ready** — wall display to phone, with **swipe navigation**, **pull-to-refresh**, and Fully Kiosk support.
@@ -133,7 +133,7 @@ Built and maintained by [@jvenuto80](https://github.com/jvenuto80).
 With thanks to community contributors:
 
 - **Translations & multi-language (i18n) support** — English, Russian, German,
-  French, Polish & Dutch by [@efimofline](https://github.com/efimofline)
+  French, Polish, Dutch & Spanish by [@efimofline](https://github.com/efimofline)
   ([#35](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/35),
   [#36](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/36)).
 

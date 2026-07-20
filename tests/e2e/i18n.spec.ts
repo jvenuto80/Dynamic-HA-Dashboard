@@ -138,7 +138,7 @@ test.describe('Settings modal', () => {
     await expect(page.locator('.settings-modal')).toBeVisible();
   });
 
-  test('language picker contains all 6 language options', async ({ page }) => {
+  test('language picker contains all 7 language options', async ({ page }) => {
     await page.locator('.mdi-cog').last().click();
     await expect(page.locator('.settings-modal')).toBeVisible();
 

@@ -1,6 +1,6 @@
 import type { Page } from 'playwright/test';
 
-export type LangCode = 'en' | 'ru' | 'de' | 'fr' | 'pl' | 'nl';
+export type LangCode = 'en' | 'ru' | 'de' | 'fr' | 'pl' | 'nl' | 'es';
 
 /**
  * Switch the UI language by setting localStorage and reloading the page.
@@ -128,6 +128,18 @@ export const LANGUAGES: LangFixture[] = [
     today: 'VANDAAG',
     settings_title: 'Instellingen',
     settings_language: 'Interfacetaal',
+  },
+  {
+    code: 'es',
+    label: 'Español',
+    greetings: ['Buenas noches', 'Buenos días', 'Buenas tardes'],
+    quiet: 'Todo en calma',
+    onboarding_title: 'Bienvenido a Glance',
+    token_label: 'Token de acceso de larga duración',
+    connect_btn: 'Conectar',
+    today: 'HOY',
+    settings_title: 'Ajustes',
+    settings_language: 'Idioma de la interfaz',
   },
 ];
 
