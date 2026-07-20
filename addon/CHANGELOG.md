@@ -1,4 +1,12 @@
 # Changelog
+## 2.1.0
+
+- **New: Spanish (Español) — seven languages now ([#45](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/45)).** Glance now speaks
+  Spanish; pick it in **Settings → Appearance → Interface language** (English,
+  Russian, Deutsch, Français, Polski, Nederlands, Español). Full key parity with
+  correct plural rules, falling back to English for anything untranslated. Thanks
+  to **[@efimofline](https://github.com/efimofline)** for the translation.
+
 ## 2.0.1
 
 - **Fixed: wall tablets occasionally logged "Login attempt or request with

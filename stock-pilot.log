@@ -1,0 +1,1 @@
+2026-07-06 22:09:06,455 [INFO] Sure sync complete: {'ok': True, 'synced_at': '2026-07-06T22:09:06.454893', 'accounts': 1, 'sure_trades': 4, 'buy_lots': 4, 'holdings_positions': 1, 'retained_lots': 5, 'inserted': 5, 'updated': 0, 'linked_to_manual': 0, 'pruned': 0, 'locked_kept': 0, 'employer_ticker': 'MSFT', 'employer_buys': 4}

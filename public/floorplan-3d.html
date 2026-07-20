@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>3D Floorplan</title>
+<!--
+  3D isometric floorplan — self-contained, no dependencies.
+
+  Usage:
+    • Served by this dashboard at /floorplan-3d.html (lives in public/), or
+    • Copy into Home Assistant's config/www/ and embed with a Webpage
+      (iframe) card pointing at /local/floorplan-3d.html.
+
+  Wiring hooks (for later HA integration):
+    • Clicking a room posts {type:'floorplan:room-selected', room:'<id>'}
+      to window.parent and dispatches a 'floorplan:room-selected'
+      CustomEvent on window.
+    • window.FLOORPLAN.setActive(roomId | null)  — highlight a room
+    • window.FLOORPLAN.setLabel(roomId, text)    — e.g. "21.5°C"
+    Room ids: master-bath, storage, bathroom, master-bedroom, hallway,
+              living-room, kitchen, dining-room
+-->
+<style>
+  :root {
+    --bg-primary: #0b0d16;
+    --text-primary: #f1f5f9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    background:
+      radial-gradient(120% 90% at 50% 38%, #161b30 0%, #0d1020 46%, var(--bg-primary) 100%);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  svg { display: block; width: 100vw; height: 100vh; }
+
+  .room {
+    cursor: pointer;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: var(--d, 0s);
+  }
+  .room:hover { transform: translateY(-5px); filter: brightness(1.18); }
+  .room.active {
+    transform: translateY(-7px);
+    filter: brightness(1.28) drop-shadow(0 0 22px rgba(var(--c), 0.45));
+  }
+  .room.active .floor { stroke-width: 2.2; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(22px); }
+  }
+
+  .edge-glow { filter: drop-shadow(0 0 5px rgba(var(--c), 0.85)); }
+
+  .label-pill { pointer-events: none; }
+  .label-pill text {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+    fill: var(--text-primary);
+  }
+  .label-pill.small text { font-size: 11px; }
+  .label-pill .sub { font-size: 10.5px; font-weight: 500; fill: #94a3b8; }
+
+  .pulse {
+    transform-box: fill-box; transform-origin: center;
+    animation: pulse 2.6s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { transform: scale(0.45); opacity: 0.9; }
+    70%  { transform: scale(1.6);  opacity: 0; }
+    100% { transform: scale(1.6);  opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .room { animation: none; transition: none; }
+    .pulse { animation: none; opacity: 0.35; }
+  }
+</style>
+</head>
+<body>
+<svg id="scene" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+(() => {
+  'use strict';
+
+  /* ------------------------------------------------ projection ---------- */
+  const S = 10;            // scale
+  const CA = 0.866;        // cos 30°
+  const H = 5.6;           // wall height (plan units)
+  const LIP = 2.2;         // near-side (cutaway) wall height
+
+  const P = (x, y, z = 0) => [(x - y) * CA * S, ((x + y) * 0.5 - z) * S];
+  const pts = a => a.map(p => p.map(n => +n.toFixed(2)).join(',')).join(' ');
+  const rect = (x1, y1, x2, y2) => [[x1, y1], [x2, y1], [x2, y2], [x1, y2]];
+
+  const hex2rgb = h => {
+    const n = parseInt(h.slice(1), 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255];
+  };
+  const mix = (rgb, k, base = [11, 13, 22]) =>       // k=1 → color, k=0 → bg
+    rgb.map((c, i) => Math.round(c * k + base[i] * (1 - k)));
+  const css = (rgb, a = 1) => `rgba(${rgb.join(',')},${a})`;
+
+  /* ------------------------------------------------ house data ---------- */
+  // Plan traced from the vacuum map: x → right, y → down, ~100 × 80 units.
+  // furniture parts: ['b', x1,y1,x2,y2, z0,z1, mat] box
+  //                  ['c', cx,cy, r, z0,z1, mat]     cylinder
+  //                  ['f', x1,y1,x2,y2, z, mat, alpha] flat panel (z<0.5 = rug)
+  const ROOMS = [
+    { id: 'master-bath', name: 'Master Bath', emoji: '🛁', color: '#34d399',
+      poly: [[16, 3], [52, 3], [52, 19], [44, 19], [44, 13], [16, 13]],
+      label: [30, 8],
+      stuff: [
+        ['b', 17.5, 4, 27, 10, 0, 1.7, 'white'],          // tub
+        ['f', 18.4, 4.8, 26.1, 9.2, 1.72, 'water', 0.55],
+        ['b', 30, 4, 42, 6.8, 0, 2.35, 'wood'],           // double vanity
+        ['c', 33, 5.4, 1.05, 2.35, 2.7, 'white'],
+        ['c', 39, 5.4, 1.05, 2.35, 2.7, 'white'],
+        ['b', 44.5, 14.6, 45.3, 17, 0, 2.3, 'white'],     // toilet
+        ['c', 46.3, 15.8, 1.05, 0, 1.5, 'white'],
+        ['b', 47.6, 3.8, 51.6, 7.9, 0, 0.25, 'white'],    // shower base
+        ['b', 47.6, 3.8, 47.9, 7.9, 0, 4.6, 'glass'],     // shower glass
+        ['b', 47.6, 7.6, 51.6, 7.9, 0, 4.6, 'glass'],
+      ] },
+
+    { id: 'storage', name: 'Storage', emoji: '📦', color: '#4ade80',
+      poly: rect(55, 16, 70, 23), label: [62.5, 19.5], small: true,
+      stuff: [
+        ['b', 55.8, 16.5, 68, 18.3, 0, 3.8, 'fab2'],      // shelving
+        ['b', 56.6, 19.6, 59.2, 21.6, 0, 1.3, 'wood'],    // boxes
+        ['b', 60.2, 19.9, 62.4, 21.9, 0, 1.0, 'wood2'],
+      ] },
+
+    { id: 'bathroom', name: 'Bath', emoji: '🚿', color: '#fbbf24',
+      poly: rect(44, 21, 53, 32), label: [48.5, 26.5], small: true,
+      stuff: [
+        ['b', 44.6, 21.6, 48.2, 23.9, 0, 2.35, 'wood'],   // vanity
+        ['c', 46.4, 22.7, 0.95, 2.35, 2.7, 'white'],
+        ['b', 49.8, 21.6, 52.6, 24.4, 0, 2.8, 'white'],   // washer
+        ['f', 50.1, 21.9, 52.3, 24.1, 2.82, 'dark', 0.5],
+        ['b', 46.2, 31.2, 48.6, 31.9, 0, 2.2, 'white'],   // toilet
+        ['c', 47.4, 30, 1.0, 0, 1.4, 'white'],
+      ] },
+
+    { id: 'master-bedroom', name: 'Master Bedroom', emoji: '🛏️', color: '#60a5fa',
+      poly: rect(8, 15, 42, 42), label: [25, 28],
+      stuff: [
+        ['f', 12, 20, 31, 36, 0.06, 'fab', 0.10],         // rug
+        ['b', 8.5, 20.5, 9.4, 33, 0, 3.4, 'wood2'],       // headboard
+        ['b', 9.4, 21, 22, 32.5, 0, 1.5, 'wood'],         // bed frame
+        ['b', 9.8, 21.5, 21.4, 32, 1.5, 2.3, 'white'],    // mattress
+        ['b', 10.2, 22.2, 12.8, 26.4, 2.3, 3.0, 'white'], // pillows
+        ['b', 10.2, 27.1, 12.8, 31.3, 2.3, 3.0, 'white'],
+        ['b', 13.8, 21.5, 21.4, 32, 2.3, 2.55, 'fab'],    // duvet
+        ['b', 8.6, 17.8, 11.4, 20, 0, 1.9, 'wood'],       // nightstands
+        ['b', 8.6, 33.5, 11.4, 35.7, 0, 1.9, 'wood'],
+        ['b', 26, 15.8, 36, 18.2, 0, 2.6, 'wood'],        // dresser
+        ['c', 10.4, 40, 0.85, 0, 1, 'pot'],               // plant
+        ['c', 10.4, 40, 1.5, 1, 2.4, 'leaf'],
+        ['c', 10.4, 40, 1.0, 2.4, 3.2, 'leaf'],
+      ] },
+
+    { id: 'hallway', name: 'Hallway', emoji: '🚶', color: '#818cf8',
+      poly: [[55, 25], [61, 25], [61, 39], [88, 39], [88, 47],
+             [46, 47], [46, 34], [55, 34]],
+      label: [71, 43], small: true,
+      stuff: [
+        ['f', 63, 40.8, 85, 45.2, 0.06, 'fab', 0.09],     // runner
+        ['c', 86, 41.2, 0.8, 0, 0.95, 'pot'],             // plant
+        ['c', 86, 41.2, 1.35, 0.95, 2.5, 'leaf'],
+      ] },
+
+    { id: 'living-room', name: 'Living Room', emoji: '🛋️', color: '#38bdf8',
+      poly: rect(15, 45, 44, 76), label: [29, 60],
+      stuff: [
+        ['f', 19, 50, 37, 70, 0.06, 'fab', 0.10],         // rug
+        ['b', 15.5, 49.6, 21.4, 51.2, 0, 2.4, 'fab2'],    // sofa arm
+        ['b', 15.5, 51.2, 16.9, 69, 0, 2.9, 'fab2'],      // sofa back
+        ['b', 16.9, 51.2, 21.4, 69, 0, 1.9, 'fab'],       // seats
+        ['b', 21.4, 62.5, 27, 69, 0, 1.9, 'fab'],         // chaise
+        ['b', 15.5, 69, 21.4, 70.6, 0, 2.4, 'fab2'],      // sofa arm
+        ['b', 25.5, 55.5, 31, 59.5, 0, 1.25, 'wood'],     // coffee table
+        ['b', 31.5, 62.5, 35.8, 67, 0, 1.8, 'fab'],       // armchair
+        ['b', 35.2, 62.5, 36.1, 67, 0, 2.6, 'fab2'],
+        ['b', 26, 45.4, 38, 47.4, 0, 1.4, 'wood'],        // media console
+        ['b', 27.6, 45.3, 36.4, 45.85, 2.3, 5.0, 'dark'], // wall TV
+        ['c', 17.6, 73.4, 0.85, 0, 1, 'pot'],             // plant
+        ['c', 17.6, 73.4, 1.5, 1, 2.6, 'leaf'],
+        ['c', 17.6, 73.4, 1.0, 2.6, 3.4, 'leaf'],
+      ] },
+
+    { id: 'kitchen', name: 'Kitchen', emoji: '🍳', color: '#cbd5e1',
+      poly: rect(46, 49, 68, 76), label: [57, 55],
+      stuff: [
+        ['b', 52, 58, 63, 63.4, 0, 2.6, 'wood2'],         // island
+        ['b', 51.6, 57.6, 63.4, 63.8, 2.6, 3.0, 'white'], // island top
+        ['f', 53.4, 58.6, 57.4, 62.8, 3.02, 'dark', 0.65],// cooktop
+        ['c', 54.4, 65.6, 0.85, 0, 1.8, 'wood'],          // stools
+        ['c', 57.6, 65.6, 0.85, 0, 1.8, 'wood'],
+        ['c', 60.8, 65.6, 0.85, 0, 1.8, 'wood'],
+        ['b', 46.6, 71.2, 67, 75, 0, 2.6, 'wood2'],       // counter run
+        ['b', 46.3, 70.9, 67.3, 75.2, 2.6, 3.0, 'white'],
+        ['f', 56, 72, 59, 74, 3.02, 'metal', 0.8],        // sink
+        ['b', 64.8, 49.8, 67.7, 52.8, 0, 5.2, 'metal'],   // fridge
+      ] },
+
+    { id: 'dining-room', name: 'Dining Room', emoji: '🍽️', color: '#f59e0b',
+      poly: rect(70, 48, 99, 76), label: [80, 53],
+      stuff: [
+        ['f', 74.5, 54.5, 93.5, 69.5, 0.06, 'fab', 0.08], // rug
+        ['b', 79.2, 54.6, 81.6, 55.2, 0, 2.9, 'fab2'],    // chairs (north)
+        ['b', 79.2, 55.2, 81.6, 57.2, 0, 1.6, 'fab'],
+        ['b', 83.0, 54.6, 85.4, 55.2, 0, 2.9, 'fab2'],
+        ['b', 83.0, 55.2, 85.4, 57.2, 0, 1.6, 'fab'],
+        ['b', 86.8, 54.6, 89.2, 55.2, 0, 2.9, 'fab2'],
+        ['b', 86.8, 55.2, 89.2, 57.2, 0, 1.6, 'fab'],
+        ['b', 78.5, 58, 89.5, 64, 0, 2.4, 'wood2'],       // table
+        ['b', 78, 57.6, 90, 64.4, 2.4, 2.8, 'wood'],
+        ['b', 79.2, 64.8, 81.6, 66.8, 0, 1.6, 'fab'],     // chairs (south)
+        ['b', 79.2, 66.8, 81.6, 67.4, 0, 2.9, 'fab2'],
+        ['b', 83.0, 64.8, 85.4, 66.8, 0, 1.6, 'fab'],
+        ['b', 83.0, 66.8, 85.4, 67.4, 0, 2.9, 'fab2'],
+        ['b', 86.8, 64.8, 89.2, 66.8, 0, 1.6, 'fab'],
+        ['b', 86.8, 66.8, 89.2, 67.4, 0, 2.9, 'fab2'],
+        ['b', 96.4, 57, 98.7, 69, 0, 2.5, 'wood'],        // sideboard
+      ],
+      dock: [95, 52] },
+  ];
+
+  // Doors / openings: gaps cut into any wall lying on the given axis line
+  // (|wall - at| <= tol) across `range` on the other axis. Walls on both
+  // sides of a shared boundary get cut, and a floor threshold bridges them.
+  const OPENINGS = [
+    { axis: 'y', at: 14,   tol: 1.6, range: [36.5, 41.5] }, // master bath ↔ master bedroom
+    { axis: 'x', at: 44,   tol: 2.5, range: [35, 41] },     // master bedroom ↔ hallway
+    { axis: 'x', at: 54,   tol: 1.6, range: [26, 31] },     // bathroom ↔ hallway
+    { axis: 'y', at: 24,   tol: 1.6, range: [56, 60] },     // storage ↔ hallway
+    { axis: 'x', at: 70,   tol: 1.0, range: [17.5, 21.5] }, // storage outer door
+    { axis: 'x', at: 45,   tol: 1.6, range: [44, 77] },     // living ↔ kitchen (open plan)
+    { axis: 'y', at: 48,   tol: 1.6, range: [46, 57] },     // kitchen ↔ hallway (open corner)
+    { axis: 'y', at: 47.5, tol: 1.0, range: [70, 88] },     // hallway ↔ dining (wide open)
+    { axis: 'x', at: 69,   tol: 1.5, range: [65, 73] },     // kitchen ↔ dining
+  ];
+
+  /* ------------------------------------------------ geometry ------------ */
+  const signedArea = poly =>
+    poly.reduce((s, a, i) => {
+      const b = poly[(i + 1) % poly.length];
+      return s + (a[0] * b[1] - b[0] * a[1]);
+    }, 0);
+
+  for (const r of ROOMS) {
+    if (signedArea(r.poly) < 0) r.poly.reverse();   // normalize winding
+    r.rgb = hex2rgb(r.color);
+    r.depth = Math.min(...r.poly.map(p => p[0] + p[1]));
+  }
+  ROOMS.sort((a, b) => a.depth - b.depth);
+
+  const edges = poly => poly.map((a, i) => [a, poly[(i + 1) % poly.length]]);
+  // outward normal for our winding: n = (dy, -dx)
+  const facing = ([a, b]) => {
+    const nx = b[1] - a[1], ny = -(b[0] - a[0]);
+    return (nx + ny) / Math.hypot(nx, ny) || 0;     // >0 → faces viewer
+  };
+  const wallShade = ([a, b], rgb, kBase) => {
+    const ny = -(b[0] - a[0]);
+    const lit = 0.62 + 0.38 * Math.max(0, -Math.sign(ny)); // south faces lighter
+    return mix(rgb, kBase * lit);
+  };
+  const wallQuad = ([a, b], h) =>
+    [P(a[0], a[1]), P(b[0], b[1]), P(b[0], b[1], h), P(a[0], a[1], h)];
+
+  // split an axis-aligned edge into sub-segments, skipping door openings
+  const cutEdge = (a, b) => {
+    const vert = a[0] === b[0];
+    if (!vert && a[1] !== b[1]) return [[a, b]];
+    const fixed = vert ? a[0] : a[1];
+    const ax = vert ? 1 : 0;
+    const cuts = OPENINGS
+      .filter(o => (o.axis === 'x') === vert && Math.abs(fixed - o.at) <= o.tol)
+      .map(o => o.range);
+    if (!cuts.length) return [[a, b]];
+    let ivs = [[Math.min(a[ax], b[ax]), Math.max(a[ax], b[ax])]];
+    for (const [c1, c2] of cuts) {
+      const next = [];
+      for (const [s1, s2] of ivs) {
+        if (c2 <= s1 || c1 >= s2) { next.push([s1, s2]); continue; }
+        if (c1 > s1) next.push([s1, c1]);
+        if (c2 < s2) next.push([c2, s2]);
+      }
+      ivs = next;
+    }
+    if (a[ax] > b[ax]) ivs = ivs.map(([s1, s2]) => [s2, s1]).reverse();
+    return ivs
+      .filter(([s1, s2]) => Math.abs(s2 - s1) > 0.05)
+      .map(([s1, s2]) => {
+        const p1 = [...a], p2 = [...b];
+        p1[ax] = s1; p2[ax] = s2;
+        return [p1, p2];
+      });
+  };
+
+  /* ------------------------------------------------ render -------------- */
+  const svg = document.getElementById('scene');
+  const NS = 'http://www.w3.org/2000/svg';
+  const out = [];
+
+  // ambient ground: soft pool of light + iso grid
+  out.push(`<defs>
+    <radialGradient id="ground" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#232b4d" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#161b30" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0b0d16" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+  </defs>`);
+
+  const gMin = [-14, -10], gMax = [114, 92];
+  const c0 = P((gMin[0] + gMax[0]) / 2, (gMin[1] + gMax[1]) / 2);
+  out.push(`<ellipse cx="${c0[0]}" cy="${c0[1]}" rx="${62 * S}" ry="${34 * S}" fill="url(#ground)"/>`);
+
+  let grid = '';
+  for (let x = gMin[0]; x <= gMax[0]; x += 6)
+    grid += `M${P(x, gMin[1])} L${P(x, gMax[1])} `;
+  for (let y = gMin[1]; y <= gMax[1]; y += 6)
+    grid += `M${P(gMin[0], y)} L${P(gMax[0], y)} `;
+  out.push(`<path d="${grid}" fill="none" stroke="rgba(148,163,184,0.05)" stroke-width="1"/>`);
+
+  // contact shadow under the whole house
+  const cs = P(53, 46);
+  out.push(`<ellipse cx="${cs[0]}" cy="${cs[1] + 26}" rx="${52 * S}" ry="${25 * S}"
+    fill="rgba(0,0,0,0.42)" filter="url(#soft)"/>`);
+
+  // unified base slab: each room footprint expanded outward so neighbors
+  // merge into one plinth, extruded downward — makes it read as one house
+  const offsetPoly = (poly, d) => poly.map((v, i) => {
+    const p = poly[(i + poly.length - 1) % poly.length];
+    const n = poly[(i + 1) % poly.length];
+    const un = (a, b) => {
+      const nx = b[1] - a[1], ny = -(b[0] - a[0]), l = Math.hypot(nx, ny);
+      return [nx / l, ny / l];
+    };
+    const n1 = un(p, v), n2 = un(v, n);
+    return [v[0] + d * (n1[0] + n2[0]), v[1] + d * (n1[1] + n2[1])];
+  });
+
+  const plinthSides = [], plinthTops = [];
+  for (const r of ROOMS) {
+    const ep = offsetPoly(r.poly, 2);
+    for (const e of edges(ep)) {
+      const [a, b] = e;
+      plinthSides.push({
+        depth: a[0] + a[1] + b[0] + b[1],
+        svg: `<polygon points="${pts([P(a[0], a[1], -2.4), P(b[0], b[1], -2.4),
+          P(b[0], b[1], 0), P(a[0], a[1], 0)])}"
+          fill="${css(wallShade(e, [100, 116, 160], 0.28), 0.97)}"/>`,
+      });
+    }
+    plinthTops.push(`<polygon points="${pts(ep.map(p => P(p[0], p[1])))}"
+      fill="rgba(27,33,56,0.96)"/>`);
+  }
+  plinthSides.sort((a, b) => a.depth - b.depth);
+  out.push(...plinthSides.map(s => s.svg), ...plinthTops);
+
+  // floor thresholds bridging the gap between rooms at each opening
+  for (const o of OPENINGS) {
+    const [r1, r2] = o.range;
+    const lo = o.at - o.tol - 0.3, hi = o.at + o.tol + 0.3;
+    const quad = o.axis === 'x'
+      ? [[lo, r1], [hi, r1], [hi, r2], [lo, r2]]
+      : [[r1, lo], [r2, lo], [r2, hi], [r1, hi]];
+    out.push(`<polygon points="${pts(quad.map(p => P(p[0], p[1])))}"
+      fill="rgba(226,232,240,0.13)" stroke="rgba(226,232,240,0.22)" stroke-width="0.7"/>`);
+  }
+
+  /* ------------------------------------------------ furniture kit ------- */
+  const MAT = {
+    wood:  [187, 148, 105], wood2: [148, 111, 76],
+    fab:   [141, 155, 180], fab2:  [104, 118, 143],
+    white: [234, 239, 247], dark:  [52, 61, 82],
+    metal: [158, 167, 186], leaf:  [86, 205, 130],
+    pot:   [124, 116, 110], water: [125, 180, 220],
+  };
+
+  const drawBox = (x1, y1, x2, y2, z0, z1, mat) => {
+    const glass = mat === 'glass';
+    const rgb = glass ? [200, 225, 245] : MAT[mat];
+    const aSide = glass ? 0.13 : 0.93, aTop = glass ? 0.18 : 0.95;
+    const kSide = glass ? 0.9 : 0.52, kTop = glass ? 0.9 : 0.8;
+    const poly = rect(x1, y1, x2, y2);
+    const es = edges(poly).sort((a, b) =>
+      (a[0][0] + a[0][1] + a[1][0] + a[1][1]) - (b[0][0] + b[0][1] + b[1][0] + b[1][1]));
+    let s = '';
+    for (const e of es) {
+      const quad = [P(e[0][0], e[0][1], z0), P(e[1][0], e[1][1], z0),
+                    P(e[1][0], e[1][1], z1), P(e[0][0], e[0][1], z1)];
+      s += `<polygon points="${pts(quad)}" fill="${css(wallShade(e, rgb, kSide), aSide)}"/>`;
+    }
+    s += `<polygon points="${pts(poly.map(p => P(p[0], p[1], z1)))}"
+      fill="${css(mix(rgb, kTop), aTop)}" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>`;
+    return s;
+  };
+
+  const drawCyl = (cx, cy, r, z0, z1, mat) => {
+    const rgb = MAT[mat];
+    const rx = 1.2247 * r * S, ry = 0.7071 * r * S;
+    const [ex0, ey0] = P(cx, cy, z0), [ex1, ey1] = P(cx, cy, z1);
+    return `<path d="M${ex0 - rx},${ey0} A${rx},${ry} 0 0 0 ${ex0 + rx},${ey0}
+        L${ex1 + rx},${ey1} A${rx},${ry} 0 0 1 ${ex1 - rx},${ey1} Z"
+        fill="${css(mix(rgb, 0.5), 0.93)}"/>
+      <ellipse cx="${ex1}" cy="${ey1}" rx="${rx}" ry="${ry}"
+        fill="${css(mix(rgb, 0.8), 0.95)}" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>`;
+  };
+
+  const drawFlat = (x1, y1, x2, y2, z, mat, a) =>
+    `<polygon points="${pts(rect(x1, y1, x2, y2).map(p => P(p[0], p[1], z)))}"
+      fill="${css(MAT[mat], a)}"/>`;
+
+  const renderStuff = parts => parts
+    .map(p => {
+      let key, svg;
+      if (p[0] === 'b') {
+        key = p[1] + p[2] + p[5] * 0.5;
+        svg = drawBox(p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+      } else if (p[0] === 'c') {
+        key = p[1] + p[2] - 1.7 * p[3] + p[4] * 0.5;
+        svg = drawCyl(p[1], p[2], p[3], p[4], p[5], p[6]);
+      } else {
+        key = p[5] < 0.5 ? -1000 + p[1] + p[2] : p[1] + p[2] + p[5] * 0.5;
+        svg = drawFlat(p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+      }
+      return { key, svg };
+    })
+    .sort((a, b) => a.key - b.key)
+    .map(x => x.svg)
+    .join('\n');
+
+  let di = 0;
+  for (const r of ROOMS) {
+    const g = [`<g class="room" data-room="${r.id}"
+      style="--c:${r.rgb.join(',')};--d:${(di++ * 0.09).toFixed(2)}s">`];
+
+    // floor
+    const fid = `f-${r.id}`;
+    g.push(`<defs><linearGradient id="${fid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${css(mix(r.rgb, 0.66), 0.92)}"/>
+      <stop offset="100%" stop-color="${css(mix(r.rgb, 0.3), 0.94)}"/>
+    </linearGradient></defs>`);
+    g.push(`<polygon class="floor" points="${pts(r.poly.map(p => P(p[0], p[1])))}"
+      fill="url(#${fid})" stroke="${css(r.rgb, 0.5)}" stroke-width="1"/>`);
+
+    // walls: far = full height, near = translucent cutaway lip
+    const far = [], near = [];
+    for (const e of edges(r.poly)) (facing(e) > 0 ? near : far).push(e);
+    const byDepth = (a, b) =>
+      (a[0][0] + a[0][1] + a[1][0] + a[1][1]) - (b[0][0] + b[0][1] + b[1][0] + b[1][1]);
+    far.sort(byDepth); near.sort(byDepth);
+
+    const isCutEnd = (p, e) =>
+      (p[0] !== e[0][0] || p[1] !== e[0][1]) && (p[0] !== e[1][0] || p[1] !== e[1][1]);
+
+    for (const e of far) {
+      for (const seg of cutEdge(e[0], e[1])) {
+        g.push(`<polygon points="${pts(wallQuad(seg, H))}"
+          fill="${css(wallShade(e, r.rgb, 0.4), 0.78)}"/>`);
+        const t1 = P(seg[0][0], seg[0][1], H), t2 = P(seg[1][0], seg[1][1], H);
+        g.push(`<line class="edge-glow" x1="${t1[0]}" y1="${t1[1]}" x2="${t2[0]}" y2="${t2[1]}"
+          stroke="${css(r.rgb, 1)}" stroke-width="2" stroke-linecap="round"/>`);
+        for (const p of seg) {                        // glowing door jambs
+          if (!isCutEnd(p, e)) continue;
+          const b0 = P(p[0], p[1]), t0 = P(p[0], p[1], H);
+          g.push(`<line class="edge-glow" x1="${b0[0]}" y1="${b0[1]}" x2="${t0[0]}" y2="${t0[1]}"
+            stroke="${css(r.rgb, 0.85)}" stroke-width="1.8" stroke-linecap="round"/>`);
+        }
+      }
+    }
+    for (const e of near) {
+      for (const seg of cutEdge(e[0], e[1])) {
+        g.push(`<polygon points="${pts(wallQuad(seg, LIP))}"
+          fill="${css(r.rgb, 0.10)}" stroke="none"/>`);
+        const t1 = P(seg[0][0], seg[0][1], LIP), t2 = P(seg[1][0], seg[1][1], LIP);
+        g.push(`<line x1="${t1[0]}" y1="${t1[1]}" x2="${t2[0]}" y2="${t2[1]}"
+          stroke="${css(r.rgb, 0.55)}" stroke-width="1.1" stroke-linecap="round"/>`);
+      }
+    }
+
+    // furniture & fixtures
+    if (r.stuff) g.push(renderStuff(r.stuff));
+
+    // vacuum dock
+    if (r.dock) {
+      const [dx, dy] = r.dock, dc = P(dx, dy);
+      g.push(`<g>
+        <ellipse class="pulse" cx="${dc[0]}" cy="${dc[1]}" rx="${3.2 * CA * S}" ry="${1.6 * S}"
+          fill="none" stroke="#34d399" stroke-width="2"/>
+        <ellipse cx="${dc[0]}" cy="${dc[1]}" rx="${2 * CA * S}" ry="${1 * S}"
+          fill="rgba(52,211,153,0.16)" stroke="rgba(52,211,153,0.8)" stroke-width="1.4"/>
+        <ellipse cx="${dc[0]}" cy="${dc[1] - 4}" rx="${1.15 * CA * S}" ry="${0.58 * S}"
+          fill="#10b981" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
+      </g>`);
+    }
+    g.push('</g>');
+    out.push(g.join('\n'));
+  }
+
+  svg.innerHTML = out.join('\n');
+
+  /* ------------------------------------------------ labels -------------- */
+  const labels = document.createElementNS(NS, 'g');
+  svg.appendChild(labels);
+  const labelEls = {};
+  for (const r of ROOMS) {
+    const [lx, ly] = r.label;
+    const [ax, ay] = P(lx, ly, H + 2.5);
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'label-pill' + (r.small ? ' small' : ''));
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', ax); t.setAttribute('y', ay);
+    t.setAttribute('text-anchor', 'middle');
+    t.textContent = `${r.emoji} ${r.name}`;
+    const sub = document.createElementNS(NS, 'text');
+    sub.setAttribute('class', 'sub');
+    sub.setAttribute('x', ax); sub.setAttribute('y', ay + 15);
+    sub.setAttribute('text-anchor', 'middle');
+    g.appendChild(t); g.appendChild(sub);
+    labels.appendChild(g);
+    const bb = t.getBBox();
+    const pad = 10, ph = bb.height + 12;
+    const pill = document.createElementNS(NS, 'rect');
+    pill.setAttribute('x', bb.x - pad); pill.setAttribute('y', bb.y - 6);
+    pill.setAttribute('width', bb.width + pad * 2); pill.setAttribute('height', ph);
+    pill.setAttribute('rx', ph / 2);
+    pill.setAttribute('fill', 'rgba(11,13,22,0.68)');
+    pill.setAttribute('stroke', `${css(r.rgb, 0.35)}`);
+    pill.setAttribute('stroke-width', '1');
+    g.insertBefore(pill, t);
+    labelEls[r.id] = { g, sub, pill, t };
+  }
+
+  /* ------------------------------------------------ fit view ------------ */
+  const bb = svg.getBBox();
+  const pad = 26;
+  svg.setAttribute('viewBox',
+    `${bb.x - pad} ${bb.y - pad} ${bb.width + pad * 2} ${bb.height + pad * 2}`);
+
+  /* ------------------------------------------------ interaction --------- */
+  let activeId = null;
+  const setActive = id => {
+    activeId = id;
+    for (const el of svg.querySelectorAll('.room'))
+      el.classList.toggle('active', el.dataset.room === id);
+  };
+  svg.addEventListener('click', ev => {
+    const room = ev.target.closest('.room');
+    if (!room) { setActive(null); return; }
+    const id = room.dataset.room === activeId ? null : room.dataset.room;
+    setActive(id);
+    if (id) {
+      window.dispatchEvent(new CustomEvent('floorplan:room-selected', { detail: { room: id } }));
+      if (window.parent !== window)
+        window.parent.postMessage({ type: 'floorplan:room-selected', room: id }, '*');
+    }
+  });
+
+  window.FLOORPLAN = {
+    setActive,
+    setLabel(id, text) {
+      const l = labelEls[id];
+      if (!l) return;
+      l.sub.textContent = text || '';
+      const tb = l.t.getBBox(), sb = text ? l.sub.getBBox() : tb;
+      const x1 = Math.min(tb.x, sb.x), x2 = Math.max(tb.x + tb.width, sb.x + sb.width);
+      const y2 = text ? sb.y + sb.height : tb.y + tb.height;
+      l.pill.setAttribute('x', x1 - 10);
+      l.pill.setAttribute('width', x2 - x1 + 20);
+      l.pill.setAttribute('height', y2 - tb.y + 12);
+      l.pill.setAttribute('rx', 12);
+    },
+  };
+})();
+</script>
+</body>
+</html>
