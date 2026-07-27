@@ -433,3 +433,83 @@ export interface GlanceButtonConfig {
 }
 
 export type ViewId = string;
+
+// ── Room Summary engine (issue #47) ──────────────────────────────────────────
+
+/** Minimal area registry entry from `config/area_registry/list`. */
+export interface AreaRegistryEntry {
+  area_id: string;
+  name: string;
+  icon?: string | null;
+  picture?: string | null;
+  floor_id?: string | null;
+  /** Preferred temperature sensor for this area (HA 2025+). */
+  temperature_entity_id?: string | null;
+  /** Preferred humidity sensor for this area (HA 2025+). */
+  humidity_entity_id?: string | null;
+}
+
+/** Minimal device registry entry from `config/device_registry/list`. */
+export interface DeviceRegistryEntry {
+  id: string;
+  area_id?: string | null;
+  name?: string | null;
+  name_by_user?: string | null;
+}
+
+/** Minimal entity registry entry from `config/entity_registry/list`. */
+export interface EntityRegistryEntry {
+  entity_id: string;
+  area_id?: string | null;
+  device_id?: string | null;
+  platform?: string;
+  disabled_by?: string | null;
+  hidden_by?: string | null;
+}
+
+export type RoomProblemSeverity = 'critical' | 'warning';
+
+export type RoomProblemReason =
+  | 'smoke'
+  | 'gas'
+  | 'moisture'
+  | 'problem'
+  | 'unavailable';
+
+/** One flagged entity in a room summary. */
+export interface RoomProblem {
+  entity_id: string;
+  reason: RoomProblemReason;
+  severity: RoomProblemSeverity;
+}
+
+/** Averaged (or preferred) climate reading for a room. */
+export interface RoomClimateValue {
+  value: number;
+  unit: string;
+  /** Entity used when the area default sensor won; absent for mean. */
+  sourceEntityId?: string;
+}
+
+/** Aggregated snapshot for one Home Assistant area (engine output for #48 UI). */
+export interface RoomSummary {
+  areaId: string;
+  areaName: string;
+  temperature?: RoomClimateValue;
+  humidity?: RoomClimateValue;
+  lightsOn: number;
+  problems: RoomProblem[];
+  /** entity_ids resolved into this area (after excludes). */
+  entityIds: string[];
+}
+
+/** Options for `buildRoomSummary` / problem detection. */
+export interface RoomSummaryOptions {
+  /** entity_ids to omit (glance-style excludes). */
+  exclude?: string[];
+  /**
+   * Flag unavailable light/lock/climate as problems.
+   * Defaults to true (strict-but-useful v1).
+   */
+  flagImportantUnavailable?: boolean;
+}

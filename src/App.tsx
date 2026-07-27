@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHomeAssistant } from './hooks/useHomeAssistant';
+import { useHomeAssistant, useHaConnection } from './hooks/useHomeAssistant';
+import { useAreaRegistry } from './hooks/useAreaRegistry';
 import { useLayout } from './hooks/useLayout';
 import { useSwipeNav } from './hooks/useSwipeNav';
 import { usePullRefresh, PullRefreshIndicator } from './hooks/usePullRefresh';
@@ -32,6 +33,9 @@ import type { RoomEntity, DashView } from './types';
 export default function App() {
   const { t } = useTranslation();
   const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse } = useHomeAssistant();
+  // Room Summary engine (#47): load area/device/entity registries. Tile UI is #48.
+  const haConnection = useHaConnection();
+  useAreaRegistry(haConnection, entities);
   const layout = useLayout();
   const { views } = layout;
   // Remember the page across reloads so pull-to-refresh (which reloads the app)
