@@ -22,6 +22,14 @@ export interface Room {
   entities: RoomEntity[];
 }
 
+/** Face metrics toggles for a Room Summary tile (issue #48). */
+export interface RoomShowOptions {
+  avgTemp?: boolean;
+  avgHumidity?: boolean;
+  lightsOn?: boolean;
+  problems?: boolean;
+}
+
 export interface RoomEntity {
   entity_id: string;
   name?: string;
@@ -45,7 +53,16 @@ export interface RoomEntity {
   mediaArtwork?: boolean;
   /** Companion media_player entity to pull now-playing artwork from (media players). */
   artworkEntity?: string;
-  type?: 'light' | 'switch' | 'cover' | 'lock' | 'climate' | 'camera' | 'media_player' | 'vacuum' | 'sensor' | 'binary_sensor' | 'scene' | 'script';
+  /**
+   * Home Assistant Area id for Room Summary tiles (`glance.room.<areaId>`).
+   * Issue #48 — ignored for normal entity tiles.
+   */
+  areaId?: string;
+  /** Which metrics to show on a Room Summary tile face / flyout. */
+  show?: RoomShowOptions;
+  /** entity_ids omitted from room lights / climate / problems (glance-style excludes). */
+  exclude?: string[];
+  type?: 'light' | 'switch' | 'cover' | 'lock' | 'climate' | 'camera' | 'media_player' | 'vacuum' | 'sensor' | 'binary_sensor' | 'scene' | 'script' | 'room';
 }
 
 export interface MediaTileConfig {

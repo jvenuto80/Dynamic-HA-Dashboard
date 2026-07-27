@@ -3,6 +3,8 @@
 // exact shape varies by provider/version), and the special "sentinel" tile
 // registry that lets a non-entity card live in the normal tile grid.
 
+import { isRoomTile } from './roomTile';
+
 /** Media types the MA `search` service understands, plus an "all" option. */
 export const MA_MEDIA_TYPES = [
   { value: '', label: 'All' },
@@ -103,6 +105,9 @@ export interface SpecialTileDef {
 export const SPECIAL_TILES: Record<string, SpecialTileDef> = {
   'music_assistant.search': { name: 'Music Search', icon: 'mdi-music-circle' },
   'glance.calendar': { name: 'Up Next (Calendar)', icon: 'mdi-calendar' },
+  /** Picker sentinel — picking opens the Area chooser; stored tiles use glance.room.<areaId>. */
+  'glance.room': { name: 'Room Summary', icon: 'mdi-floor-plan' },
 };
 
-export const isSpecialTile = (entityId: string): boolean => entityId in SPECIAL_TILES;
+export const isSpecialTile = (entityId: string): boolean =>
+  entityId in SPECIAL_TILES || isRoomTile(entityId);

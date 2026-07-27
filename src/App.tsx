@@ -19,6 +19,7 @@ import { NowPlayingTakeover } from './components/NowPlayingTakeover';
 import { AssistFlyout, AssistFab } from './components/AssistFlyout';
 import { Screensaver } from './components/Screensaver';
 import { CalendarFlyout } from './components/CalendarFlyout';
+import { RoomFlyout } from './components/RoomFlyout';
 import { activeCalendarIds, parseEventsResponse, type CalendarEvent, type CalendarServiceResponse } from './lib/calendar';
 import { PagesManager } from './components/PagesManager';
 import { PageDots } from './components/PageDots';
@@ -29,13 +30,14 @@ import { getSettings } from './settings';
 import { runNavTransition } from './lib/viewTransition';
 import { scenes, HA_TOKEN } from './config';
 import type { RoomEntity, DashView } from './types';
+import { roomAreaId } from './lib/roomTile';
 
 export default function App() {
   const { t } = useTranslation();
   const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse } = useHomeAssistant();
-  // Room Summary engine (#47): load area/device/entity registries. Tile UI is #48.
+  // Room Summary engine (#47) + tile UI (#48).
   const haConnection = useHaConnection();
-  useAreaRegistry(haConnection, entities);
+  const { areas, getRoomSummary } = useAreaRegistry(haConnection, entities);
   const layout = useLayout();
   const { views } = layout;
   // Remember the page across reloads so pull-to-refresh (which reloads the app)
@@ -56,6 +58,8 @@ export default function App() {
     }
   }, [activeView]);
   const [detailEntity, setDetailEntity] = useState<string | null>(null);
+  // Room Summary flyout (issue #48) — separate from entity DetailPanel.
+  const [roomFlyout, setRoomFlyout] = useState<RoomEntity | null>(null);
   // Full-bleed now-playing "lock screen" (issue #18), opened by tapping a
   // playing media tile that carries artwork.
   const [takeoverEntity, setTakeoverEntity] = useState<string | null>(null);
@@ -414,6 +418,9 @@ export default function App() {
             searchMusic={searchMusic}
             playMusic={playMusic}
             getMaPlayers={getMaPlayers}
+            areas={areas}
+            getRoomSummary={getRoomSummary}
+            onOpenRoom={setRoomFlyout}
           />
         )}
 
@@ -430,6 +437,21 @@ export default function App() {
       <PullRefreshIndicator innerRef={ptrRef} />
       {showAssistFab && !assistOpen && <AssistFab onOpen={() => setAssistOpen(true)} />}
       {assistOpen && <AssistFlyout converse={converse} onClose={() => setAssistOpen(false)} />}
+
+      {roomFlyout && (
+        <RoomFlyout
+          re={roomFlyout}
+          summary={getRoomSummary(roomAreaId(roomFlyout) || '', {
+            exclude: roomFlyout.exclude,
+          })}
+          entities={entities}
+          onOpenDetail={(id) => {
+            setRoomFlyout(null);
+            setDetailEntity(id);
+          }}
+          onClose={() => setRoomFlyout(null)}
+        />
+      )}
 
       <DetailPanel
         entityId={detailEntity}

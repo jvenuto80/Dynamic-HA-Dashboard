@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HassEntities } from 'home-assistant-js-websocket';
-import type { RoomEntity, TileAction, TileSize, FlyoutConfig } from '../types';
+import type { AreaRegistryEntry, RoomEntity, TileAction, TileSize, FlyoutConfig } from '../types';
 import { EntityPicker } from './DashboardView';
 import { DetailPanel } from './DetailPanel';
+import { isRoomTile, makeRoomTile, roomAreaId, roomShow } from '../lib/roomTile';
 
 const SIZES: TileSize[] = ['1x1', '2x1', '1x2', '2x2'];
+const ROOM_SIZES: TileSize[] = ['2x1', '2x2'];
 
 /** Common services offered per domain, used to populate the quick-action service dropdown. */
 const SERVICE_CATALOG: Record<string, string[]> = {
@@ -50,6 +52,7 @@ type CallHA = (domain: string, service: string, data?: Record<string, unknown>, 
 interface Props {
   re: RoomEntity;
   entities: HassEntities;
+  areas?: AreaRegistryEntry[];
   onChange: (patch: Partial<RoomEntity>) => void;
   onRemove: () => void;
   onClose: () => void;
@@ -58,7 +61,7 @@ interface Props {
 }
 
 /** Per-tile settings popover: name, icon, size, camera, linked entities, quick actions. */
-export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA, getHistory }: Props) {
+export function TileSettings({ re, entities, areas = [], onChange, onRemove, onClose, callHA, getHistory }: Props) {
   const { t } = useTranslation();
   const [sub, setSub] = useState<'camera' | 'link' | 'artwork' | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
@@ -66,6 +69,9 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
   // typing (the layout state round-trips asynchronously through the parent).
   const [nameDraft, setNameDraft] = useState(re.name ?? '');
   const [iconDraft, setIconDraft] = useState(re.icon ?? '');
+  const room = isRoomTile(re.entity_id);
+  const show = roomShow(re);
+  const sizeOptions = room ? ROOM_SIZES : SIZES;
 
   // Re-seed drafts when a different tile is opened.
   useEffect(() => {
@@ -173,10 +179,10 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
           <div className="ts-field">
             <span>{t('tile_size')}</span>
             <div className="ts-size-row">
-              {SIZES.map((s) => (
+              {sizeOptions.map((s) => (
                 <button
                   key={s}
-                  className={`ts-size-btn ${(re.size ?? '1x1') === s ? 'active' : ''}`}
+                  className={`ts-size-btn ${(re.size ?? (room ? '2x1' : '1x1')) === s ? 'active' : ''}`}
                   onClick={() => onChange({ size: s })}
                 >
                   {s}
@@ -185,6 +191,61 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
             </div>
           </div>
 
+          {room && (
+            <>
+              <label className="ts-field">
+                <span>{t('room_area')}</span>
+                <select
+                  value={roomAreaId(re) ?? ''}
+                  onChange={(e) => {
+                    const area = areas.find((a) => a.area_id === e.target.value);
+                    if (!area) return;
+                    const next = makeRoomTile(area.area_id, area.name);
+                    onChange({
+                      entity_id: next.entity_id,
+                      areaId: next.areaId,
+                      name: re.name || next.name,
+                      type: 'room',
+                    });
+                  }}
+                >
+                  {areas.map((a) => (
+                    <option key={a.area_id} value={a.area_id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="ts-field">
+                <span>{t('room_show')}</span>
+                <div className="ts-toggle-stack">
+                  {(
+                    [
+                      ['avgTemp', 'room_show_temp'],
+                      ['avgHumidity', 'room_show_humidity'],
+                      ['lightsOn', 'room_show_lights'],
+                      ['problems', 'room_show_problems'],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key} className="ts-check">
+                      <input
+                        type="checkbox"
+                        checked={show[key]}
+                        onChange={(e) =>
+                          onChange({ show: { ...re.show, [key]: e.target.checked } })
+                        }
+                      />
+                      {t(label)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {!room && (
+          <>
           {/* Slide to dim (lights only) — on by default */}
           {re.entity_id.split('.')[0] === 'light' && (
             <label className="ts-toggle-field">
@@ -425,6 +486,8 @@ export function TileSettings({ re, entities, onChange, onRemove, onClose, callHA
               </button>
             </div>
           </div>
+          </>
+          )}
         </div>
 
         <div className="ts-footer">
