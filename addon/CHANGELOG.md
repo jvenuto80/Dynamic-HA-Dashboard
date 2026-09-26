@@ -1,7 +1,8 @@
 # Changelog
 ## 2.2.0
 
-- **New: Room Summary tiles ([#47](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/47),
+- **New: Room Summary tiles ([#50](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/50);
+  [#47](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/47),
   [#48](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/48)).** Add a
   **Room Summary** card from the tile picker, pick a Home Assistant **area**, and
   the tile shows that room at a glance — temperature, humidity, how many lights

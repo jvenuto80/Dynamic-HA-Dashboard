@@ -137,6 +137,9 @@ With thanks to community contributors:
   French, Polish, Dutch & Spanish by [@efimofline](https://github.com/efimofline)
   ([#35](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/35),
   [#36](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/36)).
+- **Room Summary tiles** — the area-based room card, summary engine and room
+  flyout by [@efimofline](https://github.com/efimofline)
+  ([#50](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/50)).
 
 ---
 
