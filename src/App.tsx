@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHomeAssistant } from './hooks/useHomeAssistant';
+import { useHomeAssistant, useHaConnection } from './hooks/useHomeAssistant';
+import { useAreaRegistry } from './hooks/useAreaRegistry';
 import { useLayout } from './hooks/useLayout';
 import { useSwipeNav } from './hooks/useSwipeNav';
 import { usePullRefresh, PullRefreshIndicator } from './hooks/usePullRefresh';
@@ -18,6 +19,7 @@ import { NowPlayingTakeover } from './components/NowPlayingTakeover';
 import { AssistFlyout, AssistFab } from './components/AssistFlyout';
 import { Screensaver } from './components/Screensaver';
 import { CalendarFlyout } from './components/CalendarFlyout';
+import { RoomFlyout } from './components/RoomFlyout';
 import { activeCalendarIds, parseEventsResponse, type CalendarEvent, type CalendarServiceResponse } from './lib/calendar';
 import { PagesManager } from './components/PagesManager';
 import { PageDots } from './components/PageDots';
@@ -28,10 +30,13 @@ import { getSettings } from './settings';
 import { runNavTransition } from './lib/viewTransition';
 import { scenes, HA_TOKEN } from './config';
 import type { RoomEntity, DashView } from './types';
+import { isRoomTile, roomAreaId, roomSummaryOpts } from './lib/roomTile';
 
 export default function App() {
   const { t } = useTranslation();
   const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse } = useHomeAssistant();
+  // Room Summary engine (#47) + tile UI (#48).
+  const haConnection = useHaConnection();
   const layout = useLayout();
   const { views } = layout;
   // Remember the page across reloads so pull-to-refresh (which reloads the app)
@@ -52,10 +57,21 @@ export default function App() {
     }
   }, [activeView]);
   const [detailEntity, setDetailEntity] = useState<string | null>(null);
+  // Room Summary flyout (issue #48) — separate from entity DetailPanel.
+  const [roomFlyout, setRoomFlyout] = useState<RoomEntity | null>(null);
   // Full-bleed now-playing "lock screen" (issue #18), opened by tapping a
   // playing media tile that carries artwork.
   const [takeoverEntity, setTakeoverEntity] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  // Registries are large on big installs — only load them when a Room tile needs them.
+  const hasRoomTiles = useMemo(
+    () =>
+      views.some((v) =>
+        viewRows(v).some((r) => r.columns.some((c) => c.entities.some((e) => isRoomTile(e.entity_id)))),
+      ),
+    [views],
+  );
+  const { areas, getRoomSummary } = useAreaRegistry(haConnection, entities, hasRoomTiles || editing);
   const [showSettings, setShowSettings] = useState(false);
   const [showPages, setShowPages] = useState(false);
   const [scenePicker, setScenePicker] = useState(false);
@@ -410,6 +426,9 @@ export default function App() {
             searchMusic={searchMusic}
             playMusic={playMusic}
             getMaPlayers={getMaPlayers}
+            areas={areas}
+            getRoomSummary={getRoomSummary}
+            onOpenRoom={setRoomFlyout}
           />
         )}
 
@@ -426,6 +445,19 @@ export default function App() {
       <PullRefreshIndicator innerRef={ptrRef} />
       {showAssistFab && !assistOpen && <AssistFab onOpen={() => setAssistOpen(true)} />}
       {assistOpen && <AssistFlyout converse={converse} onClose={() => setAssistOpen(false)} />}
+
+      {roomFlyout && (
+        <RoomFlyout
+          re={roomFlyout}
+          summary={getRoomSummary(roomAreaId(roomFlyout) || '', roomSummaryOpts(roomFlyout))}
+          entities={entities}
+          onOpenDetail={(id) => {
+            setRoomFlyout(null);
+            setDetailEntity(id);
+          }}
+          onClose={() => setRoomFlyout(null)}
+        />
+      )}
 
       <DetailPanel
         entityId={detailEntity}

@@ -1,8 +1,10 @@
 import type { HassEntity } from 'home-assistant-js-websocket';
 import type { RoomEntity, TileSize } from '../types';
+import { isRoomTile } from './roomTile';
 
 /** Auto-pick a size when the user hasn't set one explicitly. */
 export function autoSize(entity: HassEntity | undefined, entity_id: string): TileSize {
+  if (isRoomTile(entity_id) || entity_id === 'glance.calendar') return '2x1';
   const domain = entity_id.split('.')[0];
   if (domain === 'vacuum') return '1x2';
   if (domain === 'cover' && entity?.attributes.current_position != null) return '1x2';

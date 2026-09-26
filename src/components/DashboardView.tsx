@@ -26,13 +26,16 @@ import { MusicAssistantSearch, type SearchMusic, type PlayMusic, type GetMaPlaye
 import { effectiveSize, sizeToSpan } from '../lib/tileSize';
 import { viewRows } from '../lib/layout';
 import { isSpecialTile, SPECIAL_TILES } from '../lib/musicAssistant';
+import { isRoomTile, makeRoomTile, roomAreaId, roomSummaryOpts, ROOM_TILE_PICKER_ID } from '../lib/roomTile';
 import { isActiveState, entityIcon } from '../lib/entityInfo';
 import { CalendarTile } from './CalendarTile';
+import { RoomTile } from './RoomTile';
 import { groupMediaPlayers, pickRepresentative, deviceNameKey, collapseSpeakerGroups, mediaConfigFor as computeMediaConfig, artworkPickerExclusions } from '../lib/mediaDevices';
 import { cameraProxyUrl } from '../hooks/useCameraFeed';
 import { getSettings } from '../settings';
 import { TileSettings } from './TileSettings';
 import { useTranslation } from 'react-i18next';
+import type { AreaRegistryEntry, RoomSummary, RoomSummaryOptions } from '../types';
 
 /** Subscribe to the "compact sections" preference (live-updated from Settings).
  *  When on, sections flow into a responsive masonry so short sections sit
@@ -219,6 +222,12 @@ interface Props {
   playMusic?: PlayMusic;
   /** Resolve Music Assistant media players (for the special MA search tile). */
   getMaPlayers?: GetMaPlayers;
+  /** HA areas for Room Summary tiles (issue #48). */
+  areas?: AreaRegistryEntry[];
+  /** Build a room summary for an area (issue #47/#48). */
+  getRoomSummary?: (areaId: string, opts?: RoomSummaryOptions) => RoomSummary;
+  /** Open the Room Summary flyout (issue #48). */
+  onOpenRoom?: (re: RoomEntity) => void;
 }
 
 export function DashboardView(props: Props) {
@@ -350,7 +359,31 @@ function Tile({
   getMaPlayers,
   calendarEvents,
   onOpenCalendar,
+  getRoomSummary,
+  onOpenRoom,
 }: { re: RoomEntity; enterIndex?: number } & Props) {
+  // Room Summary tiles (issue #48).
+  if (isRoomTile(re.entity_id)) {
+    const areaId = roomAreaId(re) ?? '';
+    const summary =
+      getRoomSummary?.(areaId, roomSummaryOpts(re)) ??
+      ({
+        areaId,
+        areaName: re.name || areaId,
+        lightsOn: 0,
+        problems: [],
+        entityIds: [],
+      } satisfies RoomSummary);
+    return (
+      <RoomTile
+        re={re}
+        summary={summary}
+        onOpen={() => onOpenRoom?.(re)}
+        enterIndex={enterIndex}
+      />
+    );
+  }
+
   // Special (non-entity) tiles render their own card.
   if (isSpecialTile(re.entity_id)) {
     const def = SPECIAL_TILES[re.entity_id];
@@ -937,6 +970,7 @@ function EditableView(props: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rows, setRows] = useState<RowState[]>(() => buildRows(viewRows(view)));
   const [picker, setPicker] = useState<{ ri: number; ci: number } | null>(null);
+  const [areaPicker, setAreaPicker] = useState<{ ri: number; ci: number } | null>(null);
   const [settings, setSettings] = useState<{ ri: number; ci: number; ei: number } | null>(null);
 
   // Re-sync from saved layout whenever it changes and we're not mid-drag.
@@ -1147,8 +1181,42 @@ function EditableView(props: Props) {
       <DragOverlay>
         {activeItem
           ? (() => {
+              if (isRoomTile(activeItem.re.entity_id)) {
+                const areaId = roomAreaId(activeItem.re) ?? '';
+                const summary =
+                  props.getRoomSummary?.(areaId, roomSummaryOpts(activeItem.re)) ??
+                  ({
+                    areaId,
+                    areaName: activeItem.re.name || areaId,
+                    lightsOn: 0,
+                    problems: [],
+                    entityIds: [],
+                  } satisfies RoomSummary);
+                return (
+                  <div className="edit-drag-overlay">
+                    <RoomTile re={activeItem.re} summary={summary} onOpen={() => {}} />
+                  </div>
+                );
+              }
               const e = entities[activeItem.re.entity_id];
-              if (!e) return null;
+              if (!e) {
+                if (isSpecialTile(activeItem.re.entity_id)) {
+                  const def = SPECIAL_TILES[activeItem.re.entity_id];
+                  return (
+                    <div className="edit-drag-overlay">
+                      <div className="tile ma-tile">
+                        <div className="tile-top">
+                          <span className={`mdi ${activeItem.re.icon || def?.icon || 'mdi-card'} tile-icon`} />
+                        </div>
+                        <div className="tile-info">
+                          <div className="tile-name">{activeItem.re.name || def?.name}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }
               const nm =
                 activeItem.re.name || (e.attributes.friendly_name as string) || activeItem.re.entity_id;
               const dm = activeItem.re.entity_id.split('.')[0];
@@ -1180,8 +1248,31 @@ function EditableView(props: Props) {
           }
           onClose={() => setPicker(null)}
           onPick={(entityId) => {
+            if (entityId === ROOM_TILE_PICKER_ID) {
+              setAreaPicker(picker);
+              setPicker(null);
+              return;
+            }
             layout.addTile(view.id, picker.ri, picker.ci, { entity_id: entityId });
             setPicker(null);
+          }}
+        />
+      )}
+
+      {areaPicker && (
+        <AreaPicker
+          areas={props.areas ?? []}
+          existing={
+            new Set(
+              rows
+                .flatMap((r) => r.columns.flatMap((c) => c.items.map((it) => roomAreaId(it.re))))
+                .filter((id): id is string => !!id),
+            )
+          }
+          onClose={() => setAreaPicker(null)}
+          onPick={(area) => {
+            layout.addTile(view.id, areaPicker.ri, areaPicker.ci, makeRoomTile(area.area_id));
+            setAreaPicker(null);
           }}
         />
       )}
@@ -1193,6 +1284,12 @@ function EditableView(props: Props) {
           <TileSettings
             re={re}
             entities={entities}
+            areas={props.areas}
+            roomEntityIds={
+              isRoomTile(re.entity_id)
+                ? props.getRoomSummary?.(roomAreaId(re) ?? '').entityIds
+                : undefined
+            }
             onChange={(patch) =>
               layout.updateTile(view.id, settings.ri, settings.ci, settings.ei, patch)
             }
@@ -1227,6 +1324,7 @@ function SortableTile({
   callHA,
   getHistory,
   onOpenSettings,
+  areas,
 }: { item: Item; rowIdx: number; colIdx: number; entIdx: number; onOpenSettings: () => void } & Props) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -1252,12 +1350,18 @@ function SortableTile({
   };
 
   const special = isSpecialTile(item.re.entity_id);
-  const specialDef = special ? SPECIAL_TILES[item.re.entity_id] : null;
-  const name = special
-    ? item.re.name || specialDef!.name
-    : entity
-      ? item.re.name || (entity.attributes.friendly_name as string)
-      : item.re.entity_id;
+  const room = isRoomTile(item.re.entity_id);
+  const specialDef = special && !room ? SPECIAL_TILES[item.re.entity_id] : null;
+  const name = room
+    ? item.re.name ||
+      areas?.find((a) => a.area_id === roomAreaId(item.re))?.name ||
+      roomAreaId(item.re) ||
+      item.re.entity_id
+    : special
+      ? item.re.name || specialDef!.name
+      : entity
+        ? item.re.name || (entity.attributes.friendly_name as string)
+        : item.re.entity_id;
   const domain = item.re.entity_id.split('.')[0];
   const missing = !entity && !special;
 
@@ -1269,14 +1373,26 @@ function SortableTile({
       {...attributes}
       {...listeners}
     >
-      {special ? (
+      {room ? (
+        <div className="tile span room-summary-tile room-tile-edit">
+          <div className="tile-top">
+            <span className={`mdi ${item.re.icon || 'mdi-floor-plan'} tile-icon room-tile-icon`} />
+          </div>
+          <div className="tile-info">
+            <div className="tile-name">{name}</div>
+            <div className="tile-sub">{t('room_tile_label')}</div>
+          </div>
+        </div>
+      ) : special ? (
         <div className="tile ma-tile ma-tile-edit">
           <div className="tile-top">
             <span className={`mdi ${item.re.icon || specialDef!.icon} tile-icon ma-tile-icon`} />
           </div>
           <div className="tile-info">
             <div className="tile-name">{name}</div>
-            <div className="tile-sub">Search &amp; play</div>
+            <div className="tile-sub">
+              {item.re.entity_id === 'glance.calendar' ? t('cal_nothing_short') : t('music_search_play')}
+            </div>
           </div>
           <span className="mdi mdi-magnify ma-tile-search" aria-hidden="true" />
         </div>
@@ -1429,7 +1545,8 @@ export function EntityPicker({
           {specials.map((s) => (
             <button key={s.id} className="picker-item picker-special" onClick={() => onPick(s.id)}>
               <span className="picker-item-name">
-                <span className={`mdi ${s.icon} picker-special-icon`} /> {s.name}
+                <span className={`mdi ${s.icon} picker-special-icon`} />{' '}
+                {s.id === ROOM_TILE_PICKER_ID ? t('room_tile_label') : s.name}
               </span>
               <span className="picker-special-badge">{t('dash_card')}</span>
             </button>
@@ -1446,6 +1563,73 @@ export function EntityPicker({
               </button>
             );
           })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Area chooser for Room Summary tiles (issue #48). */
+function AreaPicker({
+  areas,
+  existing,
+  onClose,
+  onPick,
+}: {
+  areas: AreaRegistryEntry[];
+  existing: Set<string>;
+  onClose: () => void;
+  onPick: (area: AreaRegistryEntry) => void;
+}) {
+  const { t } = useTranslation();
+  const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return areas
+      .filter((a) => {
+        if (existing.has(a.area_id)) return false;
+        if (!q) return true;
+        return a.name.toLowerCase().includes(q) || a.area_id.toLowerCase().includes(q);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [areas, existing, query]);
+
+  return (
+    <div className="picker-overlay" onClick={onClose}>
+      <div className="picker-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="picker-head">
+          <span className="mdi mdi-floor-plan" />
+          <input
+            autoFocus
+            className="picker-search"
+            placeholder={t('room_pick_area')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button className="edit-icon-btn" title={t('dash_close')} onClick={onClose}>
+            <span className="mdi mdi-close" />
+          </button>
+        </div>
+        <div className="picker-list">
+          {results.length === 0 ? (
+            <div className="picker-empty">{t('room_no_areas')}</div>
+          ) : (
+            results.map((a) => (
+              <button key={a.area_id} className="picker-item" onClick={() => onPick(a)}>
+                <span className="picker-item-name">{a.name}</span>
+                <span className="picker-item-id">{a.area_id}</span>
+              </button>
+            ))
+          )}
         </div>
       </div>
     </div>

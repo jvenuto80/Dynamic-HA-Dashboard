@@ -5,6 +5,10 @@ node_modules
 dist
 *.tsbuildinfo
 
+# Playwright output (screenshots can contain personal dashboard data)
+playwright-report
+test-results
+
 # Secrets / local config
 .env
 .env.local

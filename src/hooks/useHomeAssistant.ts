@@ -29,6 +29,22 @@ function broadcastConnected(value: boolean) {
 let haConnection: Connection | null = null;
 let verifyInflight: Promise<boolean> | null = null;
 
+/** Current WebSocket connection (null when disconnected / not yet ready). */
+export function getHaConnection(): Connection | null {
+  return haConnected ? haConnection : null;
+}
+
+/** Reactive mirror of the live HA connection for leaf hooks (issue #47). */
+export function useHaConnection(): Connection | null {
+  const [connected, setConnected] = useState(haConnected);
+  useEffect(() => {
+    const onConn = (e: Event) => setConnected((e as CustomEvent<boolean>).detail);
+    window.addEventListener('ha:connection', onConn);
+    return () => window.removeEventListener('ha:connection', onConn);
+  }, []);
+  return connected ? haConnection : null;
+}
+
 /** Prove the socket is genuinely alive before trusting cached signed URLs —
  *  a tablet waking from screen-off often holds a zombie socket that still
  *  reads as connected. Round-trips a ping; a dead socket is force-reconnected
@@ -383,7 +399,20 @@ export function useHomeAssistant() {
     return maPlayerIds.current;
   }, []);
 
-  return { entities, connected, error, callHA, getState, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse };
+  return {
+    entities,
+    connected,
+    error,
+    callHA,
+    getState,
+    getForecast,
+    getHistory,
+    getCalendarEvents,
+    searchMusic,
+    playMusic,
+    getMaPlayers,
+    converse,
+  };
 }
 
 /** Shape of a `conversation/process` result (the fields Glance uses). */

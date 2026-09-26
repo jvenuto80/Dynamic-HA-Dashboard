@@ -142,6 +142,12 @@ Decision: leaving as `localStorage` for now since it works on a single device.
 - [x] Sparklines on more tiles (climate/sensor) using the existing `Sparkline`. ([#14](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/14))
 - [ ] Quiet status dots that pulse only on change. ([#15](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/15))
 - [ ] Smart grouping — collapse an idle room into one tile, expand on tap. ([#16](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/16))
+- [x] ~~Room Summary tiles — area-based room card with climate, lights on and
+  problems, plus a device flyout.~~ ([#47](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/47),
+  [#48](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/48)) **Done (2.2.0):** pick an HA area; per-tile
+  sensor source, device-type filter, excludes; ignores diagnostic entities,
+  folds light segments, de-duplicates light groups; lazy-loads the compact
+  registry and live-updates on registry changes.
 
 ### Delightful extras
 
