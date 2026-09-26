@@ -2,10 +2,14 @@ import { describe, it, expect } from 'vitest';
 import {
   areaIdFromRoomTile,
   formatRoomFaceStats,
+  groupRoomDevices,
   isRoomTile,
   makeRoomTile,
   roomAreaId,
+  roomDeviceDomains,
+  roomSummaryOpts,
   roomTileId,
+  ROOM_DEFAULT_DEVICE_DOMAINS,
 } from './roomTile';
 import type { RoomSummary } from '../types';
 
@@ -29,7 +33,8 @@ describe('roomTile ids', () => {
   });
 
   it('makeRoomTile sets defaults', () => {
-    const re = makeRoomTile('gostinaia', 'Гостиная');
+    const re = makeRoomTile('gostinaia');
+    expect(re.name).toBeUndefined();
     expect(re.entity_id).toBe('glance.room.gostinaia');
     expect(re.areaId).toBe('gostinaia');
     expect(re.size).toBe('2x1');
@@ -49,5 +54,37 @@ describe('formatRoomFaceStats', () => {
 
   it('uses custom lights label', () => {
     expect(formatRoomFaceStats(summary, {}, (n) => `${n} Licht`)).toContain('2 Licht');
+  });
+});
+
+describe('room tile customization', () => {
+  it('maps tile settings to engine options', () => {
+    const re = {
+      ...makeRoomTile('office'),
+      exclude: ['sensor.cpu'],
+      tempSource: 'sensor.ac_temp',
+      flagUnavailable: false,
+    };
+    expect(roomSummaryOpts(re)).toEqual({
+      exclude: ['sensor.cpu'],
+      temperatureEntity: 'sensor.ac_temp',
+      humidityEntity: undefined,
+      flagImportantUnavailable: false,
+    });
+  });
+
+  it('defaults the flyout to controllable domains', () => {
+    expect(roomDeviceDomains(makeRoomTile('office'))).toEqual(ROOM_DEFAULT_DEVICE_DOMAINS);
+  });
+
+  it('groups by domain in display order and counts hidden entities', () => {
+    const ids = ['sensor.t', 'light.b', 'switch.s', 'light.a', 'update.fw', 'number.x'];
+    const { groups, hidden } = groupRoomDevices(ids, ['switch', 'light', 'other']);
+    expect(groups).toEqual([
+      { domain: 'light', ids: ['light.b', 'light.a'] },
+      { domain: 'switch', ids: ['switch.s'] },
+      { domain: 'other', ids: ['update.fw', 'number.x'] },
+    ]);
+    expect(hidden).toBe(1);
   });
 });

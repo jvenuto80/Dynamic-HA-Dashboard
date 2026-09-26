@@ -26,7 +26,7 @@ import { MusicAssistantSearch, type SearchMusic, type PlayMusic, type GetMaPlaye
 import { effectiveSize, sizeToSpan } from '../lib/tileSize';
 import { viewRows } from '../lib/layout';
 import { isSpecialTile, SPECIAL_TILES } from '../lib/musicAssistant';
-import { isRoomTile, makeRoomTile, roomAreaId, ROOM_TILE_PICKER_ID } from '../lib/roomTile';
+import { isRoomTile, makeRoomTile, roomAreaId, roomSummaryOpts, ROOM_TILE_PICKER_ID } from '../lib/roomTile';
 import { isActiveState, entityIcon } from '../lib/entityInfo';
 import { CalendarTile } from './CalendarTile';
 import { RoomTile } from './RoomTile';
@@ -366,7 +366,7 @@ function Tile({
   if (isRoomTile(re.entity_id)) {
     const areaId = roomAreaId(re) ?? '';
     const summary =
-      getRoomSummary?.(areaId, { exclude: re.exclude }) ??
+      getRoomSummary?.(areaId, roomSummaryOpts(re)) ??
       ({
         areaId,
         areaName: re.name || areaId,
@@ -1184,7 +1184,7 @@ function EditableView(props: Props) {
               if (isRoomTile(activeItem.re.entity_id)) {
                 const areaId = roomAreaId(activeItem.re) ?? '';
                 const summary =
-                  props.getRoomSummary?.(areaId, { exclude: activeItem.re.exclude }) ??
+                  props.getRoomSummary?.(areaId, roomSummaryOpts(activeItem.re)) ??
                   ({
                     areaId,
                     areaName: activeItem.re.name || areaId,
@@ -1271,7 +1271,7 @@ function EditableView(props: Props) {
           }
           onClose={() => setAreaPicker(null)}
           onPick={(area) => {
-            layout.addTile(view.id, areaPicker.ri, areaPicker.ci, makeRoomTile(area.area_id, area.name));
+            layout.addTile(view.id, areaPicker.ri, areaPicker.ci, makeRoomTile(area.area_id));
             setAreaPicker(null);
           }}
         />
@@ -1285,6 +1285,11 @@ function EditableView(props: Props) {
             re={re}
             entities={entities}
             areas={props.areas}
+            roomEntityIds={
+              isRoomTile(re.entity_id)
+                ? props.getRoomSummary?.(roomAreaId(re) ?? '').entityIds
+                : undefined
+            }
             onChange={(patch) =>
               layout.updateTile(view.id, settings.ri, settings.ci, settings.ei, patch)
             }
@@ -1319,6 +1324,7 @@ function SortableTile({
   callHA,
   getHistory,
   onOpenSettings,
+  areas,
 }: { item: Item; rowIdx: number; colIdx: number; entIdx: number; onOpenSettings: () => void } & Props) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -1347,7 +1353,10 @@ function SortableTile({
   const room = isRoomTile(item.re.entity_id);
   const specialDef = special && !room ? SPECIAL_TILES[item.re.entity_id] : null;
   const name = room
-    ? item.re.name || roomAreaId(item.re) || item.re.entity_id
+    ? item.re.name ||
+      areas?.find((a) => a.area_id === roomAreaId(item.re))?.name ||
+      roomAreaId(item.re) ||
+      item.re.entity_id
     : special
       ? item.re.name || specialDef!.name
       : entity

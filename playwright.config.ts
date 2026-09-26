@@ -1,4 +1,10 @@
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { defineConfig, devices } from 'playwright/test';
+
+// Tests PUT /layout; keep that (and settings/connection) away from the repo's real files.
+const E2E_PORT = 4179;
+const e2eFile = (name: string) => join(tmpdir(), `glance-e2e-${name}.json`);
 
 /**
  * Playwright e2e config.
@@ -7,8 +13,9 @@ import { defineConfig, devices } from 'playwright/test';
  *   npm run build && npm run test:e2e
  *
  * The webServer block spins up `vite preview` automatically so you don't
- * need to start it manually. On CI it always waits for a fresh server;
- * locally it reuses an existing one on port 4173 if present.
+ * need to start it manually, on a dedicated port with its layout, settings
+ * and connection files in the OS temp dir (tests overwrite the layout).
+ * Locally it reuses an existing server on that port if present.
  */
 export default defineConfig({
   testDir: './tests/e2e',
@@ -27,7 +34,7 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: `http://localhost:${E2E_PORT}`,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     viewport: { width: 1280, height: 900 },
@@ -41,8 +48,13 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run preview -- --port 4173',
-    url: 'http://localhost:4173',
+    command: `npm run preview -- --port ${E2E_PORT} --strictPort`,
+    url: `http://localhost:${E2E_PORT}`,
+    env: {
+      LAYOUT_FILE: e2eFile('layouts'),
+      SETTINGS_FILE: e2eFile('settings'),
+      CONNECTION_FILE: e2eFile('connection'),
+    },
     // Reuse a running server locally to keep iteration fast.
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

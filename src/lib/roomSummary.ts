@@ -54,8 +54,8 @@ function unitOf(entity: HassEntity): string {
 
 /**
  * Entity IDs that belong to an area: entity.area_id match, or (when entity has
- * no area) the parent device's area_id match. Disabled/hidden registry rows
- * are skipped when present.
+ * no area) the parent device's area_id match. Disabled/hidden rows and
+ * diagnostic/config entities are skipped.
  */
 export function entityIdsInArea(
   areaId: string,
@@ -67,7 +67,7 @@ export function entityIdsInArea(
 
   const out: string[] = [];
   for (const e of entityReg) {
-    if (e.disabled_by || e.hidden_by) continue;
+    if (e.disabled_by || e.hidden_by || e.entity_category) continue;
     const area =
       e.area_id != null && e.area_id !== ''
         ? e.area_id
@@ -141,19 +141,21 @@ export function averageByDeviceClass(
 }
 
 /**
- * Prefer the area's configured temperature/humidity entity when present and
- * readable; otherwise fall back to `averageByDeviceClass`.
+ * Prefer an explicit override, then the area's configured temperature/humidity
+ * entity, when present and readable; otherwise fall back to `averageByDeviceClass`.
  */
 export function preferAreaDefaultSensor(
   area: AreaRegistryEntry,
   entities: HassEntity[],
   states: HassEntities,
   deviceClass: ClimateDeviceClass,
+  overrideId?: string,
 ): RoomClimateValue | undefined {
-  const preferredId =
+  const areaDefault =
     deviceClass === 'temperature' ? area.temperature_entity_id : area.humidity_entity_id;
 
-  if (preferredId) {
+  for (const preferredId of [overrideId, areaDefault]) {
+    if (!preferredId) continue;
     const preferred = states[preferredId];
     if (preferred && !isUnavailable(preferred.state)) {
       const n = parseNumericState(preferred);
@@ -174,9 +176,83 @@ export function preferAreaDefaultSensor(
   return averageByDeviceClass(entities, deviceClass);
 }
 
+/** Member entity_ids of an HA group entity (group helper / old-style group), else null. */
+export function groupMembers(entity: HassEntity | undefined): string[] | null {
+  // Scenes also expose `entity_id` (the entities they set), but aren't groups.
+  if (!entity || domainOf(entity.entity_id) === 'scene') return null;
+  const members = entity.attributes.entity_id;
+  return Array.isArray(members) && members.length && members.every((m) => typeof m === 'string')
+    ? (members as string[])
+    : null;
+}
+
+/**
+ * Groups in `ids` that expand (recursively) to at least one non-group entity also
+ * in `ids` — their members already represent them, so counting both double-counts.
+ * A group whose members all live elsewhere is kept as a stand-in.
+ */
+export function redundantGroups(ids: string[], states: HassEntities): Set<string> {
+  const inRoom = new Set(ids);
+  const leavesOf = (id: string, seen: Set<string>): string[] => {
+    const members = groupMembers(states[id]);
+    if (!members) return [id];
+    return members.flatMap((m) => {
+      if (seen.has(m)) return [];
+      seen.add(m);
+      return leavesOf(m, seen);
+    });
+  };
+  const out = new Set<string>();
+  for (const id of ids) {
+    if (!groupMembers(states[id])) continue;
+    if (leavesOf(id, new Set([id])).some((leaf) => leaf !== id && inRoom.has(leaf))) out.add(id);
+  }
+  return out;
+}
+
 /** Count light.* entities that are currently on (excludes already applied). */
 export function countLightsOn(entities: HassEntity[]): number {
   return entities.filter((e) => domainOf(e.entity_id) === 'light' && e.state === 'on').length;
+}
+
+/**
+ * Fold sub-entities under a main entity of the same device and domain when the
+ * sub-entity's name extends the main one ("Hexa Segment 001" under "Hexa").
+ * Returns main entities in input order, each with its folded children.
+ */
+export function collapseSubEntities(
+  ids: string[],
+  states: HassEntities,
+  deviceIds: Record<string, string>,
+): { id: string; children: string[] }[] {
+  const nameOf = (id: string) =>
+    String(states[id]?.attributes.friendly_name ?? id).trim().toLowerCase();
+  const parentOf = new Map<string, string>();
+  const byGroup = new Map<string, string[]>();
+  for (const id of ids) {
+    const device = deviceIds[id];
+    if (!device) continue;
+    const key = `${device}|${domainOf(id)}`;
+    const list = byGroup.get(key) ?? [];
+    list.push(id);
+    byGroup.set(key, list);
+  }
+  for (const list of byGroup.values()) {
+    const mains: string[] = [];
+    for (const id of [...list].sort((a, b) => nameOf(a).length - nameOf(b).length)) {
+      const main = mains.find((m) => nameOf(id).startsWith(`${nameOf(m)} `));
+      if (main) parentOf.set(id, main);
+      else mains.push(id);
+    }
+  }
+  const out = new Map<string, string[]>();
+  for (const id of ids) {
+    const parent = parentOf.get(id);
+    if (parent) continue;
+    out.set(id, []);
+  }
+  for (const [child, parent] of parentOf) out.get(parent)?.push(child);
+  return [...out].map(([id, children]) => ({ id, children }));
 }
 
 function safetyReason(deviceClass: string): RoomProblemReason | null {
@@ -190,14 +266,17 @@ function safetyReason(deviceClass: string): RoomProblemReason | null {
 /**
  * Strict v1 problem detection:
  * - critical: binary_sensor smoke/gas/moisture/problem when active (`on`)
- * - warning: light/lock/climate unavailable (when flagImportantUnavailable)
+ * - warning: light/lock/climate unavailable (when flagImportantUnavailable),
+ *   collapsed to one row per device so an offline multi-segment light counts once
  */
 export function detectRoomProblems(
   entities: HassEntity[],
   opts: Pick<RoomSummaryOptions, 'flagImportantUnavailable'> = {},
+  deviceOf: (entityId: string) => DeviceRegistryEntry | undefined = () => undefined,
 ): RoomProblem[] {
   const flagUnavailable = opts.flagImportantUnavailable !== false;
   const problems: RoomProblem[] = [];
+  const byDevice = new Map<string, RoomProblem>();
 
   for (const e of entities) {
     const domain = domainOf(e.entity_id);
@@ -212,11 +291,20 @@ export function detectRoomProblems(
     }
 
     if (flagUnavailable && IMPORTANT_UNAVAILABLE_DOMAINS.has(domain) && isUnavailable(e.state)) {
-      problems.push({
+      const device = deviceOf(e.entity_id);
+      const existing = device ? byDevice.get(device.id) : undefined;
+      if (existing) {
+        existing.count = (existing.count ?? 1) + 1;
+        existing.label = device!.name_by_user || device!.name || undefined;
+        continue;
+      }
+      const problem: RoomProblem = {
         entity_id: e.entity_id,
         reason: 'unavailable',
         severity: 'warning',
-      });
+      };
+      if (device) byDevice.set(device.id, problem);
+      problems.push(problem);
     }
   }
 
@@ -241,6 +329,27 @@ export function buildRoomSummary(input: BuildRoomSummaryInput): RoomSummary {
 
   const entities = entitiesInArea(areaId, entityReg, deviceReg, states, exclude);
   const entityIds = entities.map((e) => e.entity_id);
+  const devicesById = new Map(deviceReg.map((d) => [d.id, d]));
+  const deviceIdByEntity = new Map(entityReg.map((e) => [e.entity_id, e.device_id]));
+  const deviceOf = (id: string) => {
+    const deviceId = deviceIdByEntity.get(id);
+    return deviceId ? devicesById.get(deviceId) : undefined;
+  };
+  const deviceIds: Record<string, string> = {};
+  for (const id of entityIds) {
+    const deviceId = deviceIdByEntity.get(id);
+    if (deviceId) deviceIds[id] = deviceId;
+  }
+  const redundant = redundantGroups(entityIds, states);
+  const physical = entities.filter((e) => !redundant.has(e.entity_id));
+  const lightEntities =
+    opts?.collapseSubEntities === false
+      ? physical
+      : collapseSubEntities(
+          physical.map((e) => e.entity_id),
+          states,
+          deviceIds,
+        ).map((m) => states[m.id]!);
 
   if (!area) {
     return {
@@ -249,18 +358,23 @@ export function buildRoomSummary(input: BuildRoomSummaryInput): RoomSummary {
       lightsOn: 0,
       problems: [],
       entityIds,
+      deviceIds,
     };
   }
 
   return {
     areaId,
     areaName,
-    temperature: preferAreaDefaultSensor(area, entities, states, 'temperature'),
-    humidity: preferAreaDefaultSensor(area, entities, states, 'humidity'),
-    lightsOn: countLightsOn(entities),
-    problems: detectRoomProblems(entities, {
-      flagImportantUnavailable: opts?.flagImportantUnavailable,
-    }),
+    temperature: preferAreaDefaultSensor(area, entities, states, 'temperature', opts?.temperatureEntity),
+    humidity: preferAreaDefaultSensor(area, entities, states, 'humidity', opts?.humidityEntity),
+    lightsOn: countLightsOn(lightEntities),
+    problems: detectRoomProblems(
+      physical,
+      { flagImportantUnavailable: opts?.flagImportantUnavailable },
+      deviceOf,
+    ),
     entityIds,
+    deviceIds,
+    groupIds: [...redundant],
   };
 }

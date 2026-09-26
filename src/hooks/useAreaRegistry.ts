@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Connection, HassEntities, HassEntity } from 'home-assistant-js-websocket';
-import { fetchAreaRegistries } from '../lib/areaRegistry';
+import { fetchAreaRegistries, REGISTRY_UPDATE_EVENTS } from '../lib/areaRegistry';
 import { buildRoomSummary, entitiesInArea } from '../lib/roomSummary';
 import type {
   AreaRegistryEntry,
@@ -36,10 +36,12 @@ export interface UseAreaRegistryResult {
 /**
  * @param conn Active HA connection (null while disconnected).
  * @param states Live entity states from `subscribeEntities`.
+ * @param enabled Only fetch/subscribe while true (e.g. a Room tile exists or edit mode is open).
  */
 export function useAreaRegistry(
   conn: Connection | null,
   states: HassEntities,
+  enabled = true,
 ): UseAreaRegistryResult {
   const [areas, setAreas] = useState<AreaRegistryEntry[]>([]);
   const [devices, setDevices] = useState<DeviceRegistryEntry[]>([]);
@@ -69,15 +71,26 @@ export function useAreaRegistry(
 
   useEffect(() => {
     if (!conn) {
-      setAreas([]);
-      setDevices([]);
-      setEntityReg([]);
+      // Keep the last registries so tiles don't blank out during a reconnect.
       setReady(false);
-      setError(null);
       return;
     }
+    if (!enabled) return;
     void refresh();
-  }, [conn, refresh]);
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleRefresh = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => void refresh(), 1500);
+    };
+    const unsubs = REGISTRY_UPDATE_EVENTS.map((type) =>
+      conn.subscribeEvents(scheduleRefresh, type).catch(() => undefined),
+    );
+    return () => {
+      clearTimeout(timer);
+      for (const p of unsubs) void p.then((unsub) => unsub?.()).catch(() => undefined);
+    };
+  }, [conn, enabled, refresh]);
 
   const getEntitiesInArea = useCallback(
     (areaId: string, exclude: string[] = []): HassEntity[] =>

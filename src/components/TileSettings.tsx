@@ -4,7 +4,8 @@ import type { HassEntities } from 'home-assistant-js-websocket';
 import type { AreaRegistryEntry, RoomEntity, TileAction, TileSize, FlyoutConfig } from '../types';
 import { EntityPicker } from './DashboardView';
 import { DetailPanel } from './DetailPanel';
-import { isRoomTile, makeRoomTile, roomAreaId, roomShow } from '../lib/roomTile';
+import { isRoomTile, makeRoomTile, roomAreaId, roomDeviceDomains, roomShow, ROOM_DEVICE_DOMAINS } from '../lib/roomTile';
+import { entitySummary } from '../lib/entityInfo';
 
 const SIZES: TileSize[] = ['1x1', '2x1', '1x2', '2x2'];
 const ROOM_SIZES: TileSize[] = ['2x1', '2x2'];
@@ -53,6 +54,8 @@ interface Props {
   re: RoomEntity;
   entities: HassEntities;
   areas?: AreaRegistryEntry[];
+  /** Room tiles: every entity in the tile's area (before excludes). */
+  roomEntityIds?: string[];
   onChange: (patch: Partial<RoomEntity>) => void;
   onRemove: () => void;
   onClose: () => void;
@@ -61,9 +64,9 @@ interface Props {
 }
 
 /** Per-tile settings popover: name, icon, size, camera, linked entities, quick actions. */
-export function TileSettings({ re, entities, areas = [], onChange, onRemove, onClose, callHA, getHistory }: Props) {
+export function TileSettings({ re, entities, areas = [], roomEntityIds = [], onChange, onRemove, onClose, callHA, getHistory }: Props) {
   const { t } = useTranslation();
-  const [sub, setSub] = useState<'camera' | 'link' | 'artwork' | null>(null);
+  const [sub, setSub] = useState<'camera' | 'link' | 'artwork' | 'exclude' | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   // Local mirror for free-text fields so the caret doesn't jump to the end while
   // typing (the layout state round-trips asynchronously through the parent).
@@ -72,6 +75,20 @@ export function TileSettings({ re, entities, areas = [], onChange, onRemove, onC
   const room = isRoomTile(re.entity_id);
   const show = roomShow(re);
   const sizeOptions = room ? ROOM_SIZES : SIZES;
+  const excluded = re.exclude ?? [];
+  const deviceDomains = roomDeviceDomains(re);
+  const roomSensors = (deviceClass: string) =>
+    roomEntityIds
+      .map((id) => entities[id])
+      .filter(
+        (e): e is NonNullable<typeof e> =>
+          !!e && e.entity_id.startsWith('sensor.') && e.attributes.device_class === deviceClass,
+      )
+      .sort((a, b) =>
+        String(a.attributes.friendly_name ?? a.entity_id).localeCompare(
+          String(b.attributes.friendly_name ?? b.entity_id),
+        ),
+      );
 
   // Re-seed drafts when a different tile is opened.
   useEffect(() => {
@@ -89,7 +106,9 @@ export function TileSettings({ re, entities, areas = [], onChange, onRemove, onC
   }, [onClose]);
 
   const entity = entities[re.entity_id];
-  const fallbackName = (entity?.attributes.friendly_name as string) || re.entity_id;
+  const fallbackName = room
+    ? areas.find((a) => a.area_id === roomAreaId(re))?.name || re.entity_id
+    : (entity?.attributes.friendly_name as string) || re.entity_id;
   const links = re.links ?? [];
   const actions = re.actions ?? [];
 
@@ -200,12 +219,17 @@ export function TileSettings({ re, entities, areas = [], onChange, onRemove, onC
                   onChange={(e) => {
                     const area = areas.find((a) => a.area_id === e.target.value);
                     if (!area) return;
-                    const next = makeRoomTile(area.area_id, area.name);
+                    const next = makeRoomTile(area.area_id);
+                    const oldAreaName = areas.find((a) => a.area_id === roomAreaId(re))?.name;
+                    // Sensor picks and excludes belong to the old area's entities.
                     onChange({
                       entity_id: next.entity_id,
                       areaId: next.areaId,
-                      name: re.name || next.name,
                       type: 'room',
+                      name: re.name && re.name !== oldAreaName ? re.name : undefined,
+                      tempSource: undefined,
+                      humiditySource: undefined,
+                      exclude: undefined,
                     });
                   }}
                 >
@@ -239,6 +263,99 @@ export function TileSettings({ re, entities, areas = [], onChange, onRemove, onC
                       {t(label)}
                     </label>
                   ))}
+                  <label className="ts-check">
+                    <input
+                      type="checkbox"
+                      checked={re.flagUnavailable !== false}
+                      disabled={!show.problems}
+                      onChange={(e) =>
+                        onChange({ flagUnavailable: e.target.checked ? undefined : false })
+                      }
+                    />
+                    {t('room_flag_offline')}
+                  </label>
+                  <label className="ts-check">
+                    <input
+                      type="checkbox"
+                      checked={re.collapseSegments !== false}
+                      onChange={(e) =>
+                        onChange({ collapseSegments: e.target.checked ? undefined : false })
+                      }
+                    />
+                    {t('room_collapse_segments')}
+                  </label>
+                </div>
+              </div>
+
+              {(
+                [
+                  ['temperature', 'tempSource', 'room_temp_source'],
+                  ['humidity', 'humiditySource', 'room_humidity_source'],
+                ] as const
+              ).map(([deviceClass, field, label]) => (
+                <label key={field} className="ts-field">
+                  <span>{t(label)}</span>
+                  <select
+                    value={re[field] ?? ''}
+                    onChange={(e) => onChange({ [field]: e.target.value || undefined })}
+                  >
+                    <option value="">{t('room_source_auto')}</option>
+                    {roomSensors(deviceClass).map((s) => (
+                      <option key={s.entity_id} value={s.entity_id}>
+                        {`${(s.attributes.friendly_name as string) || s.entity_id} — ${entitySummary(s)}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+
+              <div className="ts-field">
+                <span>{t('room_device_domains')}</span>
+                <div className="ts-domain-row">
+                  {ROOM_DEVICE_DOMAINS.map((d) => {
+                    const on = deviceDomains.includes(d);
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        className={`ts-size-btn ${on ? 'active' : ''}`}
+                        aria-pressed={on}
+                        onClick={() =>
+                          onChange({
+                            deviceDomains: on
+                              ? deviceDomains.filter((x) => x !== d)
+                              : [...deviceDomains, d],
+                          })
+                        }
+                      >
+                        {t(`room_dom_${d}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="ts-field">
+                <span>{t('room_excluded')}</span>
+                <small className="ts-hint">{t('room_excluded_hint')}</small>
+                <div className="ts-chip-row">
+                  {excluded.map((id) => (
+                    <span className="ts-chip" key={id}>
+                      {nameOf(id)}
+                      <button
+                        onClick={() => {
+                          const next = excluded.filter((x) => x !== id);
+                          onChange({ exclude: next.length ? next : undefined });
+                        }}
+                        title={t('tile_close')}
+                      >
+                        <span className="mdi mdi-close" />
+                      </button>
+                    </span>
+                  ))}
+                  <button className="ts-add" onClick={() => setSub('exclude')}>
+                    <span className="mdi mdi-eye-off-outline" /> {t('room_exclude_add')}
+                  </button>
                 </div>
               </div>
             </>
@@ -525,6 +642,18 @@ export function TileSettings({ re, entities, areas = [], onChange, onRemove, onC
           title="Search entities to link…"
           onClose={() => setSub(null)}
           onPick={(id) => { onChange({ links: [...links, id] }); setSub(null); }}
+        />
+      )}
+      {sub === 'exclude' && (
+        <EntityPicker
+          entities={Object.fromEntries(
+            roomEntityIds.filter((id) => entities[id]).map((id) => [id, entities[id]!]),
+          )}
+          existing={new Set(excluded)}
+          domainFilter={[...new Set(roomEntityIds.map((id) => id.split('.')[0]!))]}
+          title={t('room_exclude_add')}
+          onClose={() => setSub(null)}
+          onPick={(id) => { onChange({ exclude: [...excluded, id] }); setSub(null); }}
         />
       )}
       {sub === 'artwork' && (

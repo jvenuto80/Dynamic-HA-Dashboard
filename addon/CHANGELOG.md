@@ -1,4 +1,30 @@
 # Changelog
+## 2.2.0
+
+- **New: Room Summary tiles ([#47](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/47),
+  [#48](https://github.com/jvenuto80/Dynamic-HA-Dashboard/issues/48)).** Add a
+  **Room Summary** card from the tile picker, pick a Home Assistant **area**, and
+  the tile shows that room at a glance — temperature, humidity, how many lights
+  are on, and a warning badge when something needs attention (smoke, gas, leak,
+  or an offline light / lock / thermostat). Tap it for a flyout listing the
+  room's devices grouped by type, with readable values; tap any row for its full
+  controls. Thanks to **[@efimofline](https://github.com/efimofline)** for the
+  feature.
+  - **Accurate by default:** diagnostic and config entities (chip temperatures,
+    restart buttons) are ignored; light **segments** (Govee / WLED) fold under
+    their main light; **light groups** aren't double-counted; and an offline
+    multi-segment light counts as one warning, not twenty.
+  - **Customizable per tile** (Edit mode → gear): which stats show, the
+    **temperature / humidity sensor** to use (otherwise HA's area sensor, then an
+    average), which **device types** the flyout lists, **excluded entities**,
+    offline warnings, and segment folding.
+  - **Stays current:** area, device and entity changes made in Home Assistant
+    show up automatically, and renaming an area renames its tile (unless you
+    gave the tile a custom name).
+  - **Light on big installs:** the area data is only loaded when a Room tile is
+    on the dashboard (or while editing), using Home Assistant's compact registry
+    list.
+
 ## 2.1.0
 
 - **New: Spanish (Español) — seven languages now ([#45](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/45)).** Glance now speaks

@@ -30,14 +30,13 @@ import { getSettings } from './settings';
 import { runNavTransition } from './lib/viewTransition';
 import { scenes, HA_TOKEN } from './config';
 import type { RoomEntity, DashView } from './types';
-import { roomAreaId } from './lib/roomTile';
+import { isRoomTile, roomAreaId, roomSummaryOpts } from './lib/roomTile';
 
 export default function App() {
   const { t } = useTranslation();
   const { entities, connected, error, callHA, getForecast, getHistory, getCalendarEvents, searchMusic, playMusic, getMaPlayers, converse } = useHomeAssistant();
   // Room Summary engine (#47) + tile UI (#48).
   const haConnection = useHaConnection();
-  const { areas, getRoomSummary } = useAreaRegistry(haConnection, entities);
   const layout = useLayout();
   const { views } = layout;
   // Remember the page across reloads so pull-to-refresh (which reloads the app)
@@ -64,6 +63,15 @@ export default function App() {
   // playing media tile that carries artwork.
   const [takeoverEntity, setTakeoverEntity] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  // Registries are large on big installs — only load them when a Room tile needs them.
+  const hasRoomTiles = useMemo(
+    () =>
+      views.some((v) =>
+        viewRows(v).some((r) => r.columns.some((c) => c.entities.some((e) => isRoomTile(e.entity_id)))),
+      ),
+    [views],
+  );
+  const { areas, getRoomSummary } = useAreaRegistry(haConnection, entities, hasRoomTiles || editing);
   const [showSettings, setShowSettings] = useState(false);
   const [showPages, setShowPages] = useState(false);
   const [scenePicker, setScenePicker] = useState(false);
@@ -441,9 +449,7 @@ export default function App() {
       {roomFlyout && (
         <RoomFlyout
           re={roomFlyout}
-          summary={getRoomSummary(roomAreaId(roomFlyout) || '', {
-            exclude: roomFlyout.exclude,
-          })}
+          summary={getRoomSummary(roomAreaId(roomFlyout) || '', roomSummaryOpts(roomFlyout))}
           entities={entities}
           onOpenDetail={(id) => {
             setRoomFlyout(null);

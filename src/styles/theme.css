@@ -6804,6 +6804,50 @@ button.noc-port:hover { transform: translateY(-1px); }
   font-size: 13px;
   color: var(--text-secondary);
 }
+.room-flyout-group + .room-flyout-group {
+  margin-top: 12px;
+}
+.room-flyout-subh {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.room-flyout-subh span {
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 4px;
+}
+.room-flyout-row.offline {
+  opacity: 0.55;
+}
+.room-flyout-more {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.18);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.room-flyout-state {
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.room-flyout-hidden {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.ts-domain-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ts-domain-row .ts-size-btn {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+}
 
 /* Screensaver agenda under the clock */
 .ss-agenda {

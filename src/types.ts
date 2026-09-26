@@ -62,6 +62,16 @@ export interface RoomEntity {
   show?: RoomShowOptions;
   /** entity_ids omitted from room lights / climate / problems (glance-style excludes). */
   exclude?: string[];
+  /** Room tile: sensor overriding the room temperature. */
+  tempSource?: string;
+  /** Room tile: sensor overriding the room humidity. */
+  humiditySource?: string;
+  /** Room tile: domains listed in the flyout's devices section ('other' = everything else). */
+  deviceDomains?: string[];
+  /** Room tile: flag offline lights/locks/thermostats as problems (default true). */
+  flagUnavailable?: boolean;
+  /** Room tile: fold segments/sub-entities under their main device entity (default true). */
+  collapseSegments?: boolean;
   type?: 'light' | 'switch' | 'cover' | 'lock' | 'climate' | 'camera' | 'media_player' | 'vacuum' | 'sensor' | 'binary_sensor' | 'scene' | 'script' | 'room';
 }
 
@@ -482,6 +492,8 @@ export interface EntityRegistryEntry {
   platform?: string;
   disabled_by?: string | null;
   hidden_by?: string | null;
+  /** 'diagnostic' | 'config' for housekeeping entities (chip temps, restart buttons). */
+  entity_category?: string | null;
 }
 
 export type RoomProblemSeverity = 'critical' | 'warning';
@@ -498,6 +510,10 @@ export interface RoomProblem {
   entity_id: string;
   reason: RoomProblemReason;
   severity: RoomProblemSeverity;
+  /** Device name when several of one device's entities were collapsed into this row. */
+  label?: string;
+  /** Number of entities this row stands for (>1 when collapsed per device). */
+  count?: number;
 }
 
 /** Averaged (or preferred) climate reading for a room. */
@@ -518,6 +534,10 @@ export interface RoomSummary {
   problems: RoomProblem[];
   /** entity_ids resolved into this area (after excludes). */
   entityIds: string[];
+  /** entity_id → device_id for entities that belong to a device. */
+  deviceIds?: Record<string, string>;
+  /** Group entities whose members are also in the room (not counted in stats). */
+  groupIds?: string[];
 }
 
 /** Options for `buildRoomSummary` / problem detection. */
@@ -529,4 +549,10 @@ export interface RoomSummaryOptions {
    * Defaults to true (strict-but-useful v1).
    */
   flagImportantUnavailable?: boolean;
+  /** Sensor to use for the room temperature instead of the area default / average. */
+  temperatureEntity?: string;
+  /** Sensor to use for the room humidity instead of the area default / average. */
+  humidityEntity?: string;
+  /** Fold light segments etc. under their main entity (default true). */
+  collapseSubEntities?: boolean;
 }

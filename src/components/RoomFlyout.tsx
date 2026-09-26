@@ -1,8 +1,20 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { HassEntities } from 'home-assistant-js-websocket';
+import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import type { RoomEntity, RoomSummary } from '../types';
-import { formatRoomFaceStats, roomShow } from '../lib/roomTile';
+import { formatRoomFaceStats, groupRoomDevices, roomDeviceDomains, roomShow } from '../lib/roomTile';
+import { entityIcon, entitySummary } from '../lib/entityInfo';
+import { smartFormatState } from '../lib/format';
+import { collapseSubEntities } from '../lib/roomSummary';
+
+const nameOf = (e: HassEntity | undefined, id: string) =>
+  (e?.attributes.friendly_name as string) || id;
+
+function displayState(e: HassEntity | undefined): string {
+  if (!e) return '—';
+  if (e.state === 'unavailable' || e.state === 'unknown') return e.state;
+  return smartFormatState(e) ?? entitySummary(e);
+}
 
 interface Props {
   re: RoomEntity;
@@ -22,6 +34,16 @@ export function RoomFlyout({ re, summary, entities, onOpenDetail, onClose }: Pro
   const name = re.name || summary.areaName || summary.areaId;
   const stats = formatRoomFaceStats(summary, show, (n) => t('room_lights_on', { count: n }));
   const problems = show.problems ? summary.problems : [];
+  const folded =
+    re.collapseSegments === false
+      ? summary.entityIds.map((id) => ({ id, children: [] as string[] }))
+      : collapseSubEntities(summary.entityIds, entities, summary.deviceIds ?? {});
+  const childCount = new Map(folded.map((f) => [f.id, f.children.length]));
+  const groupIds = new Set(summary.groupIds ?? []);
+  const { groups, hidden } = groupRoomDevices(
+    folded.map((f) => f.id),
+    roomDeviceDomains(re),
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -96,9 +118,14 @@ export function RoomFlyout({ re, summary, entities, onOpenDetail, onClose }: Pro
                     >
                       <span className="mdi mdi-alert" />
                       <span className="room-flyout-entity">
-                        {(entities[p.entity_id]?.attributes.friendly_name as string) || p.entity_id}
+                        {p.label ||
+                          (entities[p.entity_id]?.attributes.friendly_name as string) ||
+                          p.entity_id}
                       </span>
-                      <span className="room-flyout-reason">{reasonLabel(p.reason)}</span>
+                      <span className="room-flyout-reason">
+                        {reasonLabel(p.reason)}
+                        {p.count && p.count > 1 ? ` ×${p.count}` : ''}
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -108,28 +135,52 @@ export function RoomFlyout({ re, summary, entities, onOpenDetail, onClose }: Pro
 
           <section className="room-flyout-section">
             <h4 className="room-flyout-h">{t('room_sum_devices')}</h4>
-            {summary.entityIds.length === 0 ? (
+            {groups.length === 0 ? (
               <p className="room-flyout-empty">{t('room_empty_devices')}</p>
             ) : (
-              <ul className="room-flyout-list">
-                {summary.entityIds.map((id) => {
-                  const ent = entities[id];
-                  const label = (ent?.attributes.friendly_name as string) || id;
-                  const state = ent?.state ?? '—';
-                  return (
-                    <li key={id}>
-                      <button
-                        type="button"
-                        className="room-flyout-row"
-                        onClick={() => onOpenDetail(id)}
-                      >
-                        <span className="room-flyout-entity">{label}</span>
-                        <span className="room-flyout-state">{state}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              groups.map(({ domain, ids }) => (
+                <div key={domain} className="room-flyout-group">
+                  <h5 className="room-flyout-subh">
+                    {t(`room_dom_${domain}`)} <span>{ids.length}</span>
+                  </h5>
+                  <ul className="room-flyout-list">
+                    {ids
+                      .map((id) => ({ id, ent: entities[id] }))
+                      .sort(
+                        (a, b) =>
+                          Number(groupIds.has(b.id)) - Number(groupIds.has(a.id)) ||
+                          nameOf(a.ent, a.id).localeCompare(nameOf(b.ent, b.id)),
+                      )
+                      .map(({ id, ent }) => {
+                        const offline = !ent || ent.state === 'unavailable' || ent.state === 'unknown';
+                        return (
+                          <li key={id}>
+                            <button
+                              type="button"
+                              className={`room-flyout-row${offline ? ' offline' : ''}`}
+                              onClick={() => onOpenDetail(id)}
+                            >
+                              <span className={`mdi ${entityIcon(id, ent?.state ?? '')}`} />
+                              <span className="room-flyout-entity">{nameOf(ent, id)}</span>
+                              {groupIds.has(id) && (
+                                <span className="room-flyout-more">{t('room_group_badge')}</span>
+                              )}
+                              {(childCount.get(id) ?? 0) > 0 && (
+                                <span className="room-flyout-more">+{childCount.get(id)}</span>
+                              )}
+                              <span className="room-flyout-state">{displayState(ent)}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </div>
+              ))
+            )}
+            {hidden > 0 && (
+              <p className="room-flyout-empty room-flyout-hidden">
+                {t('room_hidden_count', { count: hidden })}
+              </p>
             )}
           </section>
         </div>
