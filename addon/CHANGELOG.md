@@ -1,4 +1,21 @@
 # Changelog
+## 2.2.1
+
+- **New: alarm panel card.** Add any `alarm_control_panel` (Alarmo, a
+  UniFi NVR alarm, Ring, Envisalink, …) from the tile picker. The tile shows the
+  panel's state with a shield icon — green when armed, amber while arming or
+  pending, pulsing red when triggered. Tap it to arm (**Home / Away / Night /
+  Vacation / Custom bypass** — only the modes your panel supports) or disarm. A
+  keypad (or text field) appears automatically when the panel uses a code, and
+  **Trigger** needs a second tap so a panic alarm can't fire by accident.
+
+- **Fixed: profile pictures showed as broken images behind a reverse proxy.**
+  When Glance was opened through a reverse proxy (e.g. Nginx Proxy Manager in
+  front of the app's port), people's avatars failed to load: the proxy adds an
+  `X-Forwarded-For` header that Home Assistant rejects from the app. Avatars now
+  load straight from Home Assistant, like camera and album art already did, and
+  fall back to the person's initial if a picture can't load.
+
 ## 2.2.0
 
 - **New: Room Summary tiles ([#50](https://github.com/jvenuto80/Dynamic-HA-Dashboard/pull/50);

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { entityIcon, entitySummary, isActiveState, resolveArtwork } from '../lib/entityInfo';
+import { alarmStateKey, alarmTone } from '../lib/alarm';
 import { useArtworkColor } from '../hooks/useArtworkColor';
 import { runViewTransition, viewTransitionsAvailable } from '../lib/viewTransition';
 import { useTilt } from '../hooks/useTilt';
@@ -76,6 +77,7 @@ function statusSignature(entity: HassEntity): string | null {
     case 'script':
     case 'button':
     case 'scene':
+    case 'alarm_control_panel':
       return entity.state;
     case 'climate':
       // Mode changes and target-temperature changes are both deliberate acts.
@@ -426,6 +428,10 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
   let secClass = '';
   if (domain === 'lock') {
     secClass = entity.state === 'locked' ? 'sec-secure' : entity.state === 'unlocked' ? 'sec-open' : '';
+  } else if (domain === 'alarm_control_panel') {
+    const tone = alarmTone(entity.state);
+    secClass =
+      tone === 'armed' ? 'sec-secure' : tone === 'triggered' ? 'sec-open alarm-triggered' : tone === 'transition' ? 'alarm-transition' : '';
   } else if (domain === 'cover') {
     const deviceClass = entity.attributes.device_class as string | undefined;
     if (deviceClass === 'garage' || deviceClass === 'door' || deviceClass === 'gate') {
@@ -622,7 +628,13 @@ export function DeviceTile({ entity, name, callHA, onToggle, onOpenDetail, onOpe
       </div>
       <div className="tile-info">
         <div className="tile-name">{name}</div>
-        <div className="tile-sub">{slideEnabled && dragPct != null ? `${dragPct}%` : entitySummary(entity)}</div>
+        <div className="tile-sub">
+          {slideEnabled && dragPct != null
+            ? `${dragPct}%`
+            : domain === 'alarm_control_panel'
+              ? t(alarmStateKey(entity.state))
+              : entitySummary(entity)}
+        </div>
       </div>
       {domain === 'media_player' && entity.state === 'playing' && (
         <div className="tile-eq" aria-hidden="true">

@@ -6,6 +6,16 @@ import { useHaTempUnit } from '../hooks/useHomeAssistant';
 import { resolveArtwork } from '../lib/entityInfo';
 import { useArtworkColor } from '../hooks/useArtworkColor';
 import type { TileAction, FlyoutConfig } from '../types';
+import {
+  alarmCodeFormat,
+  alarmIcon,
+  alarmNeedsCode,
+  alarmStateKey,
+  alarmSupportsTrigger,
+  alarmTone,
+  supportedAlarmModes,
+  type AlarmMode,
+} from '../lib/alarm';
 
 interface Props {
   entityId: string | null;
@@ -168,7 +178,7 @@ export function DetailPanel({
               </div>
             )}
 
-            {domain !== 'climate' && domain !== 'vacuum' && (!cfg.hideState || editing) && (
+            {domain !== 'climate' && domain !== 'vacuum' && domain !== 'alarm_control_panel' && (!cfg.hideState || editing) && (
               <div className={`glass-card flyout-section ${cfg.hideState ? 'flyout-dim' : ''}`} style={{ marginBottom: 16, textAlign: 'center', padding: 24, position: 'relative' }}>
                 {editing && <EyeToggle hidden={!!cfg.hideState} onClick={() => toggle('hideState')} />}
                 <div style={{ fontSize: 48, marginBottom: 8, color: getStateColor(entity.state, domain) }}>
@@ -182,9 +192,10 @@ export function DetailPanel({
 
             {(!cfg.hideControls || editing) && (
               <div className={`flyout-section ${cfg.hideControls ? 'flyout-dim' : ''}`} style={{ position: 'relative' }}>
-                {editing && (['light', 'climate', 'cover', 'vacuum', 'media_player'].includes(domain)) && (
+                {editing && (['light', 'climate', 'cover', 'vacuum', 'media_player', 'alarm_control_panel'].includes(domain)) && (
                   <EyeToggle hidden={!!cfg.hideControls} onClick={() => toggle('hideControls')} />
                 )}
+                {domain === 'alarm_control_panel' && <AlarmDetail entity={entity} entityId={entityId!} callHA={callHA} />}
                 {domain === 'light' && <LightDetail entity={entity} entityId={entityId!} callHA={callHA} />}
                 {domain === 'climate' && <ClimateDetail entity={entity} entityId={entityId!} callHA={callHA} />}
                 {domain === 'cover' && <CoverDetail entity={entity} entityId={entityId!} callHA={callHA} reverse={!!reverseSlider} />}
@@ -293,6 +304,115 @@ interface EntityProps {
   entity: HassEntities[string];
   entityId: string;
   callHA: CallHA;
+}
+
+const KEYPAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
+
+function AlarmDetail({ entity, entityId, callHA }: EntityProps) {
+  const { t } = useTranslation();
+  const [code, setCode] = useState('');
+  const [confirmTrigger, setConfirmTrigger] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const state = entity.state;
+  const tone = alarmTone(state);
+  const codeFormat = alarmCodeFormat(entity);
+  const modes = supportedAlarmModes(entity);
+  const armed = tone === 'armed' || tone === 'triggered' || state === 'arming' || state === 'pending';
+
+  // Drop a typed code once the panel changes state so it can't be reused by accident.
+  useEffect(() => {
+    setCode('');
+    setConfirmTrigger(false);
+  }, [state]);
+
+  const run = async (action: AlarmMode | 'disarm' | 'trigger') => {
+    if (alarmNeedsCode(entity, action) && !code) {
+      setError(t('alarm_code_required'));
+      return;
+    }
+    setError(null);
+    try {
+      await callHA('alarm_control_panel', `alarm_${action}`, code ? { code } : undefined, { entity_id: entityId });
+    } catch (e) {
+      // HA rejects with `{ code, message }` (e.g. an invalid alarm code), not an Error.
+      const msg = (e as { message?: unknown } | null)?.message;
+      setError(typeof msg === 'string' && msg ? msg : t('alarm_failed'));
+    }
+    setCode('');
+    setConfirmTrigger(false);
+  };
+
+  return (
+    <div className={`glass-card alarm-detail alarm-${tone}`}>
+      <div className="alarm-status">
+        <span className={`mdi ${alarmIcon(state)} alarm-status-icon`} />
+        <div className="alarm-status-label">{t(alarmStateKey(state))}</div>
+        {typeof entity.attributes.changed_by === 'string' && entity.attributes.changed_by && (
+          <div className="alarm-changed-by">{t('alarm_changed_by', { name: entity.attributes.changed_by })}</div>
+        )}
+      </div>
+
+      {codeFormat === 'number' && (
+        <>
+          <div className="alarm-code-dots" aria-label={t('alarm_code')}>
+            {code ? '•'.repeat(code.length) : <span className="alarm-code-hint">{t('alarm_code')}</span>}
+          </div>
+          <div className="alarm-keypad">
+            {KEYPAD.map((k) => (
+              <button
+                key={k}
+                type="button"
+                className={`alarm-key ${k.length > 1 ? 'alarm-key-fn' : ''}`}
+                aria-label={k === 'back' ? t('alarm_backspace') : k === 'clear' ? t('alarm_clear') : k}
+                onClick={() =>
+                  setCode((c) => (k === 'back' ? c.slice(0, -1) : k === 'clear' ? '' : (c + k).slice(0, 12)))
+                }
+              >
+                {k === 'back' ? <span className="mdi mdi-backspace-outline" /> : k === 'clear' ? 'C' : k}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {codeFormat === 'text' && (
+        <input
+          className="alarm-code-input"
+          type="password"
+          autoComplete="off"
+          placeholder={t('alarm_code')}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+      )}
+
+      <div className="alarm-actions">
+        {armed ? (
+          <button type="button" className="mode-btn alarm-btn alarm-disarm" onClick={() => run('disarm')}>
+            <span className="mdi mdi-shield-off-outline" /> {t('alarm_disarm')}
+          </button>
+        ) : (
+          modes.map((m) => (
+            <button key={m.mode} type="button" className="mode-btn alarm-btn" onClick={() => run(m.mode)}>
+              <span className={`mdi ${m.icon}`} /> {t(`alarm_${m.mode}`)}
+            </button>
+          ))
+        )}
+      </div>
+
+      {alarmSupportsTrigger(entity) && tone !== 'triggered' && (
+        <button
+          type="button"
+          className={`alarm-trigger ${confirmTrigger ? 'confirm' : ''}`}
+          onClick={() => (confirmTrigger ? run('trigger') : setConfirmTrigger(true))}
+        >
+          <span className="mdi mdi-alarm-light-outline" />{' '}
+          {confirmTrigger ? t('alarm_trigger_confirm') : t('alarm_trigger')}
+        </button>
+      )}
+
+      {error && <div className="alarm-error">{error}</div>}
+    </div>
+  );
 }
 
 function LightDetail({ entity, entityId, callHA }: EntityProps) {
