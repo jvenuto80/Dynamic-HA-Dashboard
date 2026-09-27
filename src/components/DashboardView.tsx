@@ -1461,7 +1461,7 @@ function SortableTile({
 const PICKER_DOMAINS = [
   'light', 'switch', 'fan', 'cover', 'lock', 'climate', 'media_player',
   'input_boolean', 'scene', 'script', 'button', 'sensor', 'binary_sensor',
-  'vacuum', 'select', 'number',
+  'vacuum', 'select', 'number', 'alarm_control_panel',
 ];
 
 export function EntityPicker({

@@ -1932,6 +1932,118 @@ body::after {
   color: #ff7a86;
 }
 
+/* Alarm panel: amber while arming/pending, pulsing red when triggered */
+.tile.alarm-transition {
+  border-color: rgba(245, 166, 35, 0.35);
+}
+.tile.alarm-transition .tile-icon {
+  color: #f5b041;
+}
+.tile.alarm-triggered {
+  animation: alarm-pulse 1.2s ease-in-out infinite;
+}
+@keyframes alarm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 80, 90, 0.0), 0 10px 26px rgba(0, 0, 0, 0.26); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 80, 90, 0.45), 0 10px 26px rgba(0, 0, 0, 0.26); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile.alarm-triggered { animation: none; }
+}
+
+.alarm-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+}
+.alarm-status {
+  text-align: center;
+}
+.alarm-status-icon {
+  font-size: 52px;
+  color: var(--text-muted);
+}
+.alarm-armed .alarm-status-icon { color: var(--accent-green); }
+.alarm-triggered .alarm-status-icon { color: var(--accent-red); }
+.alarm-transition .alarm-status-icon { color: #f5b041; }
+.alarm-status-label {
+  font-size: 22px;
+  font-weight: 600;
+}
+.alarm-changed-by {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.alarm-code-dots {
+  min-height: 28px;
+  font-size: 24px;
+  letter-spacing: 6px;
+}
+.alarm-code-hint {
+  font-size: 13px;
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+.alarm-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 64px);
+  gap: 10px;
+}
+.alarm-key {
+  height: 56px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.alarm-key:active {
+  background: rgba(var(--accent-rgb), 0.25);
+}
+.alarm-key-fn {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+.alarm-code-input {
+  width: 100%;
+  max-width: 260px;
+  text-align: center;
+}
+.alarm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.alarm-btn .mdi {
+  margin-right: 4px;
+}
+.alarm-btn.alarm-disarm {
+  border-color: rgba(60, 220, 130, 0.35);
+}
+.alarm-trigger {
+  border: 1px solid rgba(255, 90, 100, 0.30);
+  background: transparent;
+  color: #ff7a86;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.alarm-trigger.confirm {
+  background: rgba(255, 80, 90, 0.18);
+  font-weight: 600;
+}
+.alarm-error {
+  font-size: 13px;
+  color: #ff7a86;
+  text-align: center;
+}
+
 /* Embedded live camera thumbnail filling the tile's empty space */
 .tile-cam {
   position: absolute;

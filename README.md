@@ -68,7 +68,7 @@ sidebar gives way to **swipe navigation** and **pull-to-refresh**.
 
 - 🧩 **Editable tile / room layout** — drag-and-drop tiles, multiple pages, per-tile settings. No JSON editing. → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features)
 - 🏠 **Room Summary tiles** — pick a Home Assistant area and see its temperature, humidity, lights on and any problems at a glance, with a device flyout. → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features#room-summary-tiles)
-- 🎚️ **Rich device controls** — slide-to-dim lights, slide-to-position covers, climate, locks, scenes, scripts.
+- 🎚️ **Rich device controls** — slide-to-dim lights, slide-to-position covers, climate, locks, alarm panels (arm/disarm with keypad), scenes, scripts.
 - 🗣️ **Voice & Assist** — a floating mic button opens **Home Assistant Assist**; speak or type a command and your conversation agent answers, inline. → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features#voice--assist)
 - 🎵 **Media + Music Assistant** — auto now-playing page, device de-dup, library search and cast. → [Features](https://github.com/jvenuto80/Dynamic-HA-Dashboard/wiki/Features#media--music-assistant)
 - 🧹 **Vacuum control center** — live map, room select, suction & mode (built for Dreame, degrades gracefully).

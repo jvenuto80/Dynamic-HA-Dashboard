@@ -1,5 +1,6 @@
 import type { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 import { HA_URL } from '../config';
+import { alarmIcon } from './alarm';
 
 const ACTIVE_STATES = ['on', 'open', 'unlocked', 'playing', 'cleaning', 'home', 'heat', 'cool'];
 
@@ -9,6 +10,7 @@ export function isActiveState(state: string): boolean {
 
 export function entityIcon(entityId: string, state: string): string {
   const domain = entityId.split('.')[0];
+  if (domain === 'alarm_control_panel') return alarmIcon(state);
   const icons: Record<string, [string, string]> = {
     light: ['mdi-lightbulb-outline', 'mdi-lightbulb-on'],
     switch: ['mdi-toggle-switch-off-outline', 'mdi-toggle-switch'],
@@ -76,6 +78,10 @@ export function entitySummary(entity: HassEntity): string {
     }
     case 'binary_sensor':
       return state === 'on' ? 'Detected' : 'Clear';
+    case 'alarm_control_panel': {
+      const s = state.replace(/_/g, ' ');
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
     default:
       return state;
   }
