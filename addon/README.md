@@ -29,7 +29,8 @@ Then find **Glance — HA Dashboard** in the store, **Install**, **Start**, and
 
 ## First-time setup
 
-The app does **not** store your Home Assistant token. On first open:
+By default, the app stores your Home Assistant token only in your browser.
+Server-side storage is opt-in. On first open:
 
 1. Click the **gear / Settings** icon in the dashboard.
 2. Under **Home Assistant**, enter your server URL and a **Long-Lived Access
@@ -39,8 +40,9 @@ The app does **not** store your Home Assistant token. On first open:
      reliable choice. The port is **8123** (HA's normal port).
 3. Click **Test connection**, then **Save & reload**.
 
-The token is kept in that browser's `localStorage` only — it is never written to
-disk or baked into the image.
+Unless you enable **Remember connection on this server**, the token stays in
+that browser's `localStorage` and is not written to the app's `/data` volume or
+baked into the image.
 
 > **Tip — set it up once for all your devices:** turn on **Remember connection
 > on this server** in Settings. That stores the URL + token on the app's
@@ -57,6 +59,10 @@ disk or baked into the image.
 > network, so only turn it on if you trust your LAN (and keep the port off the
 > internet).
 
+The default connection-storage gate verifies both the Supervisor's source
+address and its authenticated user header. A user header sent directly to the
+host port does not authenticate that request.
+
 ## Your layout
 
 - A generic starter layout is seeded on first run so you have something to edit.
@@ -69,6 +75,9 @@ disk or baked into the image.
   choice applies instantly and is remembered per device.
 - Your customizations (views, tiles, and at-a-glance buttons) are saved to the
   app's persistent `/data/layouts.json` and survive restarts and updates.
+- If a save or reset fails, **Layout not saved** stays visible, including after
+  leaving edit mode. Use **Retry save** before closing or reloading the page;
+  failed changes remain in memory until they are successfully saved.
 
 ### Bringing an existing layout over
 
@@ -94,6 +103,11 @@ If you already built a dashboard on another device:
 
 ## Notes
 
+- **Custom JSON APIs:** use the final HTTP/HTTPS API URL. The server-side proxy
+  does not follow redirects, and it blocks loopback, link-local/metadata, and
+  Supervisor-network addresses, including IPv4-mapped IPv6 forms. DNS addresses
+  are checked once and pinned for the outbound connection. Ordinary LAN APIs
+  remain supported.
 - **Remote access just works through Ingress.** When you open Glance from the
   Home Assistant sidebar, it connects to HA at the *same address you opened it
   with* — so reaching HA from outside your network (Nabu Casa, a reverse proxy,
@@ -150,11 +164,12 @@ What changes when you set a direct port:
   wall displays) can auto-launch reliably — no long Ingress token path.
 - **No Home Assistant authentication on that port.** Anyone who can reach that
   `IP:port` on your network sees the dashboard UI with no login prompt.
-- **Your HA data stays protected by the token.** Glance stores no secrets; it
-  only connects to HA after a long-lived token is entered in **Settings** (saved
-  per-browser in `localStorage`). A fresh device hitting the port sees an
-  unconfigured dashboard until a token is added; your already-set-up kiosk keeps
-  showing live data because its token lives in that browser.
+- **Your HA data stays protected by the token.** By default, Glance connects to
+  HA only after a long-lived token is entered in **Settings** (saved per-browser
+  in `localStorage`). A fresh device hitting the port needs its own token unless
+  you explicitly enable both server-side connection storage and
+  `share_connection_on_lan`; that combination makes the stored token available
+  to anyone who can reach the port.
 - **Keep the port on your LAN.** Do **not** port-forward it to the internet or
   put it behind an unauthenticated reverse proxy — use Ingress for remote access.
 - **Both can run at once.** Setting a host port doesn't disable the Ingress

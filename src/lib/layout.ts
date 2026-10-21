@@ -3,7 +3,7 @@ import type { DashRow, DashSection, DashView } from '../types';
 /** Normalize a view to its row/column model.
  *  Falls back to one full-width column per legacy section. */
 export function viewRows(view: DashView): DashRow[] {
-  if (view.rows && view.rows.length) return view.rows;
+  if (Array.isArray(view.rows)) return view.rows;
   return (view.sections ?? []).map((s) => ({ columns: [{ title: s.title, entities: s.entities }] }));
 }
 

@@ -381,6 +381,10 @@ export default function App() {
                     <>
                       <span className="mdi mdi-loading mdi-spin" /> {t('app_saving')}
                     </>
+                  ) : layout.saveError ? (
+                    <>
+                      <span className="mdi mdi-alert-circle-outline" /> {t('app_save_failed')}
+                    </>
                   ) : (
                     <>
                       <span className="mdi mdi-check-circle-outline" /> {t('app_saved')}
@@ -406,6 +410,16 @@ export default function App() {
             )}
           </div>
         </div>
+
+        {layout.saveError && (
+          <div className="layout-save-error" role="alert">
+            <span className="mdi mdi-alert-circle-outline" aria-hidden="true" />
+            <span>{t('app_save_failed')}</span>
+            <button className="toolbar-btn" onClick={layout.retrySave} title={layout.saveError}>
+              <span className="mdi mdi-refresh" aria-hidden="true" /> {t('app_retry_save')}
+            </button>
+          </div>
+        )}
 
         {booting ? (
           <SkeletonGrid view={view} />

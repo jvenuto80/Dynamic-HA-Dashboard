@@ -20,7 +20,10 @@ export function useLayout() {
   const [views, setViews] = useState<DashView[]>(() => withRows(clone(defaultViews)));
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSequence = useRef(0);
+  const pendingSave = useRef<DashView[] | null | undefined>(undefined);
 
   // Load saved layout (falls back to defaults on 204/error).
   useEffect(() => {
@@ -45,26 +48,37 @@ export function useLayout() {
     };
   }, []);
 
-  const persist = useCallback((next: DashView[]) => {
+  const persist = useCallback((next: DashView[] | null) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    const sequence = ++saveSequence.current;
     setSaving(true);
+    setSaveError(null);
     // Rebuild the legacy `sections` from the canonical `rows` before saving so
     // the on-disk file never carries stale sections (edits only touch `rows`).
-    const payload = syncSections(next);
+    const payload = next === null ? null : syncSections(next);
+    pendingSave.current = payload;
     saveTimer.current = setTimeout(async () => {
       try {
-        await fetch(ENDPOINT, {
+        const res = await fetch(ENDPOINT, payload === null ? { method: 'DELETE' } : {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-      } catch {
-        /* ignore */
+        if (!res.ok) throw new Error(`Layout save failed (HTTP ${res.status}).`);
+        if (saveSequence.current === sequence) pendingSave.current = undefined;
+      } catch (err) {
+        if (saveSequence.current === sequence) {
+          setSaveError(err instanceof Error ? err.message : 'Layout save failed.');
+        }
       } finally {
-        setSaving(false);
+        if (saveSequence.current === sequence) setSaving(false);
       }
     }, 500);
   }, []);
+
+  const retrySave = useCallback(() => {
+    if (pendingSave.current !== undefined) persist(pendingSave.current);
+  }, [persist]);
 
   /** Apply a mutation to one view, update state, and queue a save. */
   const mutateView = useCallback(
@@ -586,10 +600,8 @@ export function useLayout() {
 
   const resetLayout = useCallback(() => {
     setViews(withRows(clone(defaultViews)));
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    setSaving(true);
-    fetch(ENDPOINT, { method: 'DELETE' }).finally(() => setSaving(false));
-  }, []);
+    persist(null);
+  }, [persist]);
 
   /** Replace the layout with a minimal, generic starter so a new user can build
    *  from a clean slate with no code: one empty Home page plus a zero-config
@@ -682,6 +694,8 @@ export function useLayout() {
     views,
     loaded,
     saving,
+    saveError,
+    retrySave,
     setRows,
     addRow,
     removeRow,

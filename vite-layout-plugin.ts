@@ -1,8 +1,10 @@
 import type { Plugin, ViteDevServer } from 'vite';
-import type { IncomingMessage } from 'node:http';
+import { request as httpRequest, type IncomingMessage } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { lookup } from 'node:dns/promises';
+import type { LookupAddress } from 'node:dns';
 import { isIP } from 'node:net';
 
 /**
@@ -13,8 +15,14 @@ import { isIP } from 'node:net';
  * reachable through an unauthenticated proxy from inside the HA network.
  */
 function isBlockedIp(addr: string): boolean {
-  // Unwrap IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1) so it's checked as IPv4.
-  const ip = addr.toLowerCase().startsWith('::ffff:') ? addr.slice(7) : addr;
+  let ip = addr.toLowerCase();
+  if (isIP(ip) === 6) {
+    ip = new URL(`http://[${ip}]/`).hostname.slice(1, -1);
+    if (ip.startsWith('::ffff:')) {
+      const [high, low] = ip.slice(7).split(':').map((part) => parseInt(part, 16));
+      ip = [high >>> 8, high & 255, low >>> 8, low & 255].join('.');
+    }
+  }
 
   if (isIP(ip) === 4) {
     const [a, b, c] = ip.split('.').map(Number);
@@ -25,26 +33,56 @@ function isBlockedIp(addr: string): boolean {
     return false;
   }
 
-  const v6 = ip.toLowerCase();
-  if (v6 === '::1' || v6 === '::') return true; // loopback / unspecified
-  if (v6.startsWith('fe80')) return true; // link-local
+  if (isIP(ip) !== 6) return true;
+  if (ip === '::1' || ip === '::') return true; // loopback / unspecified
+  if ((parseInt(ip.split(':')[0], 16) & 0xffc0) === 0xfe80) return true; // link-local
   // ULA (fc00::/7) is intentionally allowed — LAN IPv6 uses it.
   return false;
 }
 
-/** Resolve a hostname and return true if any resolved address is blocked, or if
- *  it can't be resolved (fail closed). Literal 'supervisor'/'localhost' are
+/** Resolve a hostname and retain only fully checked address sets, or return
+ *  null if blocked/unresolvable. Literal 'supervisor'/'localhost' are
  *  rejected outright. */
-async function hostIsBlocked(hostname: string): Promise<boolean> {
+async function resolveAllowedHost(hostname: string): Promise<LookupAddress[] | null> {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (host === 'supervisor' || host === 'localhost') return true;
-  if (isIP(host)) return isBlockedIp(host);
+  if (host === 'supervisor' || host === 'localhost') return null;
+  const family = isIP(host);
+  if (family) return isBlockedIp(host) ? null : [{ address: host, family }];
   try {
     const results = await lookup(host, { all: true });
-    return results.length === 0 || results.some((r) => isBlockedIp(r.address));
+    return results.length === 0 || results.some((result) => isBlockedIp(result.address)) ? null : results;
   } catch {
-    return true; // unresolvable — don't proxy
+    return null; // unresolvable — don't proxy
   }
+}
+
+function fetchProxyJson(target: URL, addresses: LookupAddress[], headers: Record<string, string>, signal: AbortSignal) {
+  return new Promise<{ status: number; text: string }>((resolve, reject) => {
+    const request = target.protocol === 'https:' ? httpsRequest : httpRequest;
+    const upstream = request(target, {
+      headers,
+      signal,
+      lookup: (_hostname, options, callback) => {
+        if (options.all) callback(null, addresses);
+        else callback(null, addresses[0].address, addresses[0].family);
+      },
+    }, (response) => {
+      const chunks: Buffer[] = [];
+      let bytes = 0;
+      response.on('error', reject);
+      response.on('data', (chunk: Buffer) => {
+        bytes += chunk.length;
+        if (bytes > PROXY_MAX_BYTES) {
+          response.destroy(new Error('upstream response too large'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      response.on('end', () => resolve({ status: response.statusCode ?? 502, text: Buffer.concat(chunks).toString('utf8') }));
+    });
+    upstream.on('error', reject);
+    upstream.end();
+  });
 }
 
 function headerValue(req: IncomingMessage, name: string): string {
@@ -56,6 +94,8 @@ function headerValue(req: IncomingMessage, name: string): string {
  *  requests. Empty when the request didn't arrive through ingress (e.g. the
  *  optional direct host port), which we treat as unauthenticated. */
 function ingressUserId(req: IncomingMessage): string {
+  const address = req.socket?.remoteAddress;
+  if (address !== '172.30.32.2' && address !== '::ffff:172.30.32.2') return '';
   return headerValue(req, 'x-remote-user-id');
 }
 
@@ -198,7 +238,8 @@ export function layoutApi(): Plugin {
         }
         // SSRF guard: never let this unauthenticated proxy reach loopback,
         // link-local/metadata, or the Supervisor/hassio internal network.
-        if (await hostIsBlocked(parsedUrl.hostname)) {
+        const addresses = await resolveAllowedHost(parsedUrl.hostname);
+        if (!addresses) {
           res.statusCode = 403;
           res.end(JSON.stringify({ error: 'target host not allowed' }));
           return;
@@ -208,17 +249,13 @@ export function layoutApi(): Plugin {
         try {
           const headers: Record<string, string> = { Accept: 'application/json' };
           if (token) headers.Authorization = `Bearer ${token}`;
-          const upstream = await fetch(target, { headers, signal: controller.signal });
-          const text = await upstream.text();
-          if (text.length > PROXY_MAX_BYTES) {
-            res.statusCode = 502;
-            res.end(JSON.stringify({ error: 'upstream response too large' }));
-            return;
-          }
-          res.statusCode = upstream.ok ? 200 : 502;
+          const upstream = await fetchProxyJson(parsedUrl, addresses, headers, controller.signal);
+          const { text } = upstream;
+          const ok = upstream.status >= 200 && upstream.status < 300;
+          res.statusCode = ok ? 200 : 502;
           res.setHeader('Content-Type', 'application/json');
           // Pass the body through verbatim; the client extracts via JSON path.
-          res.end(upstream.ok ? text : JSON.stringify({ error: `upstream ${upstream.status}`, body: text.slice(0, 500) }));
+          res.end(ok ? text : JSON.stringify({ error: `upstream ${upstream.status}`, body: text.slice(0, 500) }));
         } catch (err) {
           res.statusCode = 502;
           res.end(JSON.stringify({ error: 'fetch failed', detail: String(err).slice(0, 200) }));
