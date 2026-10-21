@@ -1,4 +1,24 @@
 # Changelog
+## 2.2.2
+
+- **Security: stored connection authentication.** The server now verifies the
+  Supervisor's source address before trusting its authenticated user header.
+  Direct-port clients cannot forge that header to retrieve the stored HA token.
+  Local development and the explicit `share_connection_on_lan` opt-in still work.
+
+- **Security: stronger JSON proxy boundaries.** Restricted-address checks now
+  cover IPv4-mapped IPv6, outbound connections use the DNS addresses that were
+  validated, and oversized responses are stopped while reading. Redirects are
+  refused; configure custom JSON APIs with their final endpoint URL.
+
+- **Fixed: deleting the last row brought its tiles back.** An explicitly empty
+  row list no longer falls back to stale legacy sections when saving or reloading.
+
+- **Fixed: failed layout saves appeared successful.** Rejected saves and resets
+  now show **Layout not saved** with a **Retry save** action, including after
+  leaving edit mode. Failed changes remain in memory until saved successfully;
+  retry before closing or reloading the page.
+
 ## 2.2.1
 
 - **New: alarm panel card.** Add any `alarm_control_panel` (Alarmo, a

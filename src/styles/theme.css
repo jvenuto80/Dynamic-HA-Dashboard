@@ -1106,6 +1106,15 @@ body::after {
   margin-right: 4px;
 }
 
+.layout-save-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #f87171;
+}
+
 /* ── Edit mode tiles & sections ── */
 .edit-icon-btn {
   display: inline-flex;
